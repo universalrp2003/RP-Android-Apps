@@ -1,8 +1,8 @@
 # Vasanthi AI - என்னைச் சுற்றி / Tamil sound and speech window
 
-> Unreleased candidate 1.1.5: continuous playback / naming follow-up. The owner approved the original candidate from run 40495158373 on a phone; subsequent rebuilds are not that tested file. Public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
+**Current stable release:** 1.1.5 / code 8 (published 2026-10-29). Version 1.1.6 / code 9 is the release candidate described on this page: it is built and unit-tested in CI but **has not been installed on a phone**, so the download links below still point at the public 1.1.5 until it is published.
 
-**Current stable release:** 1.1.4 / code 7
+[1.1.5 changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md) · [1.1.6 release notes](../releases/vasanthi-ai-v1.1.6.md)
 
 **Package:** `com.universalrp.vasanthi`
 
@@ -15,13 +15,14 @@ It is for anyone who wants to see what is being said or what is happening in the
 ## What it does
 
 - **A floating window that is always there.** A small draggable circle sits over every app, so she can be reading a message and still see that someone is at the door. Tap it and the panel opens; it does not need her to leave what she is doing.
-- **Names the sound, in Tamil.** A YAMNet classifier runs entirely on the phone and recognises 521 real-world classes. 194 of them, the ones that actually occur in a home, carry Tamil names: கதவு மணி, தொலைபேசி, குழந்தை அழுகை, நாய் ஓட்டம், கீறல், புகை எச்சரிக்கை. A class with no Tamil name is dropped rather than shown as English, because an English sound name is a guess dressed up as information.
+- **Names the sound, in Tamil, with a picture.** A YAMNet classifier runs entirely on the phone and recognises 521 real-world classes. 248 of them, the ones that actually occur in a home and on the street, carry Tamil names: கதவு மணி, தொலைபேசி, குழந்தை அழுகை, நாய், கார், இடி, கீறல், புகை எச்சரிக்கை. A class with no Tamil name is dropped rather than shown as English, because an English sound name is a guess dressed up as information. Every named sound also gets a picture (an emoji cue) in the floating panel and in the history, so a sound can be told apart at a glance without reading.
+- **Skips the quiet stretches.** When the room is in the "மிக அமைதி" band the capture thread does not run the model at all and reports Silence directly, which saves battery and stops the classifier from inventing a sound out of noise. Silence is never written to history, so a quiet stretch cannot push real sounds out of the list.
 - **Shows how sure it is.** Every named sound carries a confidence bar. The classifier is sometimes wrong, and a wrong sound presented as certain is worse than no sound at all.
 - **A loudness bar.** The room's level in dBFS, drawn as a bar and named in five Tamil words from மிக அமைதி to மிக அதிக சத்தம். She has never heard a sound and has nothing to compare a decibel number against.
 - **Writes down what is said.** Tamil speech recognition through the platform recogniser, shown as it arrives and kept in the transcript. English that comes back is translated to Tamil on the phone before it is written down, because a line she cannot read is not a line.
 - **Two switches, one microphone.** ஒலி names the sounds and பேச்சு writes down speech, and they are separate switches because they want the same microphone and only one of them can have it properly. With ஒலி off the recogniser has the microphone outright, which is both more accurate and reaches further, which is the owner's complaint about speech from a little way away. Either can be on alone, or both together.
 - **Vibrates on the sounds that matter.** The doorbell, a smoke alarm, a crying child, breaking glass. This is the part that works when the phone is in her pocket and she is not looking at it.
-- **Saves everything.** Every line of speech and every named sound, timestamped, filterable, re-readable, deletable.
+- **Saves everything, and lets it out.** Every line of speech and every named sound, time-stamped, filterable, never Silence, re-readable, deletable, and now exportable: the history header's **Export** button shares the whole list as plain text through Android's share sheet.
 - **A built-in guide.** A வழிகாட்டி button on the main screen opens a tap-to-open Tamil and English guide covering the floating circle, the two switches, the translation, the notification and the privacy position - the same shared guide the other RP Ideas apps use.
 - **Links to every other RP Ideas app.** The About section lists the whole suite and the project links, so the app is one door into the rest of it.
 
@@ -52,7 +53,7 @@ The model takes raw audio, not a spectrogram - its log-mel front end is inside t
 
 ## Device test status
 
-**1.0, 1.0.1, 1.1 and 1.1.1 were all installed on a phone by the owner**, on his own Xiaomi, and 1.1.1 was installed by his sister as well. The screenshots he sent from those installs are what found the recogniser that never got the microphone, the history writer that rewrote the whole file per line on the main thread until the system killed the process, the "thanglish" the recogniser produced when it returned Tamil with English words left inside it, and the speech that kept missing what was said because both switches were on at once. **This 1.1.2 build has not been installed on a phone by anyone.** The guide, the word-finding, the store, the cooldowns and the wording are covered by unit tests, and the shared guide and sister-app list are the same code the other apps already ship. Whether the guide reads clearly on a small screen and whether the other-app links open the right pages are not, and it is now an app for anyone, so it needs more than one phone before it can be called anything at all.
+**1.0, 1.0.1, 1.1 and 1.1.1 were all installed on a phone by the owner**, on his own Xiaomi, and 1.1.1 was installed by his sister as well. The screenshots he sent from those installs are what found the recogniser that never got the microphone, the history writer that rewrote the whole file per line on the main thread until the system killed the process, the "thanglish" the recogniser produced when it returned Tamil with English words left inside it, and the speech that kept missing what was said because both switches were on at once. **This 1.1.6 build has not been installed on a phone by anyone.** The silence gate, the picture map and the history rule are covered by unit tests, and the shared guide and sister-app list are the same code the other apps already ship. Whether the pictures read clearly on a small screen, whether the quiet gate feels right on a particular phone's microphone and whether the share sheet offers the right targets are not, and it is now an app for anyone, so it needs more than one phone before it can be called anything at all.
 
 ## Build and test
 
@@ -64,3 +65,5 @@ python3 tools/verify_vasanthi_sound_labels.py
 Version 1.1.3 persists saved audio-stream volumes so the next launch can restore them after process death. It has no independently verified physical-device test; see the current release notes for limitations.
 
 Version 1.1.4 includes an About link to official releases. The current working tree adds a daily foreground metadata notice that opens the official website; the app does not download or install update APKs. No physical-device test of this exact build was performed in this session.
+
+Version 1.1.6 adds the emoji cue, 54 more Tamil sound names (248 total), the quiet-window battery gate, Silence excluded from history and history export. Its unit tests are `SoundGateTest`, `SoundCueTest` and `SoundLabelMapTest` (floor 240); `tools/verify_vasanthi_sound_labels.py` checks every Tamil key against the model's label file and that the model digest is unchanged. No physical-device test of this exact build was performed in this session.

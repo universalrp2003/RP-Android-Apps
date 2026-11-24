@@ -43,7 +43,8 @@ jobs:
             grep -F 'INSTRUMENTATION_CODE: -1' background-results/refresh.txt
             adb shell am instrument -w -r -e class com.universalrp.tamilanstore.RetainedTransferTest com.universalrp.tamilanstore.test/androidx.test.runner.AndroidJUnitRunner > background-results/retained.txt
             cat background-results/retained.txt
-            grep -F 'OK (1 test)' background-results/retained.txt
+            # 0.17: a second case — a download kept from a shorter live feed must come back after relaunch.
+            grep -F 'OK (2 tests)' background-results/retained.txt
             grep -F 'INSTRUMENTATION_CODE: -1' background-results/retained.txt
       - name: Bounded actual native failures
         if: failure()

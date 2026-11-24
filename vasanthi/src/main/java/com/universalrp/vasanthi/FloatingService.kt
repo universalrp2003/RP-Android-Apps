@@ -16,6 +16,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.RelativeSizeSpan
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -714,7 +717,13 @@ class FloatingService : Service() {
                 // Top up the window, classify it, then keep the remainder for the next one.
                 val take = SoundClassifier.WINDOW_SAMPLES - pendingCount
                 for (i in 0 until take) pending[pendingCount + i] = shorts[i] / 32768f
-                val scores = classifier?.classify(pending.copyOf()).orEmpty()
+                val window = pending.copyOf()
+                // A window this quiet is reported as silence without a model run; see SoundGate.
+                val scores = if (SoundGate.shouldClassify(SoundMeter.levelOf(window))) {
+                    classifier?.classify(window).orEmpty()
+                } else {
+                    listOfNotNull(SoundGate.silenceScore())
+                }
                 scores.firstOrNull()?.let { VasanthiState.recordSound(it) }
                 val leftover = read - take
                 if (leftover > 0) {
@@ -753,11 +762,15 @@ class FloatingService : Service() {
         views.levelNote.visibility = roomVisibility
 
         val sound = VasanthiState.currentSound
-        views.sound.text = sound?.tamilLabel ?: getString(R.string.nothing_heard_yet)
-        views.confidence.progress = ((sound?.confidence ?: 0f) * 100f).roundToInt()
-        views.confidenceNote.text = sound
-            ?.let { tr("நம்பகத்தன்மை", "confidence") + " " + percent(it.confidence) + "%" }
-            .orEmpty()
+        val silence = sound?.englishLabel == SoundGate.SILENCE_LABEL
+        views.sound.text = sound?.let { cuedSoundText(it) } ?: getString(R.string.nothing_heard_yet)
+        views.confidence.progress = if (silence) 0 else ((sound?.confidence ?: 0f) * 100f).roundToInt()
+        // A measured quiet has no percentage to show; the loudness word under it already says it.
+        views.confidenceNote.text = when {
+            sound == null -> ""
+            silence -> tr("மிக அமைதி", "very quiet")
+            else -> tr("நம்பகத்தன்மை", "confidence") + " " + percent(sound.confidence) + "%"
+        }
 
         val level = VasanthiState.level
         views.level.progress = (level * 100f).roundToInt()
@@ -782,6 +795,16 @@ class FloatingService : Service() {
         views.mode.text = modeNote()
 
         handleUrgent()
+    }
+
+    /** "🐕 நாய்" — the picture drawn large in front of the name, so it is read before the word. */
+    private fun cuedSoundText(sound: SoundScore): CharSequence {
+        val cue = SoundCue.emojiFor(sound.englishLabel)
+        if (cue.isEmpty()) return sound.tamilLabel
+        val text = "$cue ${sound.tamilLabel}"
+        return SpannableString(text).apply {
+            setSpan(RelativeSizeSpan(1.7f), 0, cue.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
     }
 
     /** Vibrates once per urgent sound, because she may not be looking at the screen. */

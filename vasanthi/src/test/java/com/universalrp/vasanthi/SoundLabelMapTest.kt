@@ -77,10 +77,12 @@ class SoundLabelMapTest {
     @Test
     fun theVocabularyIsWideEnoughToBeUseful() {
         // Not a target, a floor. Below this the app would name so little that it is not worth
-        // running, and the owner's sister would be better served by looking at the room.
+        // running, and the owner's sister would be better served by looking at the room. 1.1.6
+        // added the sounds a Tamil Nadu home actually makes (mixer, car horn, thunder, television),
+        // so the floor moves up with them rather than letting them be dropped quietly.
         assertTrue(
             "only ${SoundLabelMap.translatedLabels().size} classes translated",
-            SoundLabelMap.translatedLabels().size >= 150,
+            SoundLabelMap.translatedLabels().size >= 240,
         )
     }
 }

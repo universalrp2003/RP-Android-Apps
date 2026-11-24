@@ -1,0 +1,19 @@
+# தமிழன் · Tamilan Store 0.17
+
+Fixes a download that **disappeared after a relaunch**. The Store saves which catalog a download started from, so it can show the same app again when the app is reopened. That saved list is read back with a strict check that demanded every app this build knows about (17). The live catalog from the website may legitimately carry fewer entries for a while after an app is added or removed, so a download started from such a feed was treated as if it had never existed and was not restored after a relaunch. 0.17 reads the saved list with the same validation the live feed itself uses (each entry still checked field by field), so a download begun from any valid catalog comes back.
+
+The **About** screen no longer shows a typed-in catalog date that went stale as soon as the bundled list was rebuilt. It now shows the number of apps in the current list and the Store version it shipped with, both derived from the actual catalog.
+
+The bundled catalog carries the current entries. As before, a manual **Refresh catalog** fetches the live catalog from the website and validates it against the bundled identities before anything is shown.
+
+Same package `com.universalrp.tamilanstore`, version code 19, existing pinned release signer. No new permission. Update in place without uninstalling or clearing app data; uninstalling may erase local data. The signed candidate is tested over public Store 0.16 on an Android 15 emulator for same UID, language/motion preferences, a synthetic private marker, restart, a kept download copy (restored on 0.16, restored again after the upgrade, removable on 0.17) and a rendered catalog refresh before promotion of the exact bytes. Not installed on a physical phone; no all-OEM, Doze or Google clearance is claimed.
+
+## தமிழ்
+
+**மறுதொடக்கத்திற்குப் பிறகு மறைந்துபோன பதிவிறக்கம்** இதில் திருத்தப்பட்டது. பதிவிறக்கம் எந்தப் பட்டியலிலிருந்து தொடங்கப்பட்டது என்பதை அங்காடி சேமித்து, செயலி மீண்டும் திறக்கும்போது அதே செயலியைக் காட்ட வைத்துக்கொள்கிறது. அந்தச் சேமிக்கப்பட்ட பட்டியல், இந்தச் செயலிக்குத் தெரிந்த அனைத்துச் செயலிகளும் (17) இருக்க வேண்டும் என்ற கடுமையான சரிபார்ப்புடன் மீண்டும் படிக்கப்பட்டது. இணையத்தளத்தின் நேரடிப் பட்டியலில் ஒரு செயலி சேர்க்கப்பட்டோ நீக்கப்பட்டோ சிறிது நேரம் குறைவான உள்ளீடுகள் இருக்கலாம்; அப்படிப்பட்ட பட்டியலிலிருந்து தொடங்கப்பட்ட பதிவிறக்கம் ஒருபோதும் இல்லாதது போல நடத்தப்பட்டு, மறுதொகுப்பின்போது மீட்டெடுக்கப்படவில்லை. 0.17 அந்தச் சேமிக்கப்பட்ட பட்டியலை, நேரடிப் பட்டியல் பயன்படுத்தும் அதே சரிபார்ப்புடன் (ஒவ்வொரு உள்ளீடும் புலம் புலமாகச் சரிபார்க்கப்படும்) படிக்கிறது; எனவே எந்தச் செல்லுபடியான பட்டியலிலிருந்து தொடங்கப்பட்ட பதிவிறக்கமும் மீண்டும் வரும்.
+
+**செயலி விவரம்** திரையில், உள்ளமைந்த பட்டியல் மறுசேர்க்கை செய்யப்பட்டவுடன் காலாவதியாகிவிடும் கையால் எழுதப்பட்ட தேதி இனி காட்டப்படாது. அதற்குப் பதிலாக தற்போதைய பட்டியலில் உள்ள செயலிகளின் எண்ணிக்கையும், அது எந்த Store பதிப்புடன் வந்தது என்பதும், இரண்டும் உண்மையான பட்டியலிலிருந்து தரவு பெற்றுக் காட்டப்படும்.
+
+உள்ளமைந்த பட்டியலில் தற்போதைய உள்ளீடுகள் உள்ளன. முன்பு போலவே, கைமுறை **செயலிப் பட்டியலை மீண்டும் பெறு** இணையத்தளத்திலிருந்து நேரடிப் பட்டியலைப் பெற்று, எதையும் காட்டுவதற்கு முன் உள்ளமைந்த அடையாளங்களுடன் சரிபார்க்கிறது.
+
+அதே தொகுப்பு `com.universalrp.tamilanstore`, பதிப்பு எண் 19, ஏற்கனவே உள்ள நிலையான கையொப்பம். புதிய அனுமதி எதுவும் இல்லை. நிறுவலை நீக்காமல், தரவை அழிக்காமல் அப்படியே புதுப்பிக்கவும்; நீக்கினால் உள்ளூர்த் தரவு அழியலாம். கையொப்பமிடப்பட்ட வேட்பாளர், Android 15 சோதனைச் சாதனத்தில் பொது Store 0.16 மீது அதே UID, மொழி/அசைவு விருப்பத்தேர்வுகள், ஒரு செயற்கைத் தனியான குறி, மறுதொடக்கம், வைத்திருக்கப்பட்ட பதிவிறக்கக் கோப்பு (0.16-இல் மீட்டெடுக்கப்பட்டது, புதுப்பிப்பிற்குப் பிறகும் மீட்டெடுக்கப்பட்டது, 0.17-இல் நீக்கக்கூடியது) மற்றும் பட்டியல் புதுப்பிப்பு காட்டப்பட்டது ஆகியவற்றைச் சோதிக்கப்பட்டது. நிஜத் தொலைபேசியில் நிறுவப்படவில்லை; எல்லா நிறுவனங்களின் சாதனங்களிலும், Doze அல்லது Google ஒப்புதல் எனக் கூறவில்லை.

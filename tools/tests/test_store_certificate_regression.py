@@ -55,7 +55,9 @@ class StoreCertificateRegression(unittest.TestCase):
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
         directory = re.search(r'tagPrefix = "tamilan-store", version = "([^"]+)", publishedVersion = "([^"]+)"', text)
         self.assertIsNotNone(directory)
-        self.assertEqual(directory.group(1), '0.16')
+        # 0.17 is only a candidate: the directory may name it as the next version, but the published
+        # version every About screen links to must stay the exact verified public release.
+        self.assertEqual(directory.group(1), '0.17')
         self.assertEqual(directory.group(2), '0.16')
         site = (ROOT/'site/index.html').read_text()
         mirrors = (ROOT/'.github/workflows/pages.yml').read_text()

@@ -21,7 +21,10 @@ data class Transfer(val appId: String = "", val bytes: Long = 0, val busy: Boole
     val failure: TransferFailure? = null)
 
 class StoreModel(application: Application) : AndroidViewModel(application) {
-    private val bundled = Catalog.parse(application.assets.open("catalog.json").bufferedReader().use { it.readText() })
+    private val bundledText = application.assets.open("catalog.json").bufferedReader().use { it.readText() }
+    private val bundled = Catalog.parse(bundledText)
+    /** ISO day from the bundled catalog, shown on About. Derived, never typed. */
+    val bundledUpdated: String = Catalog.updated(bundledText)
     private val catalogFile = File(application.filesDir, "catalog-last-good.json")
     var apps by mutableStateOf(runCatching { LiveCatalog.validate(catalogFile.readText(), bundled) }.getOrDefault(bundled))
         private set
