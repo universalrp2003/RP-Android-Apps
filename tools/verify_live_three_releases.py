@@ -94,11 +94,12 @@ def main():
     checks.append(('Elderly-Launcher-v1.8.apk', json.loads((ROOT/'docs/launcher-1.8-publication.json').read_text())))
     checks.append(('System-App-Disabler-v0.4.1.apk', json.loads((ROOT/'docs/appdisabler-0.4.1-publication.json').read_text())))
     current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
-    # Store 0.14 and 0.15 stay byte-checked from their immutable GitHub releases; 0.16 is the mirrored current build.
+    # Store 0.14, 0.15 and 0.16 stay byte-checked from their immutable GitHub releases; 0.17 is the mirrored current build.
     checks.append(('Tamilan-Store-v0.14.apk', json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())))
     checks.append(('Tamilan-Store-v0.15.apk', json.loads((ROOT/'docs/tamilan-store-0.15-publication-receipt.json').read_text())))
-    current_names.add('Tamilan-Store-v0.16.apk')
     checks.append(('Tamilan-Store-v0.16.apk', json.loads((ROOT/'docs/tamilan-store-0.16-publication-receipt.json').read_text())))
+    current_names.add('Tamilan-Store-v0.17.apk')
+    checks.append(('Tamilan-Store-v0.17.apk', json.loads((ROOT/'docs/tamilan-store-0.17-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v0.10.apk', json.loads((ROOT/'docs/weekly-money-0.10-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v0.11.apk', json.loads((ROOT/'docs/weekly-money-0.11-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v1.0.apk', json.loads((ROOT/'docs/weekly-money-1.0-publication-receipt.json').read_text())))
