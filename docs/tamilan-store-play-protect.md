@@ -1,6 +1,6 @@
 # Tamilan Store 0.8 — owner installation block and focused review
 
-Updated 1 November 2026. **Unresolved on the owner's phone.** The owner supplied an installation dialog for `com.universalrp.tamilanstore` 0.8 (8), installed version 0.7 (7), followed by Google Play Protect **“Harmful app blocked” / “This app may be harmful.”** A later screen shows the new Store interface running; it does not establish that Google withdrew the warning or independently match the installed APK hash. Do not infer the installation path or recommend its “Install anyway” control. Keep Play Protect enabled; stop at a warning. Do not uninstall/reset a working installation, change package/key, or repackage old bytes to try to escape classification.
+Updated 23 November 2026. **New owner result for 0.16 below; the 1 November 0.8 block itself was never explained.** The owner supplied an installation dialog for `com.universalrp.tamilanstore` 0.8 (8), installed version 0.7 (7), followed by Google Play Protect **“Harmful app blocked” / “This app may be harmful.”** A later screen shows the new Store interface running; it does not establish that Google withdrew the warning or independently match the installed APK hash. Do not infer the installation path or recommend its “Install anyway” control. Keep Play Protect enabled; stop at a warning. Do not uninstall/reset a working installation, change package/key, or repackage old bytes to try to escape classification.
 
 Raw screenshots remain outside public source: they also contain private travel history. No originals are republished here.
 
@@ -41,4 +41,13 @@ Prepared draft (not submitted; confirm facts and prerequisite sample authorizati
 
 > Please review Play Protect's “Harmful app blocked” classification for Tamilan Store, package com.universalrp.tamilanstore, version 0.8 (8), SHA256 3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474. The owner observed the block on 1 November 2026 while updating 0.7. This first-party app catalog downloads only after user action, verifies APK size/hash/package/version/signer, and requires a separate action to open Android's installer. Optional silent update alerts default off; no SMS or cloud-speech feature is present. Source and verification: https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/tamilan-store-play-protect.md . We do not know the classification reason and request review, not a guarantee of future compliance.
 
-Until a genuine new result exists, the public website/release notes must disclose this owner-reported block and must not call the later running screen Google clearance.
+A genuine new result arrived on 23 November 2026 (next section); until then the website had to disclose this owner-reported block and did not call the later running screen Google clearance.
+
+## 23 November 2026 — Play Protect reports “This app looks safe” for 0.16 (owner's phone)
+
+After the exact publication of Store 0.16 (release 455683044, `Tamilan-Store-v0.16.apk`, 20,713,343 B, SHA-256 `7bf87fc4508db6f3e034ddc86fbef2121ce12593259f086efc5e8dadac27c552`), the owner opened the downloaded APK in their phone's file manager (22:11 local) and supplied three screenshots. They stay private; only the facts are recorded here:
+
+- Google Play Protect scanned `தமிழன்` and finished with **“This app looks safe — You can continue to install it”** (buttons: Install / Don't install). An earlier frame shows the same dialog in its “Scanning…” state.
+- The package installer dialog shows `Tamilan-Store-v0.16.apk`, 20.71 MB, `com.universalrp.tamilanstore` **0.16 (18)**, installed version **0.15 (17)**, offering **UPDATE**: Android accepts it as a same-signer in-place update, no uninstall needed.
+
+What this does and does not mean: it is Play Protect's verdict for this exact file, on this device, at this time, as reported by the owner — a genuine new result, so the website note now records it. It does not explain why 0.8 was blocked on 1 November, does not apply to any other build, and is not Google approval of the app. Keep Play Protect enabled; stop at any warning. At the time of writing the owner has not yet reported that the update finished and the app runs; the 0.16 testing status stays “not phone-tested” until they do.
