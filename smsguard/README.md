@@ -1,12 +1,12 @@
 # SMS Guard (குறுஞ்செய்தி காவலன்)
 
-**Package:** `com.universalrp.smsguard` · Android 8.0+ · Development version **1.1.18 / code 24** (public release: 1.1.17). See the [public releases](https://github.com/universalrp2003/RP-Android-Apps/releases?q=sms-guard&expanded=true) and [verification receipt](../docs/sms-guard-1.1.17-verification.md) for actual publication/build status rather than treating this source version as an installed-phone test.
+**Package:** `com.universalrp.smsguard` · Android 8.0+ · Version **1.1.18 / code 24**, published 24 November 2026 as a same-key update from 1.1.17. This exact source was installed on the owner's phone on 24 November 2026 (delivery report confirmed "Delivered ✓✓" on a Vodafone Idea SIM) before publication; the published APK is a CI rebuild of the same source and key. See the [public releases](https://github.com/universalrp2003/RP-Android-Apps/releases?q=sms-guard&expanded=true) and the [1.1.18 verification receipt](../docs/sms-guard-1.1.18-verification.md).
 
 ## Read before installing or sharing
 
 **Earlier sensitive-data blocks were followed by an owner1.1.15 scan saying “This app looks safe” and a running-app screenshot. This is one phone, not universal Google clearance.** The owner reports blocked older APKs and explicitly authorized publishing bug fixes for family/friends with this disclosure. The app still declares SMS read/receive permissions. Installation may remain blocked; keep Play Protect enabled and respect warnings. No Google clearance, malware-free guarantee or exact new-build phone test is claimed. Update same-key installations normally; do not uninstall/reset to force installation and risk local data loss.
 
-[Full warning, privacy choices and audit access](../docs/sms-guard-play-protect.md) · [Privacy policy](../PRIVACY.md) · [1.1.18 candidate notes](../releases/sms-guard-v1.1.18.md) · [1.1.17 notes](../releases/sms-guard-v1.1.17.md). Public source enables review, not a safety certification.
+[Full warning, privacy choices and audit access](../docs/sms-guard-play-protect.md) · [Privacy policy](../PRIVACY.md) · [1.1.18 notes](../releases/sms-guard-v1.1.18.md) · [1.1.17 notes](../releases/sms-guard-v1.1.17.md). Public source enables review, not a safety certification.
 
 ## Features and limitations
 

@@ -19,7 +19,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
         site = (ROOT / 'site/index.html').read_text()
         pages = (ROOT / '.github/workflows/pages.yml').read_text()
         releases = (
-            ('sms-guard-v1.1.17', 'SMS-Guard-v1.1.17.apk', '1.1.17', 12840884, 'b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd'),
+            ('sms-guard-v1.1.18', 'SMS-Guard-v1.1.18.apk', '1.1.18', 12873680, '22c3f7ed4dee0533679022a9099cfe0a55da2a1bc60099ebd3bd5a28f6997222'),
             ('vasanthi-ai-v1.1.6', 'Vasanthi-AI-v1.1.6.apk', '1.1.6', 45794346, '5b59ba8dbe7cf2624ac3e50000547350dd6b6af846f38a39010e2ba5feadc829'),
             ('oor-arivippu-v1.1.26', 'Oor-Arivippu-v1.1.26.apk', '1.1.26', 12941104, '96ff45915749f5f1a851ff246ee9ddcd0b83886b3d1017e6ab5f22661d17d22c'),
             ('tamil-podcast-v1.6', 'Tamil-Podcast-Player-v1.6.apk', '1.6', 11967239, 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),

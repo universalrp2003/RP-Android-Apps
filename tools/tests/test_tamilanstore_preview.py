@@ -146,7 +146,7 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         self.assertEqual(len(index['smsguard']),len(web))
         for name,path in zip(index['smsguard'],web):
             self.assertEqual((STORE/'src/main/assets/screenshots'/name).read_bytes(),path.read_bytes())
-        card=(ROOT/'site/index.html').read_text().split('<!-- SMS Guard -->',1)[1].split('<!-- Live Guard -->',1)[0]
+        card=(ROOT/'site/index.html').read_text().split('<!-- SMS Guard (newest release, 24 Nov 2026) -->',1)[1].split('<!-- Vasanthi AI -->',1)[0]
         self.assertIn('View 5 more screenshots',card)
         self.assertIn('These are this phone’s settings, not app defaults',card)
         self.assertIn('Private inbox and financial-summary images are excluded',card)
