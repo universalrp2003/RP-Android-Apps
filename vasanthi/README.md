@@ -1,6 +1,6 @@
 # Vasanthi AI - என்னைச் சுற்றி / Tamil sound and speech window
 
-**Current stable release:** 1.1.5 / code 8 (published 2026-10-29). Version 1.1.6 / code 9 is the release candidate described on this page: built and unit-tested in CI, and the candidate (run 45331600666) was **installed on the owner's phone on 24 November 2026 and confirmed working** ([record](../docs/vasanthi-1.1.6-device-verification.md)). The download links below still point at the public 1.1.5 until it is published.
+**Current stable release:** 1.1.6 / code 9 (published 2026-11-24). Built and unit-tested in CI; the candidate (run 45331600666) was **installed on the owner's phone on 24 November 2026 and confirmed working** ([record](../docs/vasanthi-1.1.6-device-verification.md)). The published APK is a rebuild of the same source by the publish run (run 45346272162), not the file he installed.
 
 [1.1.5 changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md) · [1.1.6 release notes](../releases/vasanthi-ai-v1.1.6.md)
 
@@ -41,9 +41,9 @@ It is for anyone who wants to see what is being said or what is happening in the
 
 ## Download the stable release
 
-- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Vasanthi-AI-v1.1.4.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.4/Vasanthi-AI-v1.1.4.apk) · [release notes](../releases/vasanthi-ai-v1.1.4.md) · [all RP Ideas apps](../README.md)
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Vasanthi-AI-v1.1.6.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.6/Vasanthi-AI-v1.1.6.apk) · [release notes](../releases/vasanthi-ai-v1.1.6.md) · [all RP Ideas apps](../README.md)
 
-The published asset for 1.1.4 is 45,790,702 bytes, SHA-256 b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e, published 2026-10-27T08:29:15Z. Published metadata is authoritative; candidate digests are not reused.
+The published asset for 1.1.6 is 45,794,346 bytes, SHA-256 5b59ba8dbe7cf2624ac3e50000547350dd6b6af846f38a39010e2ba5feadc829, published 2026-11-24T07:14:13Z. Published metadata is authoritative; candidate digests are not reused. Same key as 1.1.5, so 1.1.5 installs update in place; 1.1.4-or-earlier (original key) installs need the one-time fresh install described in the 1.1.5 note.
 
 ## The model, and where it came from
 

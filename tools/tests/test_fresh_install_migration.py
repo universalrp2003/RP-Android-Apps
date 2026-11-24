@@ -20,11 +20,11 @@ class FreshInstallMigrationTest(unittest.TestCase):
         pages = (ROOT / '.github/workflows/pages.yml').read_text()
         releases = (
             ('sms-guard-v1.1.17', 'SMS-Guard-v1.1.17.apk', '1.1.17', 12840884, 'b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd'),
-            ('vasanthi-ai-v1.1.5', 'Vasanthi-AI-v1.1.5.apk', '1.1.5', 45777962, '4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6'),
+            ('vasanthi-ai-v1.1.6', 'Vasanthi-AI-v1.1.6.apk', '1.1.6', 45794346, '5b59ba8dbe7cf2624ac3e50000547350dd6b6af846f38a39010e2ba5feadc829'),
             ('oor-arivippu-v1.1.26', 'Oor-Arivippu-v1.1.26.apk', '1.1.26', 12941104, '96ff45915749f5f1a851ff246ee9ddcd0b83886b3d1017e6ab5f22661d17d22c'),
             ('tamil-podcast-v1.6', 'Tamil-Podcast-Player-v1.6.apk', '1.6', 11967239, 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),
             ('daily-vault-v0.5', 'DailyVault-v0.5.apk', '0.5', 11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
-            ('tamilan-store-v0.16', 'Tamilan-Store-v0.16.apk', '0.16', 20713343, '7bf87fc4508db6f3e034ddc86fbef2121ce12593259f086efc5e8dadac27c552'),
+            ('tamilan-store-v0.17', 'Tamilan-Store-v0.17.apk', '0.17', 20713347, 'c38bed526fc53e0276f64c853665b60f29ad9cc687b623b3e1c7bf6013be66c7'),
             ('expense-tracker-v1.2', 'Expense-Tracker-v1.2.apk', '1.2', 11564299, '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
             ('elderly-launcher-v1.8', 'Elderly-Launcher-v1.8.apk', '1.8', 11538139, '6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c'),
             ('voice-notes-v1.3.4', 'Voice-Notes-v1.3.4.apk', '1.3.4', 13135195, '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a'),
@@ -86,7 +86,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
             'launcher': ('1.8', '9', 'elderly-launcher-v1.8'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
-            # Store0.17 is the in-flight candidate: 17-app catalog, same stable key.
+            # Store0.17 is public (24 Nov 2026): 17-app catalog, same stable key.
             'tamilanstore': ('0.17', '19', 'tamilan-store-v0.17'),
         }
         seen_codes = {}
@@ -111,6 +111,9 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('SMS-Guard-v1.1.16.apk', 'db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df'),
             ('SMS-Guard-v1.1.11.apk', '9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604'),
             ('Vasanthi-AI-v1.1.5.apk', '4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6'),
+            ('Vasanthi-AI-v1.1.6.apk', '5b59ba8dbe7cf2624ac3e50000547350dd6b6af846f38a39010e2ba5feadc829'),
+            ('Tamilan-Store-v0.16.apk', '7bf87fc4508db6f3e034ddc86fbef2121ce12593259f086efc5e8dadac27c552'),
+            ('Tamilan-Store-v0.17.apk', 'c38bed526fc53e0276f64c853665b60f29ad9cc687b623b3e1c7bf6013be66c7'),
             ('Oor-Arivippu-v1.1.10.apk', '7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa'),
             ('Tamil-Podcast-Player-v1.6.apk', 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),
             ('DailyVault-v0.5.apk', '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),

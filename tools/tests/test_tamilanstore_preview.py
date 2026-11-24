@@ -153,14 +153,14 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         for i in (6,7,8):
             self.assertNotIn(f'images/sms-guard/{i}.jpg',card)
 
-    def test_store_website_owner_gallery_has_seven_images_and_redaction_caption(self):
+    def test_store_website_owner_gallery_has_nine_images_and_redaction_caption(self):
         site=(ROOT/'site/index.html').read_text()
         section=site.split('<h2 id="optional-store-title">',1)[1].split('      <div class="note">',1)[0]
-        paths=['images/tamilan-store.jpg']+[f'images/tamilan-store/{i}.jpg' for i in range(1,7)]
+        paths=['images/tamilan-store.jpg']+[f'images/tamilan-store/{i}.jpg' for i in range(1,7)]+['images/tamilan-store/owner-0-17-installer-update.jpg','images/tamilan-store/owner-0-17-about.jpg']
         for path in paths:
             self.assertEqual(section.count(f'src="{path}"'),1)
             self.assertTrue((ROOT/'site'/path).read_bytes().startswith(b'\xff\xd8'))
-        self.assertIn('View 6 more screenshots',section)
+        self.assertIn('View 8 more screenshots',section)
         self.assertIn('Private message and financial previews are masked',section)
         self.assertIn('not new releases or proof of update/install success',section)
 
