@@ -9,10 +9,18 @@
 
 - [ ] **Decode numeric HTML/XML character entities (`&#x1f537;`, `&#8217;`, etc.) in RSS news headlines (`NewsPolicy.kt`)** so external news feeds containing hex/decimal HTML entities render real Unicode symbols (`🔷`, `’`) cleanly on the Home news banner.
 
-## Queued for the next Tamilan Store build (owner asked 13 November 2026)
+## Queued for the next Tamilan Store build (owner asked 13 November 2026; instruction repeated 24 November 2026)
 
-Bundle these into the next Store release; do not start a Store-only build just for them.
+**Owner instruction, 24 November 2026: when the next new application is built, fix the Store also** — bundle the items
+below into that build cycle; do not start a Store-only build just for them (publication still needs the usual approval).
 
+- [ ] **In-progress download not restored after relaunch when it was started from a shorter live feed
+      (`ManagedApkDownload.restore()`).** `begin()` snapshots whatever catalog the user was browsing — and the live
+      feed may legitimately carry fewer than 17 entries (`Catalog.parseLive` accepts 1..17) — but `restore()` parses
+      that saved snapshot with the strict `Catalog.parse(text)`, which demands exactly 17 entries. The `require`
+      throws inside `runCatching`, `restore()` returns `null`, and the running copy disappears from the Store after a
+      relaunch. Fix: parse the saved snapshot with `Catalog.parseLive(text)` (or `parse(text, count)`); keep `begin()`
+      strict; add a unit test that saves a 15-entry snapshot and restores it. Known gap left out of 0.16.
 - [ ] **The Store's About screen still says "Our 13 apps" while the catalog ships 15.** The banner
       already says "15 apps", so the two disagree on the same screen. The owner explicitly said to
       ride this along with the next Store change rather than publish a build for it alone.
