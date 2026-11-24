@@ -90,10 +90,10 @@ object SecurityAuditReader {
             .filter { pkg ->
                 val uid = applicationInfo(pm, pkg)?.uid ?: return@filter false
                 val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    ops.unsafeCheckOpNoThrow(android.app.AppOpsManager.OPSTR_REQUEST_INSTALL_PACKAGES, uid, pkg)
+                    ops.unsafeCheckOpNoThrow("android:request_install_packages", uid, pkg)
                 } else {
                     @Suppress("DEPRECATION")
-                    ops.checkOpNoThrow(android.app.AppOpsManager.OPSTR_REQUEST_INSTALL_PACKAGES, uid, pkg)
+                    ops.checkOpNoThrow("android:request_install_packages", uid, pkg)
                 }
                 mode == android.app.AppOpsManager.MODE_ALLOWED
             }

@@ -402,6 +402,9 @@ class TvRemoteFocusTest {
         press("security-back", Key.DirectionDown, "security-summary")
         press("security-summary", Key.DirectionDown, "security-shield")
         compose.onNodeWithTag("security-shield").assertIsOff()
+        compose.waitUntil(timeoutMillis = 30_000) {
+            compose.onAllNodes(hasTestTag("security-finding-adb")).fetchSemanticsNodes().isNotEmpty()
+        }
         press("security-shield", Key.DirectionDown, "security-finding-adb")
         press("security-finding-adb", Key.DirectionDown, "security-action-adb")
         press("security-action-adb", Key.DirectionDown, "security-finding-unknown_sources")
