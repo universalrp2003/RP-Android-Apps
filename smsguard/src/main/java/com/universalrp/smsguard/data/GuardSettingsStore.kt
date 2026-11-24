@@ -93,6 +93,10 @@ data class GuardPrefs(
     val billReminderCount: Int = 0,                // Unpaid reminder count (for the nav badge)
     val billAnnounceDate: String = "",             // "yyyy-MM-dd" of the current daily-announcement counter
     val billAnnounceCount: Int = 0,                // Routine bill voice announcements already spoken today
+    // --- Message archive (per message, app-private; the provider row is never touched) ---
+    val archivedMessageIds: Set<Long> = emptySet(),
+    // Moment this build first tracked a delivery report; older sent rows are shown as plain "Sent".
+    val deliveryTrackingSinceMs: Long = Long.MAX_VALUE,
 )
 
 object GuardSettingsStore {
@@ -103,6 +107,8 @@ object GuardSettingsStore {
     private const val KEY_SLEEP_QUEUE = "sleep_voice_queue_v1"
     private const val KEY_MUTED_SENDERS = "muted_senders_v1"
     private const val KEY_BILL_REMINDERS = "bill_reminders_v1"
+    private const val KEY_ARCHIVED_MESSAGES = "archived_message_ids_v1"
+    private const val KEY_DELIVERY_TRACKING_SINCE = "delivery_tracking_since_ms"
 
     private val _state = MutableStateFlow(GuardPrefs())
     val state: StateFlow<GuardPrefs> = _state.asStateFlow()
@@ -149,6 +155,10 @@ object GuardSettingsStore {
         }
         val accounts = parseUserAccounts(p.getString("user_accounts_json", null))
         val excluded = p.getStringSet("excluded_finance_ids", emptySet())
+            .orEmpty()
+            .mapNotNull { it.toLongOrNull() }
+            .toSet()
+        val archived = p.getStringSet(KEY_ARCHIVED_MESSAGES, emptySet())
             .orEmpty()
             .mapNotNull { it.toLongOrNull() }
             .toSet()
@@ -206,6 +216,8 @@ object GuardSettingsStore {
             billReminderCount = bills.count { !it.isPaid },
             billAnnounceDate = p.getString("bill_announce_date", "").orEmpty(),
             billAnnounceCount = p.getInt("bill_announce_count", 0).coerceIn(0, 999),
+            archivedMessageIds = archived,
+            deliveryTrackingSinceMs = p.getLong(KEY_DELIVERY_TRACKING_SINCE, Long.MAX_VALUE),
         )
     }
 
@@ -493,6 +505,44 @@ object GuardSettingsStore {
             )
         }
         prefs(context).edit().putString("user_accounts_json", arr.toString()).apply()
+        reload(context)
+    }
+
+    /**
+     * Hides one message from its conversation without deleting it: the telephony provider row is
+     * left exactly as it is, so "Unarchive" simply shows it again and nothing can be lost. Works
+     * whether or not SMS Guard holds the default-SMS role. Returns the new archived state.
+     */
+    fun toggleArchivedMessage(context: Context, messageId: Long): Boolean {
+        val current = ensureLoaded(context).archivedMessageIds.toMutableSet()
+        val nowArchived = if (!current.remove(messageId)) {
+            current.add(messageId)
+            true
+        } else {
+            false
+        }
+        prefs(context).edit()
+            .putStringSet(KEY_ARCHIVED_MESSAGES, current.map { it.toString() }.toSet())
+            .apply()
+        reload(context)
+        return nowArchived
+    }
+
+    /** Forgets an archived id (after the message itself was deleted), keeping the set tidy. */
+    fun removeArchivedMessage(context: Context, messageId: Long) {
+        val current = ensureLoaded(context).archivedMessageIds
+        if (messageId !in current) return
+        prefs(context).edit()
+            .putStringSet(KEY_ARCHIVED_MESSAGES, current.filterNot { it == messageId }.map { it.toString() }.toSet())
+            .apply()
+        reload(context)
+    }
+
+    /** Records, once, when delivery tracking began; rows sent before it are never shown as delivered. */
+    fun markDeliveryTrackingSince(context: Context, nowMs: Long) {
+        val p = prefs(context)
+        if (p.contains(KEY_DELIVERY_TRACKING_SINCE)) return
+        p.edit().putLong(KEY_DELIVERY_TRACKING_SINCE, nowMs).apply()
         reload(context)
     }
 

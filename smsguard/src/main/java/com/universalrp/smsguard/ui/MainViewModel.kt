@@ -45,7 +45,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 enum class MainTab { MESSAGES, SHIELD, FINANCE, BILLS, CONTROLS }
-enum class InboxFilter { ALL, PERSONAL, BANKS, OTP, LINKS, SCAM, PROMO }
+enum class InboxFilter { ALL, PERSONAL, BANKS, OTP, LINKS, SCAM, PROMO, ARCHIVED }
 enum class FinancePeriodMode { THIS_MONTH, SELECTED_MONTH, YEARLY, CUSTOM_RANGE }
 enum class BillFilter { ALL, UNPAID, PAID, DUE_SOON }
 
@@ -79,6 +79,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _threads = MutableStateFlow<List<SmsThreadSummary>>(emptyList())
     val threads: StateFlow<List<SmsThreadSummary>> = _threads.asStateFlow()
+
+    // Conversations built from archived messages only; the Archived chip shows these instead of [threads].
+    private val _archivedThreads = MutableStateFlow<List<SmsThreadSummary>>(emptyList())
+    val archivedThreads: StateFlow<List<SmsThreadSummary>> = _archivedThreads.asStateFlow()
 
     private val _isDefaultSms = MutableStateFlow(false)
     val isDefaultSms: StateFlow<Boolean> = _isDefaultSms.asStateFlow()
@@ -366,7 +370,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 SmsRepository.groupThreads(quickBatch.messages)
                             }
                             _allMessages.value = quickBatch.messages
-                            _threads.value = quickThreads
+                            publishThreads(quickBatch.messages, quickThreads)
                             _hasMoreMessages.value = quickBatch.hasMore
                         }
                     }
@@ -380,7 +384,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         SmsRepository.groupThreads(retainedMessages)
                     }
                     _allMessages.value = retainedMessages
-                    _threads.value = fullThreads
+                    publishThreads(retainedMessages, fullThreads)
                     if (fullLoaded is InboxLoadResult.Success) {
                         _hasMoreMessages.value = fullLoaded.hasMore
                     } else {
@@ -410,6 +414,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _isLoading.value = false
                 refreshMutex.unlock()
             }
+        }
+    }
+
+    /**
+     * Archived messages are hidden from every conversation, so the main list is rebuilt without
+     * them and a separate list holds what the Archived chip shows. The provider rows are untouched;
+     * this is only which messages the two lists are built from.
+     */
+    private suspend fun publishThreads(messages: List<EnrichedSmsMessage>, grouped: List<SmsThreadSummary>) {
+        val archivedIds = GuardSettingsStore.state.value.archivedMessageIds
+        if (archivedIds.isEmpty()) {
+            _threads.value = grouped
+            _archivedThreads.value = emptyList()
+            return
+        }
+        // Same off-main grouping the unfiltered list already uses; a 15,000-message inbox must not jank.
+        val (visibleThreads, archivedThreads) = withContext(Dispatchers.Default) {
+            val visible = messages.filterNot { it.id in archivedIds }
+            val archived = messages.filter { it.id in archivedIds }
+            (if (visible.size == messages.size) grouped else SmsRepository.groupThreads(visible)) to
+                SmsRepository.groupThreads(archived)
+        }
+        _threads.value = visibleThreads
+        _archivedThreads.value = archivedThreads
+    }
+
+    /** Hides a message from its conversation (or shows it again); nothing is ever deleted this way. */
+    fun toggleArchive(message: EnrichedSmsMessage) {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch(Dispatchers.IO) {
+            GuardSettingsStore.toggleArchivedMessage(ctx, message.id)
+            // The prefs state already changed; a pulse makes the lists regroup right away.
+            refreshAll()
         }
     }
 
@@ -598,6 +635,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val ctx = getApplication<Application>()
         viewModelScope.launch(Dispatchers.IO) {
             SmsRepository.deleteMessageById(ctx, message.id)
+            GuardSettingsStore.removeArchivedMessage(ctx, message.id)
             // Remove any lingering notification for this conversation so a deleted message
             // never leaves a stale "new SMS" alert in the shade.
             IncomingSmsProcessor.cancelThreadNotification(ctx, message.threadKey)
@@ -1160,6 +1198,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val latest = t.latestMessage
             val matchesFilter = when (filter) {
                 InboxFilter.ALL -> true
+                // The caller passes archived threads only for this filter, so every one matches.
+                InboxFilter.ARCHIVED -> true
                 InboxFilter.PERSONAL -> latest.sender.isPersonalNumber
                 InboxFilter.BANKS -> t.messages.any {
                     it.sender.isVerifiedFinancialSender ||

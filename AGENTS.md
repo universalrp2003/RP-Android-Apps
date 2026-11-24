@@ -1,3 +1,33 @@
+## SMS Guard 1.1.18 published — complete; site/catalog pins in PR #210 — 24 November 2026
+
+Publisher run **45380209608** (marker commit `e63cf69`) succeeded: release `456643246`, tag `sms-guard-v1.1.18`, asset `SMS-Guard-v1.1.18.apk` **12,873,680 bytes**, SHA-256 `22c3f7ed4dee0533679022a9099cfe0a55da2a1bc60099ebd3bd5a28f6997222` (GitHub's asset digest matches), published 2026-11-24T11:03:55Z. Rebuilt from the owner-tested source `0d0f3e3` with the same key; not the identical file — the release note and receipt say so. Receipt: `docs/sms-guard-1.1.18-verification.md`; digest recorded in `docs/published-release-digests.md`.
+
+Pins applied on the branch (PR #210): root README row; `smsguard/README.md`; both `SisterApps.kt` `publishedVersion = "1.1.18"`; `pages.yml` mirror tuple + `test -s` lines; `site/index.html` (JSON-LD, latest-table row moved to the top, card rewritten with the owner evidence and moved to first — the verifier's newest-first rule requires it because 11:03Z is newer than Vasanthi 07:14Z); `site/catalog*.json` and `tamilanstore/src/main/assets/catalog.json`; `site/release-dates.json`; tests `test_fresh_install_migration.py` (tuple) and `test_website_usability.py` (card order). Expect the known structurally-red live-catalog checks until Pages deploys on `main`.
+
+## Owner approval — publish SMS Guard 1.1.18 — 24 November 2026
+
+Owner re-installed the **label-fixed** candidate (run 45376638202 on `0d0f3e3`, shown as `SMS-Guard-v1.1.18.apk`, "App info 1.1.18 (24)", Play Protect again "This app looks safe"), sent two more screenshots — thread "Sasikala" with two bubbles reading **Delivered ✓✓** (single check marks, final wording) and the English inbox with the **📦 Archived** chip — and wrote verbatim: **"Yes its all ok you can publish now"**. Publication approved for 1.1.18 / code 24. Marker commit `[publish-smsguard]` pushed on the subject line; the release note states the published APK is a CI rebuild of the exact source the owner tested (same key), not the identical file.
+
+## Owner evidence — SMS Guard 1.1.18 candidate installed and working — 24 November 2026
+
+Owner installed the CI candidate (`SMS-Guard-v1.1.18.apk`, 12.87 MB on the phone, from artifact `SMS-Guard-signed-candidate` of run 45372490739 on `2343e4f`) over 1.1.17 and sent four screenshots with "See its working":
+
+- Google Play Protect install prompt for that file: "This app looks safe — You can continue to install it". **One phone's observation only — never claim Google clearance.**
+- Tamil inbox with the new **📦 காப்பகம்** chip; thread view shows the per-message row ஒலி / நகலெடு / **காப்பகப்படுத்து** / நீக்கு.
+- Thread "Sasikala" (9486726876), sent "how" at 4:03 PM on the owner's Vodafone Idea (Vi) SIM → bubble showed **Delivered ✓✓** from the network's real delivery report.
+- Screenshot also showed a cosmetic defect: the label read "✓✓ Delivered ✓✓" (check marks prefixed by `deliveryLabel` *and* suffixed in the catalog strings). Fixed in the source afterwards (prefix removed; no logic change); that fix passed CI but was **not** re-installed on a phone — the release note says so.
+- Not archive-exercised on the phone yet (button and chip visible only). No publish approval given at this point.
+
+## Owner request — SMS Guard delivery report + archive — 24 November 2026
+
+Owner: "Sms guard application need sms delivery report and need sms archive option also". Asked which shape he wanted; he chose **archive individual messages** (not whole conversations) and **inline status under each sent message** (no failure notification). Implemented as the **1.1.18 / code 24 candidate** (public 1.1.17 untouched; SisterApps `publishedVersion` stays 1.1.17):
+
+- Send path (`SmsRepository.sendSmsMessage`): outbox row first (TYPE_OUTBOX + STATUS_PENDING), then `sendTextMessage`/`sendMultipartTextMessage` with one sent + one delivery PendingIntent per part (`FLAG_MUTABLE` on S+, explicit `Intent(context, SmsStatusReceiver::class.java)`, persisted unique request codes). Nothing is marked sent/delivered at send time.
+- `service/SmsStatusReceiver` (manifest, `exported=false`, no intent-filter) → `SmsRepository.onDeliveryBroadcast` → per-part bitmask progress in `SmsDeliveryTracker` (prefs `sms_delivery_v1`, 48h prune) → row moves to SENT/PENDING, SENT/COMPLETE (only on a real report), SENT/FAILED+ERROR_CODE or FAILED/FAILED+ERROR_CODE. `SmsDeliveryStatusPolicy` (pure) maps row → SENDING/SENT/DELIVERED/NOT_DELIVERED/NOT_SENT/PLAIN_SENT; rows older than `delivery_tracking_since_ms` are never shown as delivered. JVM tests: `SmsDeliveryStatusPolicyTest`, `SmsDeliveryProgressTest`. Contract gate: `tools/tests/test_sms_delivery_archive_contracts.py`.
+- Archive: `archived_message_ids_v1` string set in `GuardSettingsStore` (no provider writes); `MainViewModel.publishThreads` splits visible/archived, `archivedThreads` + `InboxFilter.ARCHIVED` chip; `ThreadDetailScreen` partitions, banner with count + toggle, Archive/Unarchive on every bubble; `MainActivity` opens archived-only threads from the Archived chip. 20 new bilingual catalog strings (TA+EN).
+- Fixed a stale gate while here: the verifier's Oor expectation `'version = "1.1.17"'` was a whole-file substring test that had been satisfied accidentally by SMS Guard's `version = "1.1.17"`; corrected to Oor's real `1.1.26`.
+- Status at that point: candidate only, not installed on a phone. (Superseded on 24 November 2026: owner phone-tested it, approved publication, and it was published — see the sections above.)
+
 ## Published — Tamilan Store 0.17 and Vasanthi AI 1.1.6 — 24 November 2026
 
 - **Tamilan Store 0.17 / code 19**: release `tamilan-store-v0.17` (id 456415619), `Tamilan-Store-v0.17.apk` **20,713,347 B**,

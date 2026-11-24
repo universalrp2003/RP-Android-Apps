@@ -145,6 +145,13 @@
             android:name=".service.NotificationActionReceiver"
             android:exported="false" />
 
+        <!-- Delivery reports: the radio fills in the result code of the PendingIntents created for
+             each sent SMS part. Those target this class explicitly, so no intent-filter is needed
+             and nothing outside this app can trigger it. -->
+        <receiver
+            android:name=".service.SmsStatusReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".receiver.SleepEndReceiver"
             android:exported="false">
