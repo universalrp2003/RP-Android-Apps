@@ -168,6 +168,9 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assert_site_rejected(stale_sha)
         stale_size = self.source.replace('<div class="mini">12.2 MB', '<div class="mini">12.1 MB')
         self.assert_site_rejected(stale_size)
+        missing_card_size = self.source.replace('<div class="mini">11.7 MB · <strong>SHA-256 verified ✓</strong></div>', '', 1)
+        self.assertNotEqual(missing_card_size, self.source)
+        self.assert_site_rejected(missing_card_size)
         stale_tamil_count = self.source.replace('அனைத்து 17 RP Ideas செயலிகள்',
                                                 'அனைத்து 7 RP Ideas செயலிகள்', 1)
         self.assert_site_rejected(stale_tamil_count)

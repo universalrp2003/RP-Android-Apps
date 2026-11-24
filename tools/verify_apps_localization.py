@@ -1306,7 +1306,9 @@ def verify_site_versions_match_downloads() -> int:
         if not badge or badge.group(1) != asset_tag(asset_name.removesuffix(".apk")):
             raise ValueError(f"site/index.html card version badge disagrees with {asset_name}.")
         mini_size = re.search(r'<div class="mini">([0-9]+\.[0-9]+ MB)\b', card)
-        if mini_size and mini_size.group(1) != table_sizes[asset_name]:
+        if not mini_size:
+            raise ValueError(f"site/index.html card for {asset_name} does not show its APK size.")
+        if mini_size.group(1) != table_sizes[asset_name]:
             raise ValueError(
                 f"site/index.html card for {asset_name} prints {mini_size.group(1)} "
                 f"while the latest-releases table says {table_sizes[asset_name]}."
