@@ -1,3 +1,15 @@
+## Owner approval — publish Vasanthi AI 1.1.6 and Tamilan Store 0.17 — 24 November 2026
+
+Owner: **"All working you can publish both"** (2026-11-24, ~11:51 phone time) after installing the Store 0.17
+candidate (run 45331600676 artifact; installer showed 0.17 (19) over 0.16 (18) with UPDATE; About showed
+தமிழன் · 0.17 and the catalog-derived "13 நவம்பர் 2026"; Play Protect "This app looks safe" on his one phone)
+— record: `docs/tamilan-store-0.17-device-verification.md`, images `docs/images/tamilan-store/owner-0-17-*.jpg`.
+Store 0.17 is published by exact-byte promotion (`docs/approved-tamilan-store-0.17.json` → `promote-tamilan-store-0-17.yml`,
+guarded to this branch); Vasanthi 1.1.6 by a `[publish-vasanthi]` marker commit (rebuild of source 97d252e, same key —
+not the file he installed, said so in the note). Website cards, mirrors, release dates and digest pins follow in a
+separate commit once the published sizes/digests exist. Play Protect: owner's one-phone observation only, no Google
+clearance claimed.
+
 ## Owner evidence — Vasanthi AI 1.1.6 candidate installed and working — 24 November 2026
 
 Owner downloaded the CI artifact `vasanthi-stable-candidate-1167` (run 45331600666, source 97d252e), installed

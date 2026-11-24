@@ -1,0 +1,29 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner wrote 'All working you can publish both' on 2026-11-24 after installing this exact candidate on his own phone (installer showed 0.17 (19) over installed 0.16 (18) with UPDATE; About showed 'தமிழன் · 0.17' and the catalog-derived list date; Play Protect 'This app looks safe' on that one phone) and after confirming the Vasanthi AI 1.1.6 candidate; same signing key and package; in-place upgrade over the public 0.16.",
+  "publications": [
+    {
+      "app": "tamilanstore",
+      "run_id": 45331600676,
+      "run_attempt": 1,
+      "source": "97d252e3dcd903188392a64a1e07e72b4db5bf93",
+      "source_branch": "arena/30198928-rp-android-apps",
+      "artifact": "Tamilan-Store-0.17-release-key-upgrade-candidate",
+      "artifact_id": 14892891048,
+      "artifact_sha256": "d655b2b9acc2cdc4e5ab4414f7f09b8f73f74f7af6c86d2da4e66f135c023535",
+      "input_file": "Tamilan-Store-v0.17.apk",
+      "asset": "Tamilan-Store-v0.17.apk",
+      "sha256": "c38bed526fc53e0276f64c853665b60f29ad9cc687b623b3e1c7bf6013be66c7",
+      "bytes": 20713347,
+      "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+      "package": "com.universalrp.tamilanstore",
+      "code": 19,
+      "version": "0.17",
+      "tag": "tamilan-store-v0.17",
+      "title": "தமிழன் · Tamilan Store 0.17",
+      "notes": "releases/tamilan-store-v0.17.md",
+      "prerelease": false
+    }
+  ],
+  "publication_policy": "Promote the exact signed candidate from successful run 45331600676 attempt 1 (unit tests including the 15-entry saved-snapshot restore case, lint, release and debug builds, signer, permission and version identity pins, and an Android 15 emulator upgrade over the public Store 0.16 preserving UID, preferences and a private marker, restoring a kept download copy on 0.16 and again after the upgrade, removing it on 0.17 and rendering a catalog refresh) without rebuild or overwrite. Source 97d252e is an ancestor of main through PR #206. The owner installed this exact APK on his phone on 2026-11-24. The public 0.16 assets must stay unchanged."
+}
