@@ -881,7 +881,7 @@ fun AppsListWindow(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(app.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(reason.en, style = MaterialTheme.typography.bodySmall)
+                    Text(biStatic(reason, taFirst), style = MaterialTheme.typography.bodySmall)
                     Text(
                         biStatic(T.blockedRecovery, taFirst),
                         style = MaterialTheme.typography.labelSmall,
@@ -902,6 +902,9 @@ fun AppsListWindow(
                     Text(app.label, fontWeight = FontWeight.Bold)
                     Text(app.packageName, style = MaterialTheme.typography.labelSmall)
                     Text(ratingLabel(app), style = MaterialTheme.typography.labelMedium)
+                    if (DisableManager.visibleDeviceOwner(context) == true) {
+                        Text(biStatic(T.managedWarning, taFirst), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
                     app.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                     Text("Any app may be needed on your phone. Recovery can fail. Change one app, then test your phone. No app data backup is included.\nஎந்த செயலியும் தேவைப்படலாம். மீண்டும் இயக்க முடியாமல் போகலாம். ஒன்றை மட்டும் மாற்றி கைபேசியைச் சோதிக்கவும்.", style = MaterialTheme.typography.bodyMedium)
                     if (app.category == DisableCategory.UNLISTED) {

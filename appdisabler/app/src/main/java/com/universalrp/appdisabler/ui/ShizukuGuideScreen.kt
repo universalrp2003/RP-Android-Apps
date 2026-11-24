@@ -55,6 +55,13 @@ fun ShizukuGuideScreen(onBack: () -> Unit) {
             }
         }
 
+        Card {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                BiText(T.tvGuideTitle, style = MaterialTheme.typography.titleSmall, bold = true)
+                BiText(T.tvGuideBody)
+            }
+        }
+
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
             Column(Modifier.padding(12.dp)) { BiText(T.gNever) }
         }

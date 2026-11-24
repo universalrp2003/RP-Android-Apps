@@ -288,6 +288,15 @@ object T {
     val thisApp = Bi("this app", "இந்த ஆப்")
 
     // ---------- guide screen ----------
+    val managedWarning = Bi(
+        "A device owner is visible on this device. Changes can interfere with the provider or administrator; recovery may not be possible.",
+        "இந்தச் சாதனத்தில் நிர்வாகி தெரிகிறார். மாற்றங்கள் வழங்குநரின் நிர்வாகத்தை பாதிக்கலாம்; மீட்க முடியாமல் போகலாம்."
+    )
+    val tvGuideTitle = Bi("Android TV setup", "Android TV அமைப்பு")
+    val tvGuideBody = Bi(
+        "TV menus vary. Enable Developer options and wireless debugging if available, then follow Shizuku pairing instructions. Some TVs require a computer or do not offer wireless pairing. Turn debugging off when finished.",
+        "TV பட்டியல்கள் மாறுபடும். Developer options மற்றும் wireless debugging இருந்தால் இயக்கி Shizuku இணைப்பு வழிமுறைகளைப் பின்பற்றவும். சில TV-களுக்கு கணினி தேவைப்படலாம் அல்லது wireless pairing இல்லாமல் இருக்கலாம். முடித்ததும் debugging-ஐ முடக்கவும்."
+    )
     val guideTitle = Bi("Shizuku — 2 minute guide", "Shizuku — 2 நிமிட வழிகாட்டி")
     val guideIntro = Bi(
         "Shizuku provides shell access without root. This app does not uninstall packages, but disabling or suspending system apps can cause problems and recovery is not guaranteed.",
