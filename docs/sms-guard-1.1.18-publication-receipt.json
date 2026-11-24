@@ -1,0 +1,14 @@
+{
+  "release_id": 456643246,
+  "asset_id": 786837941,
+  "published_at": "2026-11-24T11:03:55Z",
+  "apk_bytes": 12873680,
+  "apk_sha256": "22c3f7ed4dee0533679022a9099cfe0a55da2a1bc60099ebd3bd5a28f6997222",
+  "publisher_run": 45380209608,
+  "publisher_commit": "e63cf69",
+  "rebuilt": true,
+  "rebuilt_from_source": "0d0f3e3",
+  "owner_tested_candidate_run": 45376638202,
+  "owner_tested_source": "0d0f3e3",
+  "bytes": 12873680
+}
