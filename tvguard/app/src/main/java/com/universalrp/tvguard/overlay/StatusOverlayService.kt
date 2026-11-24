@@ -375,7 +375,9 @@ internal fun buildPill(context: Context): Pair<LinearLayout, Int> {
         setPadding(px(10), px(2), px(10), px(2))
     }
     // The shield is opt-in and saved in the Security audit; by default the pill has five cells.
-    val keys = if (SecurityAuditPreferences(context).overlayShield) OVERLAY_METRICS + OVERLAY_SHIELD else OVERLAY_METRICS
+    val showShield = SecurityAuditPreferences(context).overlayShield &&
+        TvFeaturePreferences(context).load().enabled(TvFeature.SECURITY_AUDIT)
+    val keys = if (showShield) OVERLAY_METRICS + OVERLAY_SHIELD else OVERLAY_METRICS
     keys.forEach { key ->
         val label = TextView(context).apply {
             setTextColor(Color.WHITE)

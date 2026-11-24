@@ -63,7 +63,7 @@ Three things, in `tvguard_security_audit` (separate from launcher data and from 
 
 A switch at the top of the audit adds a **sixth cell** to the floating status pill:
 `secure` / `review` / `alert`, from the worst of the five findings, or `unavailable` if a read fails. It needs the status pill on.
-The readings behind it are package-manager queries, so the service samples it on a 60 s cadence
+Turning off the Security audit or Expert mode pauses the shield while preserving its saved choice. The readings behind it are package-manager queries, so the service samples it on a 60 s cadence
 instead of every CPU tick, and only when the cell exists. The pill is otherwise unchanged; the
 default build still has exactly five cells (`OverlayRenderTest` measures both).
 

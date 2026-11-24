@@ -127,6 +127,9 @@ class OverlayRenderTest {
         assertEquals(OVERLAY_METRICS.size, plain.childCount)
 
         // Opted in through the Security audit: one more cell, tagged for the sampler, last in the row.
+        val features = com.universalrp.tvguard.settings.TvFeaturePreferences(context)
+        features.save(com.universalrp.tvguard.settings.TvFeatureSettings(expertMode = true)
+            .withFeature(com.universalrp.tvguard.settings.TvFeature.SECURITY_AUDIT, true))
         com.universalrp.tvguard.security.SecurityAuditPreferences(context).overlayShield = true
         val (withShield, _) = buildPill(context)
         assertEquals("five readings plus the shield", OVERLAY_METRICS.size + 1, withShield.childCount)
@@ -144,6 +147,10 @@ class OverlayRenderTest {
         val widths = (0 until withShield.childCount).map { cell(withShield, it).width }
         assertTrue("six equal shares, got $widths", widths.max() - widths.min() <= 1)
 
+        // Disabling the audit pauses its saved shield without erasing the choice.
+        features.save(com.universalrp.tvguard.settings.TvFeatureSettings())
+        assertEquals(OVERLAY_METRICS.size, buildPill(context).first.childCount)
+        assertTrue(com.universalrp.tvguard.security.SecurityAuditPreferences(context).overlayShield)
         // Switching it off again restores the five-cell pill.
         com.universalrp.tvguard.security.SecurityAuditPreferences(context).overlayShield = false
         val (again, _) = buildPill(context)

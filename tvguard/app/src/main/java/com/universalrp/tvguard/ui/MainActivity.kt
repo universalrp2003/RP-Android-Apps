@@ -324,12 +324,14 @@ fun TvGuardMainScreen(activity: MainActivity) {
     }
 
     fun updateFeatures(settings: TvFeatureSettings) {
+        val auditChanged = featureSettings.enabled(TvFeature.SECURITY_AUDIT) != settings.enabled(TvFeature.SECURITY_AUDIT)
         featureSettings = settings
         featurePreferences.save(settings) // Separate from favorites/hidden-app data.
         syncHub(settings) // Revoke routes and close sockets as soon as a switch changes.
         // The overlay starts only when explicitly enabled and permitted; otherwise it stops.
         // sync() is a no-op stop when the service is not running.
-        StatusOverlayService.sync(context)
+        if (auditChanged && settings.enabled(TvFeature.STATUS_OVERLAY)) StatusOverlayService.restart(context)
+        else StatusOverlayService.sync(context)
         StatusOverlayService.move(context)
         if (!settings.enabled(TvFeature.STATUS_OVERLAY)) overlayPermissionNeeded = false
         if (!settings.enabled(TvFeature.SCREENSHOT)) screenshotJob?.cancel()
