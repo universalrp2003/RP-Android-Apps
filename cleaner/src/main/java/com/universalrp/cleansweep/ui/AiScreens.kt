@@ -407,8 +407,8 @@ fun AiSettingsScreen(state: UiState, vm: MainViewModel) {
 
                         Spacer(Modifier.height(14.dp))
                         SwitchRow(
-                            label = "Send installed app names",
-                            detail = "Gives specific advice (\"this one is bloatware\"). Off = totals only.",
+                            label = tr("Send installed app names"),
+                            detail = tr("Allows app-specific review. A name or missing usage record does not prove an app is unsafe or unneeded. Off = totals only."),
                             checked = state.aiConfig.includeAppNames,
                             onChange = { vm.setAiIncludeAppNames(it) },
                         )

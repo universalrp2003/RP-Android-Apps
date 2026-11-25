@@ -225,7 +225,7 @@ object SecuritySettingsRoutes {
             "access_combo_overlay" -> "App info → $selected → review Accessibility and Display over other apps. These are separate Android pages; do not disable an assistive tool you need without checking."
             "access_combo_installer" -> "App info → $selected → review Notification access and Install unknown apps. Review whether both are expected; no permission is changed automatically."
             "app_info", "sideloaded", "odd_installer", "root_tools" -> "App info → $selected. Verify its source and purpose; uninstall only if you recognise it as unwanted."
-            "facebook_stubs" -> "App info → $selected → Disable, if available and you do not need it. Do not remove unrelated system components."
+            "facebook_stubs" -> "App info → $selected → review its purpose and settings. A package name alone is not a reason to disable or remove it."
             "no_lock" -> "Security / Passwords and security → Screen lock → set a PIN, pattern or password."
             "developer_options" -> "System / Additional settings → Developer options. Turn off debugging/options only if you do not use them."
             "old_patch" -> "About phone → System update / MIUI or HyperOS version. Check for an official update; this app cannot know whether your manufacturer offers one."

@@ -64,7 +64,7 @@ data class AppRow(
     val hasOldUsageRecord: Boolean get() = AppUsageHistoryPolicy.hasOldRecord(usageHistoryAvailable, lastUsedMs, System.currentTimeMillis())
     val isPreinstalled: Boolean get() = isSystem && !isUpdatedSystem
     val isSideloaded: Boolean get() = !isSystem && installer == null
-    val isKnownBloatStub: Boolean get() = pkg in BloatRules.KNOWN_STUB_PACKAGES
+    val isListedReviewPackage: Boolean get() = pkg in BloatRules.REVIEW_PACKAGES
 }
 
 data class AppInventoryReport(
@@ -78,17 +78,13 @@ data class AppInventoryReport(
     val oldUsageRecordCount: Int get() = if (usageHistoryAvailable) rows.count { it.hasOldUsageRecord && !it.isSystem } else 0
     val sideloadedCount: Int get() = rows.count { it.isSideloaded }
     val riskyCount: Int get() = rows.count { it.riskyPermissions.isNotEmpty() }
-    val stubCount: Int get() = rows.count { it.isKnownBloatStub }
+    val listedPackageCount: Int get() = rows.count { it.isListedReviewPackage }
 }
 
 object BloatRules {
 
-    /**
-     * Facebook's stub apps are bundled by several vendors and cannot be removed
-     * without disabling them first. This is a fact about those packages, not a
-     * guess about your phone.
-     */
-    val KNOWN_STUB_PACKAGES = setOf(
+    /** Package-name matches for optional manual review, not proof of origin or risk. */
+    val REVIEW_PACKAGES = setOf(
         "com.facebook.appmanager",
         "com.facebook.services",
         "com.facebook.system",
@@ -243,7 +239,7 @@ object AppInventoryLoader {
             if (!permissionsObserved) tags.add("Permission state unavailable")
             if (isSystem && !updatedSystem) tags.add("Preinstalled")
             if (updatedSystem) tags.add("Bundled (updated)")
-            if (ai.packageName in BloatRules.KNOWN_STUB_PACKAGES) tags.add("Bloatware stub")
+            if (ai.packageName in BloatRules.REVIEW_PACKAGES) tags.add("Listed package (review manually)")
             if (!isSystem && AppUsageHistoryPolicy.hasOldRecord(historyAvailable, lastUsed, nowMs)) {
                 tags.add(AppUsageHistoryPolicy.OLD_RECORD_TAG)
             }
@@ -284,7 +280,7 @@ object AppInventoryLoader {
 
         AppInventoryReport(
             rows = rows.sortedWith(
-                compareByDescending<AppRow> { it.isKnownBloatStub }
+                compareByDescending<AppRow> { it.isListedReviewPackage }
                     .thenByDescending { it.riskyPermissions.size }
                     .thenByDescending { it.totalBytes }
                     .thenBy { it.label.lowercase() }

@@ -100,7 +100,19 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
-        "%s known preinstall stubs • %s not from a store • %s with sensitive permissions" to "%s அறியப்பட்ட முன்நிறுவல் துணைச் செயலிகள் • %s செயலிக் கடையிலிருந்து வந்ததாகத் தெரியவில்லை • %s முக்கிய அனுமதிகளுடன்",
+        "Preinstalled" to "முன்நிறுவப்பட்டது",
+        "Sensitive permissions" to "முக்கிய அனுமதிகள்",
+        "Not from a store" to "செயலிக் கடையிலிருந்து வந்ததாகத் தெரியவில்லை",
+        "Send installed app names" to "நிறுவிய செயலிகளின் பெயர்களை அனுப்பு",
+        "Allows app-specific review. A name or missing usage record does not prove an app is unsafe or unneeded. Off = totals only." to "ஒவ்வொரு செயலியையும் தனியாகப் பரிசீலிக்க உதவும். பெயரோ விடுபட்ட பயன்பாட்டுப் பதிவோ செயலி பாதுகாப்பற்றது அல்லது தேவையற்றது என்பதற்குச் சான்றல்ல. அணைத்தால் மொத்த எண்ணிக்கைகள் மட்டும் அனுப்பப்படும்.",
+        "Listed packages for optional review" to "விருப்பமாகச் சரிபார்க்கப் பட்டியலிட்ட செயலிகள்",
+        "These package names match a local review list, not necessarily Facebook, preinstalled components, background activity, or unsafe apps. A name match is not a security verdict." to "இந்தச் செயலிகளின் பெயர்கள் உள்ளூர் சரிபார்ப்புப் பட்டியலில் உள்ளன. அவை Facebook, முன்நிறுவல் கூறுகள், பின்னணியில் இயங்குபவை அல்லது பாதுகாப்பற்ற செயலிகள் என்று அவசியமில்லை. பெயர்ப் பொருத்தம் பாதுகாப்புத் தீர்ப்பு அல்ல.",
+        "Review each app and its settings only if you wish. Do not disable or remove an app unless you understand its purpose and no longer need it." to "நீங்கள் விரும்பினால் மட்டும் ஒவ்வொரு செயலியையும் அதன் அமைப்புகளையும் பரிசீலிக்கவும். செயலியின் நோக்கம் புரிந்து, அது தேவையில்லை என உறுதிப்படுத்தாமல் அதை முடக்கவோ அகற்றவோ வேண்டாம்.",
+        "Listed packages" to "பட்டியலிட்ட செயலிகள்",
+        "Listed package (review manually)" to "பட்டியலிட்ட செயலி (நேரில் சரிபார்க்கவும்)",
+        "Installed apps and usage records" to "நிறுவப்பட்ட செயலிகளும் பயன்பாட்டுப் பதிவுகளும்",
+        "This package matches a review list. The name alone does not prove it was preinstalled, is unsafe, or can be disabled without affecting other apps. Review it before making changes." to "இந்தச் செயலி சரிபார்ப்புப் பட்டியலில் உள்ளது. பெயரை மட்டும் கொண்டு அது முன்நிறுவப்பட்டது, பாதுகாப்பற்றது அல்லது பிற செயலிகளைப் பாதிக்காமல் முடக்கலாம் என்று உறுதிப்படுத்த முடியாது. மாற்றும் முன் சரிபார்க்கவும்.",
+        "%s listed packages • %s not from a store • %s with sensitive permissions" to "%s பட்டியலிட்ட செயலிகள் • %s செயலிக் கடையிலிருந்து வந்ததாகத் தெரியவில்லை • %s முக்கிய அனுமதிகளுடன்",
         "%s third-party apps have a last recorded use 30+ days ago" to "%s மூன்றாம் தரப்புச் செயலிகளின் கடைசிப் பயன்பாட்டுப் பதிவு 30+ நாட்களுக்கு முன்பு உள்ளது",
         "Usage history unavailable; inactivity is unknown." to "பயன்பாட்டு வரலாறு கிடைக்கவில்லை; பயன்படுத்தப்படாததா என்பது தெரியாது.",
         "Allow Usage access in the App cache screen, then reload. Android may still provide incomplete records." to "செயலி தற்காலிகச் சேமிப்பு திரையில் பயன்பாட்டு அணுகலை அனுமதித்துப் புதுப்பிக்கவும். Android வழங்கும் பதிவுகள் முழுமையற்றதாக இருக்கலாம்.",

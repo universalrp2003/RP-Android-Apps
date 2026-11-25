@@ -56,6 +56,20 @@ class AppUsageHistoryPolicyTest {
         }
     }
 
+    @Test fun listedPackagesAreInformationalNotAutomaticallyFacebookOrPreinstalled() {
+        val facebook = row(null, false).copy(pkg = "com.facebook.katana", label = "Facebook")
+        val linkedin = row(null, false).copy(pkg = "com.linkedin.android", label = "LinkedIn")
+        val netflix = row(null, false).copy(pkg = "com.netflix.partner.activation", label = "Netflix")
+        val finding = SecurityScanner.listedPackageFinding(listOf(facebook, linkedin, netflix))!!
+        assertEquals(Severity.INFO, finding.severity)
+        assertEquals(3, finding.count)
+        assertEquals(setOf("Facebook", "LinkedIn", "Netflix"), finding.samples.toSet())
+        assertTrue(finding.detail.contains("not necessarily Facebook"))
+        assertTrue(finding.detail.contains("not a security verdict"))
+        assertFalse(finding.fixHint.orEmpty().contains("Disable them"))
+        assertNull(SecurityScanner.listedPackageFinding(listOf(row(null, false))))
+    }
+
     @Test fun aiLabelsOldDateAsARecordNotAClaimOfInactivity() {
         val old = System.currentTimeMillis() - 45 * thirtyDays / 30
         val text = AiReport.build(AiConfig(), null, AppInventoryReport(listOf(row(old, true)), true, now, true), null, null, null)

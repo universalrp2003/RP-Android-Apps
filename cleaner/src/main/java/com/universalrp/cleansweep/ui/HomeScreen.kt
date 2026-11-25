@@ -1075,7 +1075,7 @@ private fun HomeQuickGrid(state: UiState, vm: MainViewModel) {
                 QuickCard(
                     icon = Icons.Outlined.Apps,
                     title = tr("Installed apps"),
-                    subtitle = tr("Bloatware, unused apps"),
+                    subtitle = tr("Installed apps and usage records"),
                     onClick = { vm.loadAppInventory() },
                     modifier = Modifier.weight(1f),
                 )

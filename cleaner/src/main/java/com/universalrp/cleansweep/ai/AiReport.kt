@@ -208,11 +208,11 @@ object AiReport {
     private fun appLines(apps: AppInventoryReport): List<String> {
         val interesting = apps.rows
             .filter { row ->
-                row.isKnownBloatStub || row.isPreinstalled || row.hasOldUsageRecord ||
+                row.isListedReviewPackage || row.isPreinstalled || row.hasOldUsageRecord ||
                     row.isSideloaded || row.riskyPermissions.isNotEmpty()
             }
             .sortedWith(
-                compareByDescending<com.universalrp.cleansweep.data.AppRow> { it.isKnownBloatStub }
+                compareByDescending<com.universalrp.cleansweep.data.AppRow> { it.isListedReviewPackage }
                     .thenByDescending { it.totalBytes }
             )
             .take(60)

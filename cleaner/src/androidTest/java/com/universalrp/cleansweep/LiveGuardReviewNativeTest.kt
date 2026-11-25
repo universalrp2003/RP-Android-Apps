@@ -18,6 +18,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.universalrp.cleansweep.data.AppLang
+import com.universalrp.cleansweep.data.AppInventoryReport
+import com.universalrp.cleansweep.data.AppRow
 import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.SettingsRepo
 import kotlinx.coroutines.runBlocking
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.first
 import com.universalrp.cleansweep.data.NetworkReport
 import com.universalrp.cleansweep.data.WifiDetails
 import com.universalrp.cleansweep.ui.NetworkScreen
+import com.universalrp.cleansweep.ui.AppsScreen
 import com.universalrp.cleansweep.ui.HomeHeader
 import com.universalrp.cleansweep.voice.NewsVoiceRotation
 import com.universalrp.cleansweep.voice.VoiceGenderMode
@@ -58,7 +61,7 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
             shell("input swipe ${bounds.centerX()} ${bounds.top + bounds.height() * 8 / 10} ${bounds.centerX()} ${bounds.top + bounds.height() * 4 / 10} 250")
             SystemClock.sleep(150)
         }
-        fail("Missing visible network state: $text")
+        fail("Missing visible UI text: $text; tree:\n${describe(instrument.uiAutomation.rootInActiveWindow)}")
     }
     @Test fun networkScanStatesAreDistinctInBothLanguagesAtLargeText() {
         val wifi = WifiDetails(connected = true, transport = "Wi-Fi", ssid = "test", bssid = null, ip = null,
@@ -93,6 +96,85 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                         }
                         SystemClock.sleep(500)
                         requireVisible(expected)
+                    } finally { instrument.runOnMainSync { activity.finish() } }
+                }
+            }
+        } finally {
+            runBlocking { settings.setLang(oldLang) }
+            app.getSharedPreferences(Lang.PREFS, Context.MODE_PRIVATE).edit().putString(Lang.KEY, oldLang.id).commit()
+            instrument.runOnMainSync { Lang.set(previous) }
+        }
+    }
+
+    private fun findClickableText(node: android.view.accessibility.AccessibilityNodeInfo?, text: String): android.view.accessibility.AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.isVisibleToUser && node.text?.toString()?.contains(text) == true) {
+            var clickable: android.view.accessibility.AccessibilityNodeInfo? = node
+            while (clickable != null) {
+                if (clickable.isClickable) return clickable
+                clickable = clickable.parent
+            }
+        }
+        for (i in 0 until node.childCount) findClickableText(node.getChild(i), text)?.let { return it }
+        return null
+    }
+
+    @Test fun appUsageStatesAndDetailsAreVisibleInBothLanguagesAtLargeText() {
+        val previous = Lang.current
+        val settings = SettingsRepo(app)
+        val oldLang = AppLang.fromId(runBlocking { settings.lang.first() })
+        try {
+            for (lang in listOf(AppLang.EN, AppLang.TA)) {
+                runBlocking { settings.setLang(lang) }
+                app.getSharedPreferences(Lang.PREFS, Context.MODE_PRIVATE).edit().putString(Lang.KEY, lang.id).commit()
+                for (case in 0..3) {
+                    val available = case >= 2
+                    val old = case == 3
+                    val row = AppRow(
+                        pkg = "com.example.fixture", label = "Inventory Fixture", isSystem = false, isUpdatedSystem = false,
+                        apkBytes = 0, dataBytes = 0, cacheBytes = 0, firstInstallMs = 1, updatedMs = 0,
+                        lastUsedMs = if (old) System.currentTimeMillis() - 45L * 24 * 60 * 60 * 1000 else null,
+                        hasLauncher = true, installer = null, permissions = emptyList(), grantedPermissions = emptyList(),
+                        revokedPermissions = emptyList(), riskyPermissions = emptyList(), revokedRiskyPermissions = emptyList(),
+                        tags = emptyList(), canUninstall = true, apkPath = null, usageHistoryAvailable = available,
+                    )
+                    val report = AppInventoryReport(listOf(row), usageAccessGranted = case != 0,
+                        scannedAtMs = System.currentTimeMillis(), usageHistoryAvailable = available)
+                    val state = UiState(appInventory = report, appFilter = if (old) AppFilter.UNUSED else AppFilter.ALL)
+                    val expected = when {
+                        lang == AppLang.EN && !available -> "Usage history unavailable; inactivity is unknown."
+                        lang == AppLang.TA && !available -> "பயன்பாட்டு வரலாறு கிடைக்கவில்லை; பயன்படுத்தப்படாததா என்பது தெரியாது."
+                        lang == AppLang.EN && old -> "1 third-party apps have a last recorded use 30+ days ago"
+                        lang == AppLang.TA && old -> "1 மூன்றாம் தரப்புச் செயலிகளின் கடைசிப் பயன்பாட்டுப் பதிவு 30+ நாட்களுக்கு முன்பு உள்ளது"
+                        lang == AppLang.EN -> "0 third-party apps have a last recorded use 30+ days ago"
+                        else -> "0 மூன்றாம் தரப்புச் செயலிகளின் கடைசிப் பயன்பாட்டுப் பதிவு 30+ நாட்களுக்கு முன்பு உள்ளது"
+                    }
+                    val activity = instrument.startActivitySync(Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
+                    try {
+                        instrument.runOnMainSync {
+                            Lang.set(lang)
+                            val vm = ViewModelProvider(activity)[MainViewModel::class.java]
+                            activity.setContent {
+                                val density = LocalDensity.current.density
+                                CompositionLocalProvider(LocalDensity provides Density(density, 2f)) {
+                                    MaterialTheme { AppsScreen(state, vm) }
+                                }
+                            }
+                        }
+                        requireVisible(expected)
+                        if (case == 0) requireVisible(if (lang == AppLang.EN) "Allow Usage access" else "பயன்பாட்டு அணுகலை அனுமதித்துப் புதுப்பிக்கவும்")
+                        if (case == 1) requireVisible(if (lang == AppLang.EN) "Android did not return usage history" else "Android பயன்பாட்டு வரலாற்றை வழங்கவில்லை")
+                        requireVisible("Inventory Fixture")
+                        val rowNode = findClickableText(instrument.uiAutomation.rootInActiveWindow, "Inventory Fixture")
+                        assertNotNull("Fixture row must be accessible and clickable", rowNode)
+                        assertTrue(rowNode!!.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                        if (!old) requireVisible(when {
+                            lang == AppLang.EN && !available -> "Usage history unavailable"
+                            lang == AppLang.TA && !available -> "பயன்பாட்டு வரலாறு கிடைக்கவில்லை"
+                            lang == AppLang.EN -> "No usage record returned; activity unknown"
+                            else -> "பயன்பாட்டுப் பதிவு கிடைக்கவில்லை; பயன்பாடு தெரியாது"
+                        })
+                        requireVisible(if (lang == AppLang.EN) "Android usage history may be incomplete" else "Android பயன்பாட்டு வரலாறு முழுமையற்றதாக இருக்கலாம்")
                     } finally { instrument.runOnMainSync { activity.finish() } }
                 }
             }

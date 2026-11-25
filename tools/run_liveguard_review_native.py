@@ -31,10 +31,10 @@ def instrument(test_class, count):
         sys.exit('Native review tests failed or did not finish (see output above).')
 
 
-instrument('LiveGuardReviewNativeTest', 3)
+instrument('LiveGuardReviewNativeTest', 4)
 instrument('NewsRotationRestartNativeTest#seedStartedVoice', 1)
 # Only the disposable emulator's app process is stopped; no uninstall or data clear.
 subprocess.run(['adb', 'shell', 'am', 'force-stop', 'com.universalrp.cleansweep'], check=True)
 instrument('NewsRotationRestartNativeTest#readAfterForceStop', 1)
-print('::notice title=Live Guard native checks::Three UI/playback checks and saved voice across Android process restart passed; target SHA-256 ' + sha)
+print('::notice title=Live Guard native checks::Four UI/playback checks and saved voice across Android process restart passed; target SHA-256 ' + sha)
 print('Not a physical-phone or audible Tamil synthesis test.')

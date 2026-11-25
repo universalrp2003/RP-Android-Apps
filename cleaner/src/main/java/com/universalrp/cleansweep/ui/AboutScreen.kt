@@ -285,8 +285,8 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                             "thumbnail caches, duplicate files, leftover APK installers, empty folders, " +
                             "old downloads and large files — then removes only what you confirm.\n\n" +
                             "New in 2.0: live battery, temperature, voltage, charging current and watt " +
-                            "readings; an installed-app list that flags bloatware, unused and sideloaded " +
-                            "apps; a security review of permissions and system settings; a Wi-Fi scanner " +
+                            "readings; an installed-app list with usage records, package and permission details" +
+                            "; a security review of permissions and system settings; a Wi-Fi scanner " +
                             "that shows how many devices share your network; and optional AI analysis " +
                             "with your own key (or a free keyless option). The Accessibility service " +
                             "stays gone, and nothing is uploaded unless you tap Analyse.",

@@ -2008,15 +2008,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun appFilters(): List<Pair<String, String>> = listOf(
         AppFilter.ALL to "All",
-        AppFilter.BLOAT to "Bloatware",
+        AppFilter.BLOAT to "Listed packages",
         AppFilter.UNUSED to "Last recorded use 30+ days ago",
         AppFilter.PREINSTALLED to "Preinstalled",
         AppFilter.SIDELOADED to "Not from a store",
         AppFilter.RISKY to "Sensitive permissions",
     )
 
-    fun filteredApps(): List<AppRow> {
-        val s = _state.value
+    fun filteredApps(s: UiState = _state.value): List<AppRow> {
         val report = s.appInventory ?: return emptyList()
         val query = s.appQuery.trim().lowercase()
         return report.rows.filter { row ->
@@ -2024,7 +2023,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 row.label.lowercase().contains(query) ||
                 row.pkg.lowercase().contains(query)
             val matchesFilter = when (s.appFilter) {
-                AppFilter.BLOAT -> row.isKnownBloatStub
+                AppFilter.BLOAT -> row.isListedReviewPackage
                 AppFilter.UNUSED -> row.hasOldUsageRecord && !row.isSystem
                 AppFilter.PREINSTALLED -> row.isPreinstalled
                 AppFilter.SIDELOADED -> row.isSideloaded

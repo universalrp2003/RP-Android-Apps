@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -133,7 +134,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
         }
 
         val report = state.appInventory
-        val rows = vm.filteredApps()
+        val rows = vm.filteredApps(state)
 
         LazyColumn(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
@@ -188,8 +189,8 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                tr("%s known preinstall stubs • %s not from a store • %s with sensitive permissions",
-                                    loaded.stubCount, loaded.sideloadedCount, loaded.riskyCount),
+                                tr("%s listed packages • %s not from a store • %s with sensitive permissions",
+                                    loaded.listedPackageCount, loaded.sideloadedCount, loaded.riskyCount),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                             )
@@ -304,7 +305,7 @@ private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
 @Composable
 private fun TagPill(text: String) {
     val colour = when {
-        text.contains("Bloat") -> DangerRed
+        text == "Listed package (review manually)" -> AccentViolet
         text.contains("Sideloaded") -> WarnAmber
         text.contains("Sensitive") -> WarnAmber
         text == "Last recorded use 30+ days ago" -> AccentViolet
@@ -329,7 +330,7 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
         onDismissRequest = onClose,
         title = { Text(row.label, fontWeight = FontWeight.Bold) },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 InfoRow("Package", row.pkg)
                 InfoRow("Size", row.totalBytes.formatBytes() +
                     " (data ${row.dataBytes.formatBytes()}, cache ${row.cacheBytes.formatBytes()})")
@@ -368,11 +369,10 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                         Text("• $permission", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                     }
                 }
-                if (row.isKnownBloatStub) {
+                if (row.isListedReviewPackage) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "This is one of the well-known Facebook preinstall stubs that vendors bundle. " +
-                            "Disabling it stops it running without breaking your phone.",
+                        tr("This package matches a review list. The name alone does not prove it was preinstalled, is unsafe, or can be disabled without affecting other apps. Review it before making changes."),
                         style = MaterialTheme.typography.bodySmall,
                         color = DangerRed,
                     )
@@ -414,7 +414,7 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                     contentColor = Color(0xFF03202B),
                 ),
             ) {
-                Text(if (row.isSystem) "App settings" else "Uninstall", fontWeight = FontWeight.Bold)
+                Text(tr("App settings"), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -644,7 +644,7 @@ private fun FindingCard(finding: Finding) {
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    finding.title,
+                    tr(finding.title),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f),
@@ -653,7 +653,7 @@ private fun FindingCard(finding: Finding) {
                     color = severityColor(finding.severity), fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(6.dp))
-            Text(finding.detail, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Text(tr(finding.detail), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             if (apps.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 val shown = if (expanded) apps else apps.take(6)
@@ -697,7 +697,7 @@ private fun FindingCard(finding: Finding) {
             finding.fixHint?.let { hint ->
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(hint, style = MaterialTheme.typography.labelMedium, color = AccentCyan,
+                    Text(tr(hint), style = MaterialTheme.typography.labelMedium, color = AccentCyan,
                         fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(8.dp))
                     Button(

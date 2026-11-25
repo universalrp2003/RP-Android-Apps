@@ -277,22 +277,7 @@ object SecurityScanner {
             )
         }
 
-        val stubs = apps.filter { it.isKnownBloatStub }
-        if (stubs.isNotEmpty()) {
-            findings.add(
-                Finding(
-                    id = "facebook_stubs",
-                    title = "Preinstalled Facebook components",
-                    detail = "Vendors bundle Facebook's service stubs so its apps install faster. They " +
-                        "run in the background even if you never open Facebook.",
-                    severity = Severity.LOW,
-                    count = stubs.size,
-                    samples = stubs.map { it.label },
-                    affectedApps = stubs.map { FindingApp(it.label, it.pkg) },
-                    fixHint = "Disable them from their app page (they cannot be uninstalled on most ROMs).",
-                )
-            )
-        }
+        listedPackageFinding(apps)?.let { findings.add(it) }
 
         val suspiciousInstallers = apps.filter { app ->
             if (app.isSystem || app.installer == null) return@filter false
@@ -429,6 +414,22 @@ object SecurityScanner {
         com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context)
         runCatching { SecurityHistoryRepo.record(context, report, apps) }
         report
+    }
+
+    /** Keep the historical finding ID for saved history and settings routes. */
+    internal fun listedPackageFinding(apps: List<AppRow>): Finding? {
+        val matches = apps.filter { it.isListedReviewPackage }
+        if (matches.isEmpty()) return null
+        return Finding(
+            id = "facebook_stubs",
+            title = "Listed packages for optional review",
+            detail = "These package names match a local review list, not necessarily Facebook, preinstalled components, background activity, or unsafe apps. A name match is not a security verdict.",
+            severity = Severity.INFO,
+            count = matches.size,
+            samples = matches.map { it.label },
+            affectedApps = matches.map { FindingApp(it.label, it.pkg) },
+            fixHint = "Review each app and its settings only if you wish. Do not disable or remove an app unless you understand its purpose and no longer need it.",
+        )
     }
 
     /** Findings are ordered worst-first, so sort on a numeric weight instead. */
