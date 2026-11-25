@@ -138,6 +138,7 @@ import com.universalrp.tvguard.network.NetworkQualityMonitor
 import com.universalrp.tvguard.network.NetworkStatus
 import com.universalrp.tvguard.overlay.OverlayPlacement
 import com.universalrp.tvguard.overlay.OverlayPosition
+import com.universalrp.tvguard.security.SecurityAuditReader
 import com.universalrp.tvguard.overlay.StatusOverlayService
 import com.universalrp.tvguard.settings.TvFeature
 import com.universalrp.tvguard.settings.TvFeaturePreferences
@@ -221,7 +222,8 @@ enum class ToolsSubView {
     NETWORK,
     HIDDEN_APPS,
     ABOUT,
-    EXPERT
+    EXPERT,
+    SECURITY
 }
 
 /** Lazy items and Dialog windows can attach after the first composition. */
@@ -262,6 +264,11 @@ fun TvGuardMainScreen(activity: MainActivity) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val featurePreferences = remember { TvFeaturePreferences(context) }
     var featureSettings by remember { mutableStateOf(featurePreferences.load()) }
+
+    // Records the default HOME app once per launch so the Security audit can tell when the
+    // launcher was swapped between launches. One package name, written whether or not the audit
+    // feature is on, so the baseline exists the first time the screen is opened.
+    LaunchedEffect(Unit) { withContext(Dispatchers.IO) { SecurityAuditReader.noteLaunch(context) } }
 
     var currentTab by remember { mutableStateOf(TvNavTab.HOME) }
     var toolsSubView by remember { mutableStateOf(ToolsSubView.OVERVIEW) }
@@ -317,12 +324,14 @@ fun TvGuardMainScreen(activity: MainActivity) {
     }
 
     fun updateFeatures(settings: TvFeatureSettings) {
+        val auditChanged = featureSettings.enabled(TvFeature.SECURITY_AUDIT) != settings.enabled(TvFeature.SECURITY_AUDIT)
         featureSettings = settings
         featurePreferences.save(settings) // Separate from favorites/hidden-app data.
         syncHub(settings) // Revoke routes and close sockets as soon as a switch changes.
         // The overlay starts only when explicitly enabled and permitted; otherwise it stops.
         // sync() is a no-op stop when the service is not running.
-        StatusOverlayService.sync(context)
+        if (auditChanged && settings.enabled(TvFeature.STATUS_OVERLAY)) StatusOverlayService.restart(context)
+        else StatusOverlayService.sync(context)
         StatusOverlayService.move(context)
         if (!settings.enabled(TvFeature.STATUS_OVERLAY)) overlayPermissionNeeded = false
         if (!settings.enabled(TvFeature.SCREENSHOT)) screenshotJob?.cancel()
@@ -341,6 +350,9 @@ fun TvGuardMainScreen(activity: MainActivity) {
         if (!settings.enabled(TvFeature.STATUS_OVERLAY)) tempPill = null
         if (!settings.enabled(TvFeature.HARDWARE_AUDIT)) hardwareReport = null
         if (!settings.enabled(TvFeature.NETWORK_TOOLS) && toolsSubView == ToolsSubView.NETWORK) {
+            toolsSubView = ToolsSubView.OVERVIEW
+        }
+        if (!settings.enabled(TvFeature.SECURITY_AUDIT) && toolsSubView == ToolsSubView.SECURITY) {
             toolsSubView = ToolsSubView.OVERVIEW
         }
         if (!settings.enabled(TvFeature.FILE_HUB) && !settings.enabled(TvFeature.SCREENSHOT)) {
@@ -699,6 +711,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     onOpenNetwork = { toolsSubView = ToolsSubView.NETWORK },
                                     onOpenHiddenApps = { toolsSubView = ToolsSubView.HIDDEN_APPS },
                                     onOpenAbout = { toolsSubView = ToolsSubView.ABOUT },
+                                    onOpenSecurity = { toolsSubView = ToolsSubView.SECURITY },
                                     onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
                                     // Ask before opening a system screen, and explain why.
                                     // One tap goes straight to the system page: the extra
@@ -887,6 +900,15 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                 TvExpertView(
                                     settings = featureSettings,
                                     onChange = { updateFeatures(it) },
+                                    onBack = { toolsSubView = ToolsSubView.OVERVIEW }
+                                )
+                            }
+
+                            ToolsSubView.SECURITY -> {
+                                // Read-only: the screen reads Android's own settings and links to
+                                // the system screens; it never changes anything itself.
+                                TvSecurityAuditView(
+                                    context = context,
                                     onBack = { toolsSubView = ToolsSubView.OVERVIEW }
                                 )
                             }
@@ -1717,6 +1739,7 @@ fun TvToolsView(
     onOpenNetwork: () -> Unit,
     onOpenHiddenApps: () -> Unit,
     onOpenAbout: () -> Unit,
+    onOpenSecurity: () -> Unit,
     onSetDefaultLauncher: () -> Unit,
     onGrantStorage: () -> Unit,
     overlayPlacement: OverlayPlacement,
@@ -1812,6 +1835,11 @@ fun TvToolsView(
                 if (settings.enabled(TvFeature.FILE_HUB) || settings.enabled(TvFeature.SCREENSHOT))
                     TvActionCard(stringResource(R.string.optional_share_title), stringResource(R.string.optional_share_short),
                         Icons.Default.Wifi, Color(0xFF38BDF8), onOpenShare, Modifier.weight(1f).testTag("tools-share"))
+                else Spacer(Modifier.weight(1f))
+                // Read-only audit; the card appears only when the Expert switch is on.
+                if (settings.enabled(TvFeature.SECURITY_AUDIT))
+                    TvActionCard(stringResource(R.string.security_title), stringResource(R.string.security_subtitle),
+                        Icons.Default.Security, Color(0xFF38BDF8), onOpenSecurity, Modifier.weight(1f).testTag("tools-security"))
                 else Spacer(Modifier.weight(1f))
             }
             if (listOf(TvFeature.RAM_BOOST, TvFeature.SCREENSHOT, TvFeature.DEBLOATER, TvFeature.NETWORK_TOOLS).any { settings.enabled(it) }) {

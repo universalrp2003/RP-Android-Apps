@@ -1,6 +1,8 @@
 package com.universalrp.appdisabler.data
 
 import android.content.Context
+import android.content.Intent
+import android.app.admin.DevicePolicyManager
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.util.Log
@@ -255,6 +257,33 @@ object DisableManager {
                     "(அதன் விளக்கத்தில் 'bootloop' உள்ளது). பட்டியலில் தெரியும், ஆனால் இங்கு முடக்க முடியாது."
             )
         }
+        // Fail closed if Android cannot enumerate HOME activities; this check is repeated by
+        // disablePackage immediately before issuing either disable or suspension commands.
+        val homeActivities = try {
+            @Suppress("DEPRECATION")
+            context.packageManager.queryIntentActivities(
+                Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY
+            ).mapNotNull { result ->
+                result.activityInfo?.let { HomeActivity(it.packageName, it.enabled, it.exported) }
+            }
+        } catch (_: Exception) {
+            return Bi("Could not check launchers. Nothing was disabled.",
+                "முகப்புச் செயலிகளைச் சரிபார்க்க முடியவில்லை. எதுவும் முடக்கப்படவில்லை.")
+        }
+        val homes = homeActivities.map { it.packageName }.toSet()
+        if (homes.isEmpty()) {
+            return Bi("No enabled HOME app could be verified. Nothing was disabled.",
+                "இயங்கும் முகப்புச் செயலியை உறுதிசெய்ய முடியவில்லை. எதுவும் முடக்கப்படவில்லை.")
+        }
+        // An enabled but suspended or uncheckable alternative cannot be relied on for recovery.
+        // On older Android versions suspensionState may be unknown, so fail closed for HOME apps.
+        val usableHomes = if (packageName in homes) homes.filterTo(mutableSetOf()) { home ->
+            enabledState(context, home) == true && suspensionState(context, home) == false
+        } else emptySet()
+        if (HomeSafety.mustBlock(packageName, homeActivities, usableHomes)) {
+            return Bi("No other usable HOME app could be verified. Enable another launcher before disabling this one.",
+                "வேறு இயங்கக்கூடிய முகப்புச் செயலியை உறுதிசெய்ய முடியவில்லை. இதை முடக்கும்முன் வேறு முகப்புச் செயலியை இயக்கவும்.")
+        }
         // The keyboard currently in use: losing it means losing the ability to type anywhere.
         val activeIme = try {
             Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
@@ -305,6 +334,7 @@ object DisableManager {
         if (afterDisable != true) {
             return@withContext Result.failure(IllegalStateException("Could not verify the disable result. Refresh and check the app before retrying.\n$log".trim()))
         }
+        blockingReason(context, packageName)?.let { return@withContext Result.failure(IllegalStateException(it)) }
         val suspendCmd = arrayOf("pm", "suspend", "--user", user, packageName)
         val s = runShell(suspendCmd)
         log.append("suspend -> exit ${s.exit}: ${s.output.take(300)}\n")
@@ -317,6 +347,15 @@ object DisableManager {
             return@withContext Result.success(ActionOutcome.SUSPENDED)
         }
         Result.failure(IllegalStateException("Could not verify disable or suspension. The device may have refused it. Refresh and check the app before retrying.\n$log".trim()))
+    }
+
+    /** Only detects an owner among active admins visible to the current user. Null is unknown. */
+    fun visibleDeviceOwner(context: Context): Boolean? {
+        return try {
+            val policy = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as? DevicePolicyManager
+                ?: return null
+            policy.activeAdmins.orEmpty().any { policy.isDeviceOwnerApp(it.packageName) }
+        } catch (_: Exception) { null }
     }
 
     /** Read-only: why this package must not be turned off right now (null when it is fine). */

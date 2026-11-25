@@ -13,6 +13,13 @@ enum class TvFeature(val key: String) {
     RUNNING_APPS("running_apps"),
 
     /**
+     * Read-only security audit: ADB, install-from-unknown-sources apps, device admins,
+     * accessibility services and the default HOME app, each with a link to its system screen.
+     * Also owns the opt-in shield cell of the status strip.
+     */
+    SECURITY_AUDIT("security_audit"),
+
+    /**
      * The single floating status strip over other apps: processor load, free RAM, free
      * storage, temperature and internet quality. Needs "Display over other apps".
      */

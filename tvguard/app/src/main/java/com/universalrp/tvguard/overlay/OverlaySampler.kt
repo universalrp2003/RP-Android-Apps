@@ -10,6 +10,8 @@ import android.os.StatFs
 import com.universalrp.tvguard.hardware.CpuTimes
 import com.universalrp.tvguard.hardware.CpuUsage
 import com.universalrp.tvguard.network.NetworkQualityMonitor
+import com.universalrp.tvguard.security.SecurityAuditReader
+import com.universalrp.tvguard.security.SecurityAuditReport
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
@@ -193,6 +195,27 @@ object OverlaySampler {
                 StatusThresholds.temperature(reading.celsius),
                 true,
             )
+        }
+    }
+
+    /**
+     * The opt-in security shield: the worst of the audit's five findings as one word. The
+     * readings involve package-manager queries, so they run off the main thread and only when the
+     * cell exists; the service samples this on a slow cadence.
+     */
+    suspend fun shield(context: Context): OverlayMetric = withContextIo {
+        val report = try {
+            SecurityAuditReport.from(SecurityAuditReader.read(context.applicationContext))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+        if (report == null) {
+            OverlayMetric("Shield", "unavailable", Band.UNAVAILABLE, false)
+        } else {
+            val band = StatusThresholds.security(report.alerts, report.warnings)
+            OverlayMetric("Shield", StatusThresholds.securityWord(band), band, true)
         }
     }
 

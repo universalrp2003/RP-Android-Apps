@@ -94,6 +94,8 @@ def main():
     checks.append(('CleanSweep-v2.98.apk', json.loads((ROOT/'docs/live-guard-2.98-publication-receipt.json').read_text())))
     checks.append(('Elderly-Launcher-v1.8.apk', json.loads((ROOT/'docs/launcher-1.8-publication.json').read_text())))
     checks.append(('System-App-Disabler-v0.4.1.apk', json.loads((ROOT/'docs/appdisabler-0.4.1-publication.json').read_text())))
+    checks.append(('Android-TV-Guard-v1.5.2.apk', json.loads((ROOT/'docs/tvguard-v1.5.2-publication.json').read_text())))
+    checks.append(('System-App-Disabler-v0.5.0.apk', json.loads((ROOT/'docs/system-app-disabler-v0.5.0-publication.json').read_text())))
     current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
     # Store 0.14, 0.15 and 0.16 stay byte-checked from their immutable GitHub releases; 0.17 is the mirrored current build.
     checks.append(('Tamilan-Store-v0.14.apk', json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())))

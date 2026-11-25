@@ -1,0 +1,72 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner reported both earlier candidates working on their TV and remote, then authorized wording fixes and publication. Corrected bytes are not physically retested.",
+  "candidates": [
+    {
+      "package": "com.universalrp.tvguard",
+      "version": "1.5.2",
+      "code": 9,
+      "tag": "tvguard-v1.5.2",
+      "title": "Android TV Guard 1.5.2 \u2014 security audit",
+      "notes": "releases/tvguard-v1.5.2.md",
+      "run_id": 45546027796,
+      "run_attempt": 1,
+      "source": "2ca5752602686c9ebfc15f314301eb7cc04bc053",
+      "workflow": ".github/workflows/tvguard-candidate.yml",
+      "artifact": "tvguard-1.5.2-stable-signed-tested-candidate",
+      "artifact_id": 14992170333,
+      "archive_sha256": "83a6db09e82cdbb25533ca18c91ad2421a0731f8304f2669d052fbbabb3b72ef",
+      "candidate_file": "Android-TV-Guard-1.5.2-signed-candidate.apk",
+      "candidate_sidecar": "Android-TV-Guard-1.5.2-signed-candidate.sha256",
+      "asset": "Android-TV-Guard-v1.5.2.apk",
+      "sha256": "66acfaa601394bed85b3628e22214b56903427c2cd37c042c36a285f22251443",
+      "bytes": 11855823,
+      "previous_tag": "tvguard-v1.5.1",
+      "previous_asset": "Android-TV-Guard-v1.5.1.apk",
+      "previous_sha256": "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b",
+      "previous_bytes": 11797331,
+      "compiled_paths": [
+        "tvguard/app/",
+        "shared/src/main/java/com/universalrp/updates/",
+        "build.gradle.kts",
+        "settings.gradle.kts",
+        "gradle.properties",
+        "gradle/"
+      ],
+      "resume_draft_id": 457652999,
+      "resume_apk_asset_id": 790046579,
+      "resume_checksum_asset_id": 790046571
+    },
+    {
+      "package": "com.universalrp.appdisabler",
+      "version": "0.5.0",
+      "code": 6,
+      "tag": "system-app-disabler-v0.5.0",
+      "title": "System App Disabler 0.5.0 \u2014 Android TV support",
+      "notes": "releases/system-app-disabler-v0.5.0.md",
+      "run_id": 45546028062,
+      "run_attempt": 1,
+      "source": "2ca5752602686c9ebfc15f314301eb7cc04bc053",
+      "workflow": ".github/workflows/appdisabler-signed-tv-candidate.yml",
+      "artifact": "appdisabler-0.5.0-stable-signed-tested-candidate",
+      "artifact_id": 14990519978,
+      "archive_sha256": "8649ec17dc4e8a5cac61919878f0216b8a01324bbec3639e69089abc077d97ba",
+      "candidate_file": "System-App-Disabler-0.5.0-signed-candidate.apk",
+      "candidate_sidecar": "System-App-Disabler-0.5.0-signed-candidate.sha256",
+      "asset": "System-App-Disabler-v0.5.0.apk",
+      "sha256": "1f9846d8d995520530ea1d9b2602daf16f8856c4371191c8d0561cba3d97b920",
+      "bytes": 11685145,
+      "previous_tag": "system-app-disabler-v0.4.1",
+      "previous_asset": "System-App-Disabler-v0.4.1.apk",
+      "previous_sha256": "d4a51560e1cd77eb240d2132cfad568796be5f4f642f6dfce5bcecdbd5294aea",
+      "previous_bytes": 11684389,
+      "compiled_paths": [
+        "appdisabler/app/",
+        "build.gradle.kts",
+        "settings.gradle.kts",
+        "gradle.properties",
+        "gradle/"
+      ]
+    }
+  ]
+}

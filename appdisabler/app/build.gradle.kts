@@ -6,6 +6,10 @@ plugins {
 
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
 val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
+val requireStableSigner = providers.gradleProperty("appdisablerRequireStableSigner").orNull == "true"
+if (requireStableSigner && (!stableKeystore.exists() || releaseStorePassword.isNullOrBlank())) {
+    throw GradleException("The stable System App Disabler signer is required for this candidate")
+}
 
 android {
     // SisterApps.kt is now copied into this module; no shared srcDir to avoid voice/okhttp transitive errors
@@ -13,14 +17,15 @@ android {
 
     namespace = "com.universalrp.appdisabler"
     compileSdk = 36
+    testBuildType = providers.gradleProperty("appdisablerTestBuildType").orNull ?: "debug"
 
     defaultConfig {
         applicationId = "com.universalrp.appdisabler"
         minSdk = 26
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 5
-        versionName = "0.4.1"
+        versionCode = 6
+        versionName = "0.5.0"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -93,6 +98,12 @@ dependencies {
     // API + provider for binder to shell daemon (installed separately)
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
+
+    androidTestImplementation(composeBom)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.13")

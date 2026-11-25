@@ -79,8 +79,8 @@ object T {
     val statusPermission = Bi("Shizuku running — permission needed", "Shizuku இயங்குகிறது — அனுமதி தேவை")
     val statusMissing = Bi("Shizuku not running", "Shizuku இயங்கவில்லை")
     val bodyReady = Bi(
-        "Open the Apps window and turn off what you do not need. Everything can be restored with one tap.",
-        "Apps சாளரத்தைத் திறந்து தேவையற்றவற்றை முடக்குங்கள். அனைத்தையும் ஒரு தட்டில் மீட்டெடுக்கலாம்."
+        "Review each app before changing it. Enable requests recovery, but recovery can fail.",
+        "மாற்றும்முன் ஒவ்வொரு செயலியையும் கவனமாகச் சரிபார்க்கவும். இயக்கு என்பதைத் தேர்ந்தெடுத்தாலும் மீட்பு தோல்வியடையலாம்."
     )
     val bodyPermission = Bi(
         "Tap “Allow Shizuku permission”, then Allow in the Shizuku dialog. Without it every action fails.",
@@ -288,6 +288,20 @@ object T {
     val thisApp = Bi("this app", "இந்த ஆப்")
 
     // ---------- guide screen ----------
+    val managementUnknown = Bi(
+        "Device management status could not be checked. Ask the provider or administrator before changing managed devices.",
+        "சாதன நிர்வாக நிலையைச் சரிபார்க்க முடியவில்லை. மாற்றும்முன் வழங்குநர் அல்லது நிர்வாகியிடம் கேளுங்கள்."
+    )
+    val managedWarning = Bi(
+        "A device owner is visible on this device. Changes can interfere with the provider or administrator; recovery may not be possible.",
+        "இந்தச் சாதனத்தில் நிர்வாகி தெரிகிறார். மாற்றங்கள் வழங்குநரின் நிர்வாகத்தை பாதிக்கலாம்; மீட்க முடியாமல் போகலாம்."
+    )
+    val noBrowser = Bi("No app is available to open this help link.", "இந்த உதவி இணைப்பைத் திறக்க ஆப் எதுவும் இல்லை.")
+    val tvGuideTitle = Bi("Android TV setup", "Android TV அமைப்பு")
+    val tvGuideBody = Bi(
+        "TV menus vary. Enable Developer options and wireless debugging if available, then follow Shizuku pairing instructions. Some TVs require a computer or do not offer wireless pairing. Turn debugging off when finished.",
+        "TV பட்டியல்கள் மாறுபடும். Developer options மற்றும் wireless debugging இருந்தால் இயக்கி Shizuku இணைப்பு வழிமுறைகளைப் பின்பற்றவும். சில TV-களுக்கு கணினி தேவைப்படலாம் அல்லது wireless pairing இல்லாமல் இருக்கலாம். முடித்ததும் debugging-ஐ முடக்கவும்."
+    )
     val guideTitle = Bi("Shizuku — 2 minute guide", "Shizuku — 2 நிமிட வழிகாட்டி")
     val guideIntro = Bi(
         "Shizuku provides shell access without root. This app does not uninstall packages, but disabling or suspending system apps can cause problems and recovery is not guaranteed.",

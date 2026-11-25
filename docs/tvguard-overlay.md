@@ -37,6 +37,7 @@ to the top.
 | Free storage | `26.0 GB` | `StorageManager` volumes, largest real one | **Changed in 1.4.** This used to read the data partition alone, which is a small slice of the drive: a 16 GB TV showed "26.0 GB free", which cannot be true. The figure now comes from the roomiest volume that exists, and a value larger than its own capacity is rejected rather than shown. |
 | Temperature | `43.2 °C` | `/sys/class/thermal/thermal_zone*`, hottest readable zone | **Not every TV exposes a sensor.** Many OEM builds expose none to an unprivileged app, and some report `0`, which means uncalibrated rather than 0 °C. Then the strip shows `-- °C`. This is the SoC sensor, not room temperature. |
 | Internet quality | `good` / `medium` / `bad` | Real TCP latency to public DNS, about every 15 s | Actual round-trip latency, not download speed. `offline` means no usable connection. Shows `--` when nothing can be measured. |
+| Security shield (opt-in, **1.5.2**) | `secure` / `review` / `alert` | The Security audit's five findings, sampled about every 60 s | Off by default. Turned on inside **Expert settings → Security audit**; adds a sixth cell and needs the pill on. See [tvguard-security-audit.md](tvguard-security-audit.md). |
 
 Internet quality is a single colour-coded word on purpose: it carries the meaning without
 turning the strip into a sentence.
@@ -50,8 +51,9 @@ turning the strip into a sentence.
 | Free storage | over 20% of total | 8–20% | under 8% |
 | Temperature | under 55 °C | 55–70 °C | over 70 °C |
 | Internet quality | under 60 ms | 60–150 ms | over 150 ms |
+| Security shield (opt-in) | no alerts, no warnings | no alerts, one or more warnings | one or more alerts |
 
-A reading that cannot be measured is shown in grey with `--`, never as a guessed green value.
+A reading that cannot be measured is shown in grey, never as a guessed green value; the shield says `unavailable`.
 
 ## Language
 

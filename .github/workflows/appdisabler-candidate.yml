@@ -106,7 +106,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: appdisabler-0.3.0-debug-only
+          name: appdisabler-0.5.0-debug-only
           path: |
             appdisabler/app/build/outputs/apk/debug/*.apk
             appdisabler/app/build/test-results/
@@ -117,7 +117,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: appdisabler-0.3.0-release-candidate
+          name: appdisabler-0.5.0-release-candidate
           path: appdisabler/app/build/outputs/apk/release/*.apk
           retention-days: 14
 
@@ -138,7 +138,7 @@ jobs:
             echo "| --- | --- |"
             echo "| run | ${GITHUB_RUN_ID} |"
             echo "| commit | ${GITHUB_SHA} |"
-            echo "| artifact | appdisabler-0.3.0-release-candidate |"
+            echo "| artifact | appdisabler-0.5.0-release-candidate |"
             echo "| apk | $(basename "$APK") |"
             echo "| bytes | $(stat -c %s "$APK") |"
             echo "| apk_sha256 | $(sha256sum "$APK" | cut -d' ' -f1) |"
@@ -156,5 +156,5 @@ jobs:
           git config user.name "arena-agent"
           git config user.email "arena-agent@users.noreply.github.com"
           git add docs/appdisabler-candidate-build-digest.md
-          git commit -m "CI: record System App Disabler 0.2.0 release APK digest (run ${GITHUB_RUN_ID}) [skip ci]" || echo "nothing to commit"
+          git commit -m "CI: record System App Disabler candidate APK digest (run ${GITHUB_RUN_ID}) [skip ci]" || echo "nothing to commit"
           git push origin HEAD:${GITHUB_REF_NAME} || true

@@ -174,6 +174,49 @@
     <string name="overlay_permission_grant">Open overlay permission</string>
     <string name="overlay_blocked_note">Android hides overlays over secure or system screens such as DRM video and some dialogs. There is no supported workaround, so the pill may not appear there.</string>
 
+    <!-- Security audit (1.5.2): read-only findings with links to the system screens -->
+    <string name="feature_security_audit">Security audit</string>
+    <string name="feature_security_audit_desc">Read-only check of ADB debugging, apps allowed to install from unknown sources, device admins, accessibility services and the default HOME app. Each line links to its system screen. Nothing is changed until you open one.</string>
+    <string name="security_title">Security audit</string>
+    <string name="security_subtitle">ADB, installers, admins, accessibility, HOME</string>
+    <string name="security_intro">Nothing is changed here. Each line links to the system screen where that setting lives; a link opens that screen, and only there can anything be changed.</string>
+    <string name="security_summary_ok">No issues found in the settings visible to this app; this is not a security guarantee.</string>
+    <string name="security_summary_counts">Alerts: %1$d; warnings: %2$d. Open the linked screens to review.</string>
+    <string name="security_shield_title">Security shield in the status strip</string>
+    <string name="security_shield_desc">Adds a sixth cell to the floating pill: secure, review or alert, from the checks below. Needs the status pill on.</string>
+    <string name="security_shield_strip_off">The status pill is off, so the shield is not drawn yet.</string>
+    <string name="security_finding_adb">ADB debugging (USB / network)</string>
+    <string name="security_desc_adb">Debugging can allow an authorized computer to control the device. Network debugging exposes it over the network; pairing or authorization is normally required. The network status may be unavailable.</string>
+    <string name="security_finding_unknown_sources">Apps allowed to install from unknown sources</string>
+    <string name="security_desc_unknown_sources">These apps may request APK installs from outside a store; Android may still require confirmation. One or two is a review; three or more is an alert.</string>
+    <string name="security_finding_device_policy">Device management and admin apps</string>
+    <string name="security_desc_device_policy">A managed device can be controlled remotely by the company or provider that set it up. An admin app only has the policies it was granted.</string>
+    <string name="security_finding_accessibility">Enabled accessibility services</string>
+    <string name="security_desc_accessibility">An accessibility service can read the screen and inject input. One may be deliberate; several is an alert. Keep only the ones you installed on purpose.</string>
+    <string name="security_finding_home">Default HOME app</string>
+    <string name="security_desc_home">Compared with the HOME app recorded at the previous launch. Opening this screen acknowledges a change.</string>
+    <string name="security_read_unavailable">Some security settings could not be read. No clear result is available.</string>
+    <string name="security_adb_usb_unknown">USB on; network status unavailable</string>
+    <string name="security_adb_network_unknown">USB off; network status unavailable</string>
+    <string name="security_value_checking">Checking…</string>
+    <string name="security_value_off">Off</string>
+    <string name="security_value_adb_usb">On, USB only</string>
+    <string name="security_value_adb_network">On, over the network</string>
+    <string name="security_value_adb_both">On, USB and network</string>
+    <string name="security_value_none">None</string>
+    <string name="security_value_more">+%1$d more</string>
+    <string name="security_value_home_none">No default HOME app set</string>
+    <string name="security_value_home_changed">%1$s, changed since the last launch</string>
+    <string name="security_severity_ok">OK</string>
+    <string name="security_severity_warn">Review</string>
+    <string name="security_severity_alert">Alert</string>
+    <string name="security_action_developer_options">Developer options</string>
+    <string name="security_action_unknown_sources">Open %1$s</string>
+    <string name="security_action_accessibility">Accessibility settings</string>
+    <string name="security_action_home">Home app settings</string>
+    <string name="security_action_device_admins">Device admin apps</string>
+    <string name="security_action_unavailable">That screen is not available on this TV.</string>
+
     <!-- AI assistant -->
     <!-- Temperature -->
     <string name="debloater_screen_title">TV Debloater &amp; System Cleaner</string>

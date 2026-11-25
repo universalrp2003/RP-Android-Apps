@@ -165,7 +165,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "tvguard", name = "Android TV Guard (டிவி காவலன்)", tamilName = "டிவி காவலன்",
-            tagPrefix = "tvguard", version = "1.5.1", publishedVersion = "1.5.1",
+            tagPrefix = "tvguard", version = "1.5.2", publishedVersion = "1.5.2",
             packageName = "com.universalrp.tvguard",
             aboutLabel = "Android TV Guard (டிவி காவலன்) — Android TV release",
         ),
@@ -188,7 +188,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "appdisabler", name = "System App Disabler", tamilName = "சிஸ்டம் செயலி முடக்கி",
-            tagPrefix = "system-app-disabler", version = "0.4.1", publishedVersion = "0.4.1",
+            tagPrefix = "system-app-disabler", version = "0.5.0", publishedVersion = "0.5.0",
             packageName = "com.universalrp.appdisabler",
             aboutLabel = "System App Disabler (சிஸ்டம் செயலி முடக்கி) — GitHub release",
         ),

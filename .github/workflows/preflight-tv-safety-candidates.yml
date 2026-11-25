@@ -1,0 +1,24 @@
+name: Preflight exact TV safety candidates (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["docs/tv-safety-candidate-pins.json", ".github/workflows/preflight-tv-safety-candidates.yml"]
+permissions: {contents: write, actions: read}
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TV_SAFETY_PREFLIGHT_ONLY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Verify tests, signing, permissions and exact APK bytes without publishing
+        run: |
+          python3 tools/verify_tvguard_resources.py
+          python3 -m unittest discover -s tools/tests -p 'test_*tv*safety*.py'
+          python3 tools/publish_tv_safety_candidates.py

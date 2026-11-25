@@ -98,6 +98,27 @@ object StatusThresholds {
     }
 
     /**
+     * The security shield (opt-in sixth cell). It follows the audit's severities: any alert is red,
+     * otherwise any warning is amber, otherwise green. Negative counts are nonsense and read as
+     * unavailable rather than green.
+     */
+    fun security(alerts: Int?, warnings: Int?): Band = when {
+        alerts == null || warnings == null -> Band.UNAVAILABLE
+        alerts < 0 || warnings < 0 -> Band.UNAVAILABLE
+        alerts > 0 -> Band.BAD
+        warnings > 0 -> Band.WARN
+        else -> Band.GOOD
+    }
+
+    /** The one word the shield cell shows. Like the network word, it is not translated. */
+    fun securityWord(band: Band): String = when (band) {
+        Band.GOOD -> "secure"
+        Band.WARN -> "review"
+        Band.BAD -> "alert"
+        Band.UNAVAILABLE -> "unavailable"
+    }
+
+    /**
      * Percentage helper that refuses to invent a number from nonsense input, e.g. a free
      * value larger than the total or a zero total.
      */

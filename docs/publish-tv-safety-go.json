@@ -1,0 +1,7 @@
+{
+  "owner_authorized": true,
+  "pins_sha256": "f243645c2c6e7eafbf4ef329329c1b763bc675779896405af024d4ec8f7fbbff",
+  "preflight_run": 45547193828,
+  "note": "Owner authorized publication after reporting the earlier candidates working with the remote on their TV. Corrected exact APKs were tested on a disposable TV emulator, not retested on physical TV.",
+  "recovery_note": "Resume only the inspected TV Guard draft 457652999 and its matching asset IDs; no new draft replaces it."
+}

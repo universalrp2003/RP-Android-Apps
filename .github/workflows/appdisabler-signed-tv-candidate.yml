@@ -1,0 +1,131 @@
+name: System App Disabler signed TV candidate (no publication)
+on:
+  push:
+    branches: ["arena/**"]
+    paths: ["appdisabler/**", ".github/workflows/appdisabler-signed-tv-candidate.yml"]
+  workflow_dispatch:
+permissions: {contents: read, actions: read}
+concurrency:
+  group: disabler-signed-tv-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Prepare existing signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Download and verify the public 0.4.1 baseline
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/disabler-signed"
+          gh release download system-app-disabler-v0.4.1 --pattern 'System-App-Disabler-v0.4.1.apk' --dir "$RUNNER_TEMP/disabler-signed"
+          mv "$RUNNER_TEMP/disabler-signed/System-App-Disabler-v0.4.1.apk" "$RUNNER_TEMP/disabler-signed/old-0.4.1.apk"
+          echo 'd4a51560e1cd77eb240d2132cfad568796be5f4f642f6dfce5bcecdbd5294aea  '"$RUNNER_TEMP/disabler-signed/old-0.4.1.apk" | sha256sum --check
+      - name: Build signed candidate, instrumentation and release tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/disabler-signed"
+          gradle -PappdisablerRequireStableSigner=true -PappdisablerTestBuildType=release :appdisabler:testReleaseUnitTest :appdisabler:lintRelease :appdisabler:assembleRelease :appdisabler:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$work/build.log"
+          mapfile -t apks < <(find appdisabler/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f)
+          mapfile -t tests < <(find appdisabler/app/build/outputs/apk/androidTest/release -maxdepth 1 -name '*.apk' -type f)
+          test "${#apks[@]}" -eq 1 && test "${#tests[@]}" -eq 1
+          cp "${apks[0]}" "$work/System-App-Disabler-0.5.0-signed-candidate.apk"
+          cp "${tests[0]}" "$work/disabler-release-androidTest.apk"
+      - name: Verify version, signer, release build and required unit tests
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/disabler-signed"
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          expected="$(PYTHONPATH=tools python3 -c 'from prepare_release_signing import EXPECTED_SIGNER; print(EXPECTED_SIGNER)')"
+          for file in "$work/old-0.4.1.apk" "$work/System-App-Disabler-0.5.0-signed-candidate.apk" "$work/disabler-release-androidTest.apk"; do
+            "$tools/apksigner" verify --print-certs "$file" > "$work/signer.txt"
+            mapfile -t certs < <(sed -n 's/^.*certificate SHA-256 digest: //p' "$work/signer.txt")
+            test "${#certs[@]}" -gt 0
+            for cert in "${certs[@]}"; do test "$cert" = "$expected"; done
+          done
+          "$tools/aapt" dump badging "$work/System-App-Disabler-0.5.0-signed-candidate.apk" > "$work/badging.txt"
+          grep -Fq "package: name='com.universalrp.appdisabler' versionCode='6' versionName='0.5.0'" "$work/badging.txt"
+          ! grep -Fq 'application-debuggable' "$work/badging.txt"
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          roots = [ET.parse(p).getroot() for p in Path('appdisabler/app/build/test-results/testReleaseUnitTest').glob('TEST-*.xml')]
+          cases = [c for r in roots for c in r.iter('testcase')]
+          names = {c.get('classname', '').rsplit('.', 1)[-1] for c in cases}
+          assert {'HomeSafetyTest', 'PackageCommandVerificationTest', 'ReviewSnapshotTest'} <= names, names
+          assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases)
+          print(f'::notice title=Disabler release tests::{len(cases)} unit tests passed')
+          PY
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Upgrade public 0.4.1 and test exact signed bytes on disposable TV
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: android-tv
+          arch: x86
+          profile: tv_1080p
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: bash -o pipefail -c 'bash appdisabler/tools/signed_tv_candidate_smoke.sh 2>&1 | tee "$RUNNER_TEMP/disabler-signed/smoke.log"'
+      - name: Create candidate receipt
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          work = Path(os.environ['RUNNER_TEMP'], 'disabler-signed')
+          apk = work / 'System-App-Disabler-0.5.0-signed-candidate.apk'
+          sha = hashlib.file_digest(apk.open('rb'), 'sha256').hexdigest()
+          (work / 'System-App-Disabler-0.5.0-signed-candidate.sha256').write_text(f'{sha}  {apk.name}\n')
+          receipt = {'package':'com.universalrp.appdisabler', 'versionName':'0.5.0', 'versionCode':6,
+                     'apkSha256':sha, 'apkBytes':apk.stat().st_size, 'sourceCommit':os.environ['GITHUB_SHA'],
+                     'workflowRun':os.environ['GITHUB_RUN_ID'], 'exactCandidateInstalledAndTested':True,
+                     'published':False, 'scope':'same-key upgrade and read-only focus tests on disposable TV emulator'}
+          (work / 'verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          print('::notice title=Exact signed Disabler candidate::SHA-256 ' + sha)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-0.5.0-stable-signed-tested-candidate
+          path: |
+            ${{ runner.temp }}/disabler-signed/System-App-Disabler-0.5.0-signed-candidate.apk
+            ${{ runner.temp }}/disabler-signed/System-App-Disabler-0.5.0-signed-candidate.sha256
+            ${{ runner.temp }}/disabler-signed/verification.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Surface failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          work = Path(os.environ['RUNNER_TEMP'], 'disabler-signed')
+          for path in (work / 'build.log', work / 'smoke.log'):
+              if not path.exists(): continue
+              lines = path.read_text(errors='replace').splitlines()
+              selected = [l for l in lines if re.search(r'(^e: |error:|FAILURE:|What went wrong|Execution failed|Instrumentation verification failed)', l, re.I)]
+              for line in selected[-30:]:
+                  print('::error title=Disabler signed verification::' + line[:1800].replace('%', '%25'))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: appdisabler-signed-failure
+          path: ${{ runner.temp }}/disabler-signed/*.log
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove signing material
+        if: always()
+        run: rm -rf ci-keystore
