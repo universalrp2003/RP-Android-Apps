@@ -2,7 +2,7 @@ package com.universalrp.appdisabler
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isFocused
@@ -20,6 +20,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Disposable TV emulator only. Never grant Shizuku or disable a real package in these tests. */
+@OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
 class TvFocusTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()

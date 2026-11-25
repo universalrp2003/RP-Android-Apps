@@ -1,7 +1,5 @@
 package com.universalrp.appdisabler.ui
 
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -41,7 +39,7 @@ fun ShizukuGuideScreen(onBack: () -> Unit) {
                 BiText(T.g1Body)
                 Button(onClick = {
                     if (!openShizuku(context)) {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+                        openHelpLink(context, "https://shizuku.rikka.app/download/")
                     }
                 }) {
                     Text(biStatic(if (installed) T.btnOpenShizuku else T.btnInstallShizuku, taFirst))
@@ -61,7 +59,7 @@ fun ShizukuGuideScreen(onBack: () -> Unit) {
                 BiText(T.g3Title, style = MaterialTheme.typography.titleSmall, bold = true)
                 BiText(T.g3Body)
                 OutlinedButton(onClick = {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/guide/setup/")))
+                    openHelpLink(context, "https://shizuku.rikka.app/guide/setup/")
                 }) { Text(biStatic(T.gFullSite, taFirst), style = MaterialTheme.typography.labelSmall) }
             }
         }

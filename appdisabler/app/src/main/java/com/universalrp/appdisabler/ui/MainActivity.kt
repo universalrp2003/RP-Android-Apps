@@ -58,6 +58,15 @@ import rikka.shizuku.Shizuku
 
 private const val SHIZUKU_PKG = "moe.shizuku.privileged.api"
 
+/** Some TV firmwares have no browser; opening help must not crash the app. */
+internal fun openHelpLink(context: Context, url: String) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    } catch (_: Exception) {
+        Toast.makeText(context, T.noBrowser.en + "\n" + T.noBrowser.ta, Toast.LENGTH_LONG).show()
+    }
+}
+
 /** Open Google AI Mode only on request. Availability and answers vary by region and account. */
 private fun openGoogleAi(context: Context, app: AppInfo) {
     val query = Uri.encode("Explain Android package ${app.packageName} (${app.label}): what does it do, and what could be affected if disabled?")
@@ -304,7 +313,7 @@ fun ShizukuSetupWindow(
                     ) { Text(biStatic(T.btnOpenShizuku, taFirst)) }
                 } else {
                     Button(
-                        onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/"))) },
+                        onClick = { openHelpLink(context, "https://shizuku.rikka.app/download/") },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text(biStatic(T.btnInstallShizuku, taFirst)) }
                 }

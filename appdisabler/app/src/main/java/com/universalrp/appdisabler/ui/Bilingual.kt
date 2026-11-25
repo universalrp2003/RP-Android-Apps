@@ -292,6 +292,7 @@ object T {
         "A device owner is visible on this device. Changes can interfere with the provider or administrator; recovery may not be possible.",
         "இந்தச் சாதனத்தில் நிர்வாகி தெரிகிறார். மாற்றங்கள் வழங்குநரின் நிர்வாகத்தை பாதிக்கலாம்; மீட்க முடியாமல் போகலாம்."
     )
+    val noBrowser = Bi("No app is available to open this help link.", "இந்த உதவி இணைப்பைத் திறக்க ஆப் எதுவும் இல்லை.")
     val tvGuideTitle = Bi("Android TV setup", "Android TV அமைப்பு")
     val tvGuideBody = Bi(
         "TV menus vary. Enable Developer options and wireless debugging if available, then follow Shizuku pairing instructions. Some TVs require a computer or do not offer wireless pairing. Turn debugging off when finished.",
