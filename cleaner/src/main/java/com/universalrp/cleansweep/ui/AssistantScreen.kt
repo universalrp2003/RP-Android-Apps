@@ -409,7 +409,7 @@ private fun AssistantBubble(msg: AssistantMessage, vm: MainViewModel) {
         ) {
             Column {
                 if (!msg.fromUser) {
-                    Text(tr("CleanSweep AI"),
+                    Text(tr("Live Guard AI"),
                         style = MaterialTheme.typography.labelSmall,
                         color = AccentCyan,
                         fontWeight = FontWeight.Bold,

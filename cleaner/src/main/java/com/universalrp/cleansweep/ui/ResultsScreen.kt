@@ -189,7 +189,7 @@ fun ResultsScreen(state: UiState, vm: MainViewModel) {
                     }
                     Text(
                         if (selectedCount == 0) {
-                            "Tick what you want removed — CleanSweep deletes nothing on its own."
+                            watchWords("Choose what to remove — Live Guard deletes nothing on its own.", "நீக்க வேண்டியவற்றைத் தேர்வுசெய்யவும் — Live Guard தானாக எதையும் நீக்காது.")
                         } else {
                             "$selectedCount of ${report.totalCount} ticked"
                         },
@@ -258,8 +258,8 @@ fun ResultsScreen(state: UiState, vm: MainViewModel) {
             title = { Text(tr("Delete permanently?")) },
             text = {
                 Text(
-                    "CleanSweep will permanently delete $selectedCount selected items and free " +
-                        "${selectedBytes.formatBytes()}. This cannot be undone.",
+                    watchWords("Permanently delete $selectedCount selected items? Estimated size: ${selectedBytes.formatBytes()}. This cannot be undone; some items may not be removable.",
+                        "தேர்ந்தெடுத்த $selectedCount உருப்படிகளை நிரந்தரமாக நீக்கவா? மதிப்பிடப்பட்ட அளவு: ${selectedBytes.formatBytes()}. இதை மீட்டெடுக்க முடியாது; சிலவற்றை நீக்க முடியாமல் போகலாம்."),
                     color = TextSecondary,
                 )
             },

@@ -122,7 +122,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 VoiceSwitch(
                     title = tr("Speak to me"),
                     subtitle = if (state.voiceOn) {
-                        tr("CleanSweep talks: warnings about the battery, heat and the daily brief.")
+                        tr("Live Guard talks: warnings about the battery, heat and the daily brief.")
                     } else {
                         tr("Voice is off. Nothing will be spoken, at any hour.")
                     },
@@ -233,6 +233,15 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                     )
+                    Text(tr("News rotates through the available HD profiles across days and restarts. Male or female mode limits news to that group. Some Tamil profiles share a neural voice; some adjust its pitch."),
+                        style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    val lastNewsProfile = Announcer.prefs(context).getString("news_voice_last_profile", null)
+                    val lastNewsName = Announcer.prefs(context).getString("news_voice_last_name", null)
+                    val lastNewsVoice = com.universalrp.voice.SharedNeuralVoiceEngine.CURATED_VOICES.firstOrNull { it.id == lastNewsProfile }
+                    if (lastNewsVoice != null && lastNewsName != null) {
+                        Text(tr("Last news voice started") + ": " + (if (com.universalrp.cleansweep.data.Lang.isTamil) lastNewsVoice.titleTa else lastNewsVoice.titleEn) + " · " + lastNewsName,
+                            style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    }
                     val mode = state.voiceGenderMode
                     listOf(
                         com.universalrp.cleansweep.voice.VoiceGenderMode.RANDOM to tr("🔀 Random male / female each time"),
@@ -635,7 +644,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
             PanelCard(Modifier.fillMaxWidth()) {
               Column(Modifier.fillMaxWidth()) {
                 Text(
-                    tr("What CleanSweep may say"),
+                    tr("What Live Guard may say"),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                     modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
@@ -774,7 +783,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     title = tr("Daily security risk watch"),
                     subtitle = if (state.dailyScanOn) {
                         tr(
-                            "Once a day CleanSweep checks security settings, permissions, battery and system health. " +
+                            "Once a day Live Guard checks security settings, permissions, battery and system health. " +
                                 "Speaks out loud strictly when High or Medium risk items are found."
                         )
                     } else {
@@ -820,6 +829,9 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     }
                 }
                 if (state.lastBrief.isNotBlank()) {
+                    val briefAt = Announcer.lastBriefAt(context)
+                    val briefTime = if (briefAt > 0) java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(briefAt)) else tr("Time unavailable")
+                    Text(tr("Last saved daily brief") + " · " + briefTime, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 16.dp))
                     Text(
                         state.lastBrief,
                         style = MaterialTheme.typography.labelSmall,
@@ -832,10 +844,10 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
 
             Text(
                 tr(
-                    "Privacy: the microphone is used only when you tap the mic button in the " +
-                        "assistant, the phone's own recogniser turns your words into text, and " +
-                        "CleanSweep never records or keeps audio. Voice announcements are made on " +
-                        "the phone and can be switched off here at any time."
+                    "Privacy: the assistant opens Android's speech recognizer when you tap the mic; " +
+                        "the recognizer's privacy policy applies. " +
+                        "HD voice sends announcement text to the voice provider for synthesis. " +
+                        "Generated clips can be cached on this phone. You can switch announcements off here."
                 ),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,

@@ -2304,7 +2304,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     devices = emptyList(),
                     scannedAtMs = System.currentTimeMillis(),
                     probedHosts = 0,
-                    note = "Tap “Scan my network” to look for the phones, computers and smart " +
+                    note = "Tap “Scan my network with AI” to look for the phones, computers and smart " +
                         "devices sharing your Wi-Fi.",
                 )
                 else -> current.copy(wifi = details)

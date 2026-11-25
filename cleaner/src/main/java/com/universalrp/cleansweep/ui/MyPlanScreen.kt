@@ -467,7 +467,13 @@ private fun BoosterCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSet
             Column(Modifier.weight(1f)) {
                 Text(tr("I recharged an extra data booster"), style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
                 Text(
-                    if (plan.boosterEnabled && plan.boosterMb > 0) PlanPolicy.formatMb(plan.boosterMb) else tr("Off"),
+                    when {
+                        !plan.boosterEnabled -> tr("Off")
+                        plan.boosterEndDay != null && today.isAfter(plan.boosterEndDay) -> tr("Expired")
+                        plan.boosterStartDay != null && today.isBefore(plan.boosterStartDay) -> tr("Not started yet")
+                        plan.boosterMb > 0 -> PlanPolicy.formatMb(plan.boosterMb)
+                        else -> tr("Amount not set")
+                    },
                     style = MaterialTheme.typography.labelSmall,
                     color = if (plan.boosterEnabled) AccentViolet else TextSecondary,
                 )

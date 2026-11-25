@@ -60,7 +60,7 @@ object NewsAutoSchedule {
         val p = prefs(c)
         mutableStatus.value = Status(p.getLong(LAST, 0), p.getLong(NEXT, 0), p.getString(RESULT, "not_checked")!!, precise(c),
             NewsHeadlinesVoiceWatcher.lastSuccessful(c), NewsHeadlinesVoiceWatcher.lastAudible(c),
-            NewsHeadlinesVoiceWatcher.announcedKeysToday(c, Lang.languageIn(c) == com.universalrp.cleansweep.data.AppLang.TA).size)
+            NewsHeadlinesVoiceWatcher.completedStoriesToday(c, com.universalrp.cleansweep.data.NewsPreferences.tamil(c)))
     }
     fun playbackProgress(c: Context) = publish(c)
 

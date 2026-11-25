@@ -372,6 +372,7 @@ object SharedNeuralVoiceEngine {
         ratePercent: Int = 98,
         timeoutMs: Long = 3800L,
         attemptTimeoutMs: Long = 0L,
+        allowVoiceFallback: Boolean = true,
     ): File? {
         val primaryVoice = if (useTamil) profile.tamilNeuralId else profile.englishNeuralId
         val primaryPitch = if (useTamil) profile.pitchTa else profile.pitchEn
@@ -381,6 +382,7 @@ object SharedNeuralVoiceEngine {
             cacheDir = cacheDir, text = text, neuralVoiceName = primaryVoice,
             rate = rate, pitch = primaryPitch, timeoutMs = timeoutMs,
             attemptTimeoutMs = attemptTimeoutMs,
+            allowVoiceFallback = allowVoiceFallback,
         )
     }
 
@@ -396,10 +398,11 @@ object SharedNeuralVoiceEngine {
         profile: CuratedNeuralVoiceProfile,
         useTamil: Boolean,
         ratePercent: Int = 98,
+        allowVoiceFallback: Boolean = true,
     ): File? {
         val voice = if (useTamil) profile.tamilNeuralId else profile.englishNeuralId
         val pitch = if (useTamil) profile.pitchTa else profile.pitchEn
-        return NeuralVoiceFailover.candidates(voice).firstNotNullOfOrNull { candidate ->
+        return (if (allowVoiceFallback) NeuralVoiceFailover.candidates(voice) else listOf(voice)).firstNotNullOfOrNull { candidate ->
             cachedFileOrNull(cacheDir, text, candidate, rateFromPercent(ratePercent), pitch)
         }
     }
@@ -427,6 +430,7 @@ object SharedNeuralVoiceEngine {
         pitch: String = "+0Hz",
         timeoutMs: Long = 3800L,
         attemptTimeoutMs: Long = 0L,
+        allowVoiceFallback: Boolean = true,
     ): File? {
         val trimmed = text.trim().take(1200)
         if (trimmed.isEmpty()) return null
@@ -447,6 +451,7 @@ object SharedNeuralVoiceEngine {
             timeoutMs = timeoutMs,
             onVoiceSelected = { selectedVoice = it },
             attemptTimeoutMs = attemptTimeoutMs,
+            allowVoiceFallback = allowVoiceFallback,
         ) ?: return null
 
         if (mp3Bytes.size < 256) return null

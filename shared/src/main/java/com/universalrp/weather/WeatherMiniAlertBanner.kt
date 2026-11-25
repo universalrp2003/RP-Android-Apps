@@ -63,6 +63,7 @@ fun WeatherMiniAlertBanner(
     onDismissPreview: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     placeDetails: String = "",
+    isStale: Boolean = false,
 ) {
     if (severity == WeatherSeverity.CLEAR_OR_NORMAL) return
 
@@ -135,8 +136,12 @@ fun WeatherMiniAlertBanner(
             pickLang(tamil, "Very heavy rain warning — stay safe", "மிகக் கனமழை எச்சரிக்கை — கவனம்")
         WeatherSeverity.RAIN_SOON -> {
             val mins = ((minutesUntilRain ?: 30).coerceIn(5, 60) + 2) / 5 * 5
-            if ((minutesUntilRain ?: 30) <= 3) {
-                pickLang(tamil, "Rain starting now", "இப்போது மழை தொடங்குகிறது")
+            if (isStale && !isPreview) {
+                pickLang(tamil, "Earlier rain forecast · check latest", "முந்தைய மழை முன்னறிவிப்பு · புதிதாகச் சரிபார்க்கவும்")
+            } else if (minutesUntilRain == null) {
+                pickLang(tamil, "Rain forecast soon", "விரைவில் மழை வாய்ப்பு")
+            } else if (minutesUntilRain <= 3) {
+                pickLang(tamil, "Rain forecast around now", "இப்போது மழை வாய்ப்பு")
             } else {
                 pickLang(
                     tamil,
@@ -147,13 +152,13 @@ fun WeatherMiniAlertBanner(
         }
         WeatherSeverity.CLEAR_OR_NORMAL -> ""
     }
-    val subline = when (severity) {
+    val subline = if (isStale && !isPreview) pickLang(tamil, "Older forecast · Tap to check", "பழைய முன்னறிவிப்பு · சரிபார்க்கத் தொடவும்") else when (severity) {
         WeatherSeverity.CYCLONE_SEVERE ->
-            pickLang(tamil, "24×7 emergency voice active · Tap for details", "24×7 அவசர எச்சரிக்கை · விவரத்திற்கு தட்டவும்")
+            pickLang(tamil, "Severe weather alert · Tap for details", "கடுமையான வானிலை எச்சரிக்கை · விவரத்திற்கு தட்டவும்")
         WeatherSeverity.VERY_HEAVY_RAIN ->
             pickLang(tamil, "Heavy downpour / squall · Tap for details", "பலத்த மழை / காற்று · விவரத்திற்கு தட்டவும்")
         WeatherSeverity.RAIN_SOON ->
-            pickLang(tamil, "30-min rain watch · Tap for details", "30 நிமிட மழை கண்காணிப்பு · விவரத்திற்கு தட்டவும்")
+            pickLang(tamil, "Rain forecast · Tap for details", "மழை முன்னறிவிப்பு · விவரத்திற்கு தட்டவும்")
         WeatherSeverity.CLEAR_OR_NORMAL -> ""
     }
 

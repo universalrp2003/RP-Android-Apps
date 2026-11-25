@@ -155,6 +155,15 @@ object NewsHeadlinesVoiceWatcher {
         return p.getStringSet(setKey, emptySet()).orEmpty().toSet()
     }
 
+    // Old deduplication keys cannot be converted reliably into a story count. Keep them
+    // intact and count newly completed stories separately from the update onward.
+    internal fun completedStoriesToday(context: Context, tamil: Boolean, nowMs: Long = System.currentTimeMillis()): Int {
+        val p = prefs(context)
+        val suffix = if (tamil) "ta" else "en"
+        if (p.getString("news_story_count_day_$suffix", null) != dayScope(nowMs, ZoneId.systemDefault())) return 0
+        return p.getStringSet("news_story_count_keys_$suffix", emptySet()).orEmpty().size
+    }
+
     @Synchronized
     internal fun markHeadlinesAnnounced(context: Context, headlines: List<NewsHeadline>, tamil: Boolean, nowMs: Long = System.currentTimeMillis(), completeBulletin: Boolean = true) {
         if (headlines.isEmpty()) return
@@ -163,6 +172,17 @@ object NewsHeadlinesVoiceWatcher {
         val setKey = if (tamil) KEY_SPOKEN_KEYS_TA else KEY_SPOKEN_KEYS_EN
         val scope = dayScope(nowMs, ZoneId.systemDefault())
         val existing = announcedKeysToday(context, tamil, nowMs)
+        val suffix = if (tamil) "ta" else "en"
+        val countDayKey = "news_story_count_day_$suffix"
+        val countKeysKey = "news_story_count_keys_$suffix"
+        val countKeys = if (p.getString(countDayKey, null) == scope)
+            p.getStringSet(countKeysKey, emptySet()).orEmpty().toMutableSet() else mutableSetOf()
+        val seen = existing.toMutableSet()
+        headlines.forEach { item ->
+            val keys = listOf(item.key, NewsPolicy.titleKey(item.title)).filter { it.isNotBlank() }
+            if (keys.isNotEmpty() && keys.none { it in seen }) countKeys.add(keys.first())
+            seen.addAll(keys)
+        }
         val updated = (existing.toList() + headlines.flatMap { listOf(it.key, NewsPolicy.titleKey(it.title)) })
             .filter { it.isNotBlank() }
             .distinct()
@@ -177,6 +197,8 @@ object NewsHeadlinesVoiceWatcher {
             .putString(KEY_RECENT_EVENTS, encoded)
             .putString(dayKey, scope)
             .putStringSet(setKey, updated)
+            .putString(countDayKey, scope)
+            .putStringSet(countKeysKey, countKeys)
         if (completeBulletin) editor
             .putInt(KEY_ROTATION, if (rotation == Int.MAX_VALUE) 0 else rotation + 1)
             .putLong(KEY_LAST_AUTO_SPOKEN_MS, nowMs)

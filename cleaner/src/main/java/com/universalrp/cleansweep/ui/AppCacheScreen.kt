@@ -248,8 +248,8 @@ private fun UsageAccessCard(vm: MainViewModel) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "To show how much cache each app is holding, CleanSweep needs the " +
-                    "“Usage access” permission. Find CleanSweep on the next screen and switch it ON.",
+                watchWords("To show app cache sizes, Live Guard needs Usage access. Find Live Guard on the next screen to allow it.",
+                    "செயலிகளின் cache அளவைக் காட்ட Live Guard-க்கு Usage access தேவை. அடுத்த திரையில் Live Guard-ஐத் தேர்ந்தெடுத்து அனுமதிக்கவும்."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
             )
@@ -299,12 +299,11 @@ private fun GuidedCleanCard(state: UiState) {
             Spacer(Modifier.height(10.dp))
             Text(
                 if (state.pendingManualApps > 0)
-                    "Cleaning in progress: ${state.pendingManualApps} app${if (state.pendingManualApps == 1) "" else "s"} left. " +
-                        "CleanSweep opened the app's storage page — tap “Clear cache” there, come back, then tap “Next app”."
+                    watchWords("Cleaning in progress: ${state.pendingManualApps} apps left. Live Guard opened the storage page — tap Clear cache, return, then tap Next app.",
+                        "சுத்தம் நடைபெறுகிறது: ${state.pendingManualApps} செயலிகள் மீதம். திறந்த சேமிப்பு பக்கத்தில் Clear cache அழுத்தி, திரும்பி Next app அழுத்தவும்.")
                 else
-                    "Android does not let any cleaner wipe another app's cache silently (that needs root). " +
-                        "So CleanSweep opens each selected app's storage page and you tap “Clear cache” — two taps per app, " +
-                        "and you can see exactly what is happening.",
+                    watchWords("Android does not let an ordinary app silently clear another app's cache. Live Guard opens each storage page for you to tap Clear cache.",
+                        "ஒரு சாதாரண செயலி மற்றொரு செயலியின் cache-ஐ அமைதியாக அழிக்க Android அனுமதிக்காது. நீங்கள் Clear cache அழுத்த Live Guard சேமிப்புப் பக்கத்தைத் திறக்கும்."),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
             )

@@ -316,12 +316,28 @@ fun HomeScreen(
         // ONLY when rain (~30 min), heavy downpour, or cyclone warning is active (or previewed).
         val miniWeatherSeverity = state.weather.previewSeverity
             ?: if (state.weather.enabled) state.weather.severity else com.universalrp.weather.WeatherSeverity.CLEAR_OR_NORMAL
+        // Only the visible rain banner needs a periodic clock; it must not keep showing
+        // an old "in 30 minutes" as if no time had passed.
+        var weatherClockMs by androidx.compose.runtime.remember { mutableStateOf(System.currentTimeMillis()) }
+        androidx.compose.runtime.LaunchedEffect(miniWeatherSeverity) {
+            weatherClockMs = System.currentTimeMillis()
+            while (miniWeatherSeverity == com.universalrp.weather.WeatherSeverity.RAIN_SOON) {
+                kotlinx.coroutines.delay(60_000L)
+                weatherClockMs = System.currentTimeMillis()
+            }
+        }
+        val isWeatherPreview = state.weather.previewSeverity != null
+        val rainMinutes = if (isWeatherPreview) state.weather.minutesUntilRain else
+            com.universalrp.cleansweep.data.WeatherPresentationPolicy.remainingMinutes(state.weather.minutesUntilRain, state.weather.lastCheckedAtMs, weatherClockMs)
         com.universalrp.weather.WeatherMiniAlertBanner(
             severity = miniWeatherSeverity,
             placeName = state.weather.activePlaceName.ifBlank { state.weather.savedPlaceName },
-            minutesUntilRain = state.weather.minutesUntilRain ?: 30,
+            minutesUntilRain = rainMinutes,
             tamil = Lang.isTamil,
-            isPreview = state.weather.previewSeverity != null,
+            isPreview = isWeatherPreview,
+            isStale = !isWeatherPreview && com.universalrp.cleansweep.data.WeatherPresentationPolicy.forecastIsOlder(
+                if (miniWeatherSeverity == com.universalrp.weather.WeatherSeverity.RAIN_SOON) state.weather.minutesUntilRain else null,
+                state.weather.lastCheckedAtMs, weatherClockMs),
             onClick = {
                 vm.refreshWeatherUiState()
                 vm.navigate(Screen.WEATHER)
@@ -495,8 +511,8 @@ private fun SetupCard(vm: MainViewModel) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "CleanSweep needs “All files access” to scan for junk, duplicates and empty folders. " +
-                    "On the next screen, find CleanSweep and switch it ON.",
+                watchWords("Live Guard needs All files access to scan for junk, duplicates and empty folders. Find Live Guard on the next screen to allow it.",
+                    "தேவையற்றவை, நகல்கள், காலி கோப்புறைகளை ஆய்வு செய்ய Live Guard-க்கு அனைத்து கோப்பு அணுகலும் தேவை. அடுத்த திரையில் Live Guard-ஐத் தேர்ந்தெடுத்து அனுமதிக்கவும்."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary,
             )
@@ -766,9 +782,8 @@ private fun LegacyStorageCard(vm: MainViewModel) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "This phone runs Android 9 or older, where an app needs the storage permission " +
-                    "before it can delete anything. Until then CleanSweep finds your junk and " +
-                    "Android refuses every delete — which is why cleaning reported 0 MB.",
+                watchWords("On older Android versions, storage permission is needed to remove accessible files. Without it, Android can refuse deletion.",
+                    "பழைய Android பதிப்புகளில் அணுகக்கூடிய கோப்புகளை நீக்க சேமிப்பு அனுமதி தேவை. அனுமதி இல்லாவிட்டால் Android நீக்குவதை மறுக்கலாம்."),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
             )

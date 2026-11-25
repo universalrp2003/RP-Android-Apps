@@ -196,7 +196,6 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(tr("Permission/settings review only — not proof that the phone is safe."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                            Text(tr("Permission/settings review only — not proof that the phone is safe."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Text(
                                 tr("Last checked %s", checkedAt(loaded.scannedAtMs)),
                                 style = MaterialTheme.typography.labelSmall,
@@ -255,6 +254,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
     PanelCard(Modifier.fillMaxWidth()) {
@@ -282,9 +282,9 @@ private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
                 )
                 if (row.tags.isNotEmpty()) {
                     Spacer(Modifier.height(6.dp))
-                    Row(
-                        Modifier.horizontalScroll(rememberScrollState()),
+                    androidx.compose.foundation.layout.FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         row.tags.forEach { tag -> TagPill(tag) }
                     }
@@ -393,8 +393,7 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "CleanSweep never force-stops or uninstalls anything by itself — Android asks " +
-                        "you to confirm on the next screen.",
+                    tr("Live Guard opens Android app settings; Android asks you to confirm any stop or uninstall."),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                 )
@@ -556,7 +555,7 @@ fun SecurityScreen(state: UiState, vm: MainViewModel) {
                                 // so it stays out of the count.
                                 run {
                                     val n = loaded.findings.count { it.severity != Severity.INFO }
-                                    tr("%s findings across %s apps · %s high, %s medium", n, loaded.appsChecked, loaded.highCount, loaded.mediumCount)
+                                    tr("%s findings across %s apps · %s high, %s medium, %s low", n, loaded.appsChecked, loaded.highCount, loaded.mediumCount, loaded.findings.count { it.severity == Severity.LOW })
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
@@ -1060,12 +1059,16 @@ fun NetworkScreen(state: UiState, vm: MainViewModel) {
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(
-                                        "${loaded.devices.size} devices answered",
+                                        when {
+                                            !loaded.scanAttempted -> tr("Not scanned yet")
+                                            loaded.probedHosts == 0 -> tr("Scan unavailable — no addresses probed")
+                                            else -> tr("%s devices answered", loaded.devices.size)
+                                        },
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                     )
                                     Text(
-                                        "Probed ${loaded.probedHosts} addresses on your network",
+                                        if (loaded.scanAttempted) tr("Probed %s addresses on your network", loaded.probedHosts) else tr("Tap below to scan your Wi-Fi."),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = TextSecondary,
                                     )
@@ -1090,7 +1093,9 @@ fun NetworkScreen(state: UiState, vm: MainViewModel) {
                             }
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                loaded.note,
+                                if (!loaded.scanAttempted) tr("Tap below to scan your Wi-Fi.")
+                                else if (loaded.probedHosts == 0) tr("Connect to Wi-Fi and try scanning again.")
+                                else loaded.note,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
                             )
@@ -1139,9 +1144,7 @@ private fun NetworkPermissionCard(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "Android hides your Wi-Fi name, the router address and the access point unless the " +
-                    "app has Location or Nearby-devices permission. CleanSweep uses it only while this " +
-                    "screen is open — nothing about your network is stored or sent anywhere.",
+                tr("Android may require Location or Nearby devices permission to show Wi-Fi details. Verified device choices and names can be saved. Optional AI analysis sends displayed device facts only when you request it and allow network sharing."),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
             )
