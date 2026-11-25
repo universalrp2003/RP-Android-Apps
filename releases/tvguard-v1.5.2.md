@@ -3,7 +3,7 @@
 - An opt-in, read-only Expert audit reviews Android's visible ADB settings, allowed unknown-app installers, active administrators, accessibility services and the default HOME app. Links open the corresponding Android settings where available; TV Guard does not change those settings itself.
 - An optional sixth status-strip cell summarizes the audit. Disabling the audit or Expert mode pauses the shield without erasing its choice. An unavailable check is not treated as a clean result.
 - Android and TV firmware may hide settings, packages or management information. An all-clear result is **not** proof that a device is secure. Wireless debugging normally requires pairing or authorization; turn it off when no longer needed.
-- The exact signed candidate was checked on a disposable TV emulator, including same-key upgrade and D-pad tests. **No physical-device test of this exact build is claimed.** Settings screens and remote behavior may differ by manufacturer.
+- The owner reported that the earlier candidate worked with the remote on their TV setup. This wording-corrected signed build was checked on a disposable TV emulator, including same-key upgrade and D-pad tests; **it has not been retested on the physical TV**. The installed hash of the earlier candidate was not independently read back. Settings screens and remote behavior may differ by manufacturer.
 - Install over the existing app only if Android accepts the update. Do not uninstall or bypass a security warning to force installation.
 
 ## தமிழ்

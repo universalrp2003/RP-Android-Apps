@@ -3,7 +3,7 @@
 - Adds a TV launcher entry, remote focus indicators and a TV-specific Shizuku setup guide, while retaining the phone launcher.
 - The launcher guard refuses to disable a HOME app unless another enabled, exported and visibly unsuspended HOME app can be verified. When that cannot be checked, it fails closed. This cannot guarantee the alternative will work or that recovery is possible.
 - A device-owner warning is shown when Android exposes one to the current user; an unavailable management check is reported. Other users, profiles and provider management can be hidden, so no warning does not prove a device is unmanaged.
-- Candidate tests cover a same-key update from 0.4.1 and remote navigation on a disposable TV emulator; they do not disable real packages or prove Shizuku works on a particular TV. **No physical-TV test of this exact build is claimed.**
+- The owner reported that the earlier candidate worked with the remote on their TV setup. This wording-corrected build was tested with a same-key update from 0.4.1 and remote navigation on a disposable TV emulator; **it has not been retested on the physical TV**. The earlier installed hash was not independently read back. The tests do not disable real packages or prove Shizuku works on a particular TV.
 - Disabling essential packages can make the device unusable. Review one change at a time, and do not bypass Android security prompts or uninstall to force an update.
 
 ## தமிழ்

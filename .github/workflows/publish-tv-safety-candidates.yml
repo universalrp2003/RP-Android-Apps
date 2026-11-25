@@ -1,0 +1,38 @@
+name: Publish owner-authorized exact TV safety candidates
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["docs/approved-tv-safety-candidates.json"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-exact-tv-safety-candidates
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Verify resources and publication code
+        run: |
+          python3 tools/verify_tvguard_resources.py
+          python3 -m unittest discover -s tools/tests -p 'test_tv_candidate_copy_safety.py'
+          python3 -m unittest discover -s tools/tests -p 'test_publish_tv_safety_candidates.py'
+          python3 -m py_compile tools/publish_tv_safety_candidates.py
+      - name: Publish only the exact authorized tested APKs
+        run: python3 tools/publish_tv_safety_candidates.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tv-safety-publication-receipts
+          path: ${{ runner.temp }}/tv-safety-publication/*-publication.json
+          if-no-files-found: warn
+          retention-days: 90
