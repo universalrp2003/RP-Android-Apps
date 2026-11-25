@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -11,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
@@ -83,8 +85,13 @@ fun TvShizukuDiagnosticsView(context: Context, onBack: () -> Unit) {
                 Text(stringResource(R.string.shizuku_stats, bytes(snapshot?.availableRam), bytes(snapshot?.totalRam), bytes(snapshot?.storageFree), bytes(snapshot?.storageTotal), snapshot?.installedPackages?.toString() ?: unknown, snapshot?.matchedPackages?.toString() ?: unknown, snapshot?.processes?.size?.toString() ?: unknown), color = Color.White, fontSize = 16.sp)
             }
             item { Text(stringResource(R.string.shizuku_processes), color = Color.White, fontSize = 18.sp) }
-            items(snapshot?.processes?.sortedByDescending { it.rssKb }?.take(80) ?: emptyList()) { row ->
-                Text(stringResource(R.string.shizuku_process_line, row.pid, row.rssKb.toString(), row.name), color = Color.LightGray, fontSize = 14.sp, modifier = Modifier.focusable())
+            items(snapshot?.processes?.sortedByDescending { it.rssKb }?.take(80) ?: emptyList(), key = { it.pid }) { row ->
+                var focused by remember(row.pid) { mutableStateOf(false) }
+                Text(stringResource(R.string.shizuku_process_line, row.pid, row.rssKb.toString(), row.name),
+                    color = if (focused) Color.White else Color.LightGray, fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused }
+                        .background(if (focused) Color(0xFF075985) else Color.Transparent)
+                        .focusable().padding(8.dp))
             }
         }
     }

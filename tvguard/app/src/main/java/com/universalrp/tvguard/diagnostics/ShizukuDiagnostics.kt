@@ -28,10 +28,12 @@ object ShizukuDiagnostics {
         val header = lines.next().trim().split(Regex("\\s+"))
         if (header != listOf("PID", "RSS", "NAME")) return null
         val rows = mutableListOf<ProcessRow>()
+        val seen = mutableSetOf<Int>()
         for (line in lines) {
             val parts = line.trim().split(Regex("\\s+"), limit = 3)
             if (parts.size != 3) return null
             val pid = parts[0].toIntOrNull()?.takeIf { it > 0 } ?: return null
+            if (!seen.add(pid)) return null
             val rss = parts[1].toLongOrNull()?.takeIf { it >= 0 } ?: return null
             if (parts[2].isBlank()) return null
             rows.add(ProcessRow(pid, rss, parts[2]))

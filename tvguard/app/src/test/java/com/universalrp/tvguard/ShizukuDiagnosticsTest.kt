@@ -16,5 +16,6 @@ class ShizukuDiagnosticsTest {
         assertNull(ShizukuDiagnostics.parsePs("USER PID NAME\n u0 1 foo"))
         assertNull(ShizukuDiagnostics.parsePs("PID RSS NAME\n 2 bad pkg"))
         assertNull(ShizukuDiagnostics.parsePs("PID RSS NAME\n"))
+        assertNull(ShizukuDiagnostics.parsePs("PID RSS NAME\n1 8 a\n1 9 b"))
     }
 }
