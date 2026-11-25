@@ -100,6 +100,15 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "Size" to "அளவு",
+        "%s apps • size unavailable" to "%s செயலிகள் • அளவு கிடைக்கவில்லை",
+        "%s apps • sum of known sizes %s" to "%s செயலிகள் • தெரிந்த அளவுகளின் கூட்டுத்தொகை %s",
+        "Some sizes are APK-only or unavailable. Listed sizes may overlap shared app code." to "சில அளவுகள் APK கோப்புக்கு மட்டும் அல்லது கிடைக்காமல் இருக்கலாம். பகிரப்பட்ட செயலிக் குறியீடு பட்டியலில் ஒன்றுக்கு மேல் எண்ணப்படலாம்.",
+        "Listed sizes may overlap shared app code." to "பகிரப்பட்ட செயலிக் குறியீடு பட்டியலில் ஒன்றுக்கு மேல் எண்ணப்படலாம்.",
+        "APK only" to "APK மட்டும்",
+        "Size unavailable" to "அளவு கிடைக்கவில்லை",
+        "%s total • app %s • data %s (includes cache %s)" to "மொத்தம் %s • செயலி %s • தரவு %s (தற்காலிகச் சேமிப்பு %s உட்பட)",
+        "APK file only: %s; other code and app data not measured" to "APK கோப்பு மட்டும்: %s; பிற செயலிக் குறியீடும் தரவும் அளவிடப்படவில்லை",
         "Installer needs review" to "நிறுவியைச் சரிபார்க்கலாம்",
         "Installer not reported" to "நிறுவி தெரிவிக்கப்படவில்லை",
         "Installer ID not recognized" to "நிறுவி அடையாளம் அறியப்படவில்லை",

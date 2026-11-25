@@ -59,8 +59,13 @@ data class AppRow(
     val identity: PackageIdentity? = null,
     /** Whether the Android usage query succeeded, not whether its history is complete. */
     val usageHistoryAvailable: Boolean = false,
+    /** Android-reported code size, null when full storage statistics were unavailable. */
+    val storageCodeBytes: Long? = null,
 ) {
-    val totalBytes: Long get() = if (dataBytes > 0L) dataBytes + cacheBytes else apkBytes + cacheBytes
+    val storageStatsAvailable: Boolean get() = storageCodeBytes?.let { AppStorageSizePolicy.valid(it, dataBytes, cacheBytes) } == true
+    /** A partial APK-only estimate when Android did not return full storage statistics. */
+    val sizeBytes: Long? get() = AppStorageSizePolicy.size(storageCodeBytes, dataBytes, cacheBytes, apkBytes)
+    val totalBytes: Long get() = sizeBytes ?: 0L
     val hasOldUsageRecord: Boolean get() = AppUsageHistoryPolicy.hasOldRecord(usageHistoryAvailable, lastUsedMs, System.currentTimeMillis())
     val isPreinstalled: Boolean get() = isSystem && !isUpdatedSystem
     val installerNeedsReview: Boolean get() = BloatRules.installerReviewTag(isSystem, installer) != null
@@ -74,6 +79,8 @@ data class AppInventoryReport(
     val usageHistoryAvailable: Boolean = false,
 ) {
     val totalBytes: Long get() = rows.sumOf { it.totalBytes }
+    val hasIncompleteSizes: Boolean get() = rows.any { !it.storageStatsAvailable }
+    val hasKnownSizes: Boolean get() = rows.any { it.sizeBytes != null }
     val preinstalledCount: Int get() = rows.count { it.isPreinstalled }
     val oldUsageRecordCount: Int get() = if (usageHistoryAvailable) rows.count { it.hasOldUsageRecord && !it.isSystem } else 0
     val installerReviewCount: Int get() = rows.count { it.installerNeedsReview }
@@ -212,6 +219,7 @@ object AppInventoryLoader {
 
             var dataBytes = 0L
             var cacheBytes = 0L
+            var storageCodeBytes: Long? = null
             if (storageStats != null) {
                 try {
                     val s = storageStats.queryStatsForPackage(
@@ -219,10 +227,13 @@ object AppInventoryLoader {
                         ai.packageName,
                         Process.myUserHandle(),
                     )
-                    dataBytes = s.dataBytes + s.appBytes
-                    cacheBytes = s.cacheBytes
+                    if (AppStorageSizePolicy.valid(s.appBytes, s.dataBytes, s.cacheBytes)) {
+                        storageCodeBytes = s.appBytes
+                        dataBytes = s.dataBytes
+                        cacheBytes = s.cacheBytes
+                    }
                 } catch (e: Exception) {
-                    // Some system packages cannot be measured; leave 0.
+                    // Unknown storage is not a measured zero; APK size is only a partial fallback.
                 }
             }
             var apkBytes = 0L
@@ -282,6 +293,7 @@ object AppInventoryLoader {
                     unavailablePermissionChecks = permissionReading.unavailableChecks,
                     identity = signingIdentity(info),
                     usageHistoryAvailable = historyAvailable,
+                    storageCodeBytes = storageCodeBytes,
                 )
             )
         }

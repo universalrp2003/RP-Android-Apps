@@ -32,6 +32,14 @@ class InventoryUsageAccessNativeTest : ExactCandidateNativeTest() {
         assertTrue("Android's usage query should succeed after access is granted", report.usageHistoryAvailable)
         assertTrue("The real inventory should not be empty on this emulator", report.rows.isNotEmpty())
         assertTrue(report.rows.all { it.usageHistoryAvailable })
+        assertTrue("Some real app storage stats should be readable with access granted", report.rows.any { it.storageStatsAvailable })
+        assertTrue(report.rows.filter { it.storageStatsAvailable }.all { row ->
+            val code = row.storageCodeBytes!!
+            row.totalBytes == code + row.dataBytes && row.cacheBytes <= row.dataBytes
+        })
+        assertTrue(report.rows.filterNot { it.storageStatsAvailable }.all { row ->
+            row.sizeBytes == row.apkBytes.takeIf { it > 0 }
+        })
         assertEquals(report.rows.count { !it.isSystem && it.hasOldUsageRecord }, report.oldUsageRecordCount)
         assertTrue(report.rows.all { row ->
             row.lastUsedMs?.let { it > 0 && it <= System.currentTimeMillis() } ?: true

@@ -37,7 +37,7 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           files = list(Path('cleaner/build/test-results/testReleaseUnitTest').glob('TEST-*.xml'))
-          required = ['NewsCompletedStoriesTest', 'NewsStrictVoiceCacheTest', 'NewsVoicePersistenceTest', 'NewsVoiceRotationTest', 'WeatherPresentationPolicyTest', 'AppUsageHistoryPolicyTest']
+          required = ['NewsCompletedStoriesTest', 'NewsStrictVoiceCacheTest', 'NewsVoicePersistenceTest', 'NewsVoiceRotationTest', 'WeatherPresentationPolicyTest', 'AppUsageHistoryPolicyTest', 'AppStorageSizePolicyTest']
           for name in required:
               matches = [p for p in files if name in p.name]
               assert len(matches) == 1, f'Missing executed suite {name}'
@@ -46,7 +46,7 @@ jobs:
               print(name, 'tests=', root.get('tests'), 'skipped=', root.get('skipped'))
               assert root.get('skipped') == '0'
           total = sum(int(ET.parse(p).getroot().get('tests', '0')) for p in files)
-          print('::notice title=Live Guard release JVM::' + str(total) + ' tests; all six regression suites executed with zero skips')
+          print('::notice title=Live Guard release JVM::' + str(total) + ' tests; all seven regression suites executed with zero skips')
           PYTEST
       - name: Surface errors
         if: failure()

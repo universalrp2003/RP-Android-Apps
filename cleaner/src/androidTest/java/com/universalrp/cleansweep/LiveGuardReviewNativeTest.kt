@@ -132,7 +132,9 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                     val old = case == 3
                     val row = AppRow(
                         pkg = "com.example.fixture", label = "Inventory Fixture", isSystem = false, isUpdatedSystem = false,
-                        apkBytes = 0, dataBytes = 0, cacheBytes = 0, firstInstallMs = 1, updatedMs = 0,
+                        apkBytes = if (case == 2) 4096 else 0, dataBytes = if (old) 600 else 0,
+                        cacheBytes = if (old) 100 else 0, storageCodeBytes = if (old) 1000 else null,
+                        firstInstallMs = 1, updatedMs = 0,
                         lastUsedMs = if (old) System.currentTimeMillis() - 45L * 24 * 60 * 60 * 1000 else null,
                         hasLauncher = true, installer = null, permissions = emptyList(), grantedPermissions = emptyList(),
                         revokedPermissions = emptyList(), riskyPermissions = emptyList(), revokedRiskyPermissions = emptyList(),
@@ -181,6 +183,14 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                         val rowNode = findClickableText(instrument.uiAutomation.rootInActiveWindow, "Inventory Fixture")
                         assertNotNull("Fixture row must be accessible and clickable", rowNode)
                         assertTrue(rowNode!!.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                        requireVisible(when {
+                            lang == AppLang.EN && old -> "includes cache"
+                            lang == AppLang.TA && old -> "தற்காலிகச் சேமிப்பு"
+                            lang == AppLang.EN && case == 2 -> "APK file only"
+                            lang == AppLang.TA && case == 2 -> "APK கோப்பு மட்டும்"
+                            lang == AppLang.EN -> "Size unavailable"
+                            else -> "அளவு கிடைக்கவில்லை"
+                        })
                         if (!old) requireVisible(when {
                             lang == AppLang.EN && !available -> "Usage history unavailable"
                             lang == AppLang.TA && !available -> "பயன்பாட்டு வரலாறு கிடைக்கவில்லை"

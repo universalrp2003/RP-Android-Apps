@@ -183,9 +183,15 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                     PanelCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
                             Text(
-                                "${loaded.rows.size} apps • ${loaded.totalBytes.formatBytes()}",
+                                if (loaded.hasKnownSizes) tr("%s apps • sum of known sizes %s", loaded.rows.size, loaded.totalBytes.formatBytes())
+                                else tr("%s apps • size unavailable", loaded.rows.size),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                if (loaded.hasIncompleteSizes) tr("Some sizes are APK-only or unavailable. Listed sizes may overlap shared app code.")
+                                else tr("Listed sizes may overlap shared app code."),
+                                style = MaterialTheme.typography.labelSmall, color = TextSecondary,
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
@@ -296,7 +302,12 @@ private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End) {
-                ByteChip(row.totalBytes)
+                if (row.sizeBytes != null) {
+                    ByteChip(row.totalBytes)
+                    if (!row.storageStatsAvailable) Text(tr("APK only"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                } else {
+                    Text(tr("Size unavailable"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                }
                 Spacer(Modifier.height(6.dp))
                 Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TextSecondary)
             }
@@ -334,8 +345,12 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 InfoRow("Package", row.pkg)
-                InfoRow("Size", row.totalBytes.formatBytes() +
-                    " (data ${row.dataBytes.formatBytes()}, cache ${row.cacheBytes.formatBytes()})")
+                InfoRow(tr("Size"), when {
+                    row.storageStatsAvailable -> tr("%s total • app %s • data %s (includes cache %s)",
+                        row.totalBytes.formatBytes(), row.storageCodeBytes!!.formatBytes(), row.dataBytes.formatBytes(), row.cacheBytes.formatBytes())
+                    row.sizeBytes != null -> tr("APK file only: %s; other code and app data not measured", row.totalBytes.formatBytes())
+                    else -> tr("Size unavailable")
+                })
                 InfoRow("Installed", dateFormat.format(Date(row.firstInstallMs)))
                 InfoRow("Updated", if (row.updatedMs > 0) dateFormat.format(Date(row.updatedMs)) else "never")
                 InfoRow(

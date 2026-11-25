@@ -222,7 +222,11 @@ object AiReport {
             buildString {
                 append(row.label.take(40))
                 append(" | ").append(row.pkg)
-                append(" | ").append(gb(row.totalBytes))
+                append(" | ").append(when {
+                    row.storageStatsAvailable -> gb(row.totalBytes) + " app code and data (cache included in data)"
+                    row.sizeBytes != null -> gb(row.totalBytes) + " APK file only; app data and other code not measured"
+                    else -> "size unavailable"
+                })
                 append(" | ").append(lastUsedLabel(if (row.usageHistoryAvailable) row.lastUsedMs else null))
                 append(if (row.isPreinstalled) " | SYSTEM/PREINSTALLED: do not recommend removal" else " | NON-SYSTEM: removal only if user confirms not needed")
                 if (row.tags.isNotEmpty()) append(" | ").append(row.tags.joinToString(", "))
@@ -234,7 +238,7 @@ object AiReport {
 
         val remaining = apps.rows.size - interesting.size
         if (remaining > 0) {
-            lines.add("(+$remaining more apps with nothing unusual about them)")
+            lines.add("(+$remaining other apps omitted; omission is not a safety assessment)")
         }
         return lines
     }
