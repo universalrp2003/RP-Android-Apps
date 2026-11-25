@@ -259,15 +259,18 @@ object DisableManager {
         }
         // Fail closed if Android cannot enumerate HOME activities; this check is repeated by
         // disablePackage immediately before issuing either disable or suspension commands.
-        val homes = try {
+        val homeActivities = try {
             @Suppress("DEPRECATION")
             context.packageManager.queryIntentActivities(
                 Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY
-            ).mapNotNull { it.activityInfo?.packageName }.toSet()
+            ).mapNotNull { result ->
+                result.activityInfo?.let { HomeActivity(it.packageName, it.enabled, it.exported) }
+            }
         } catch (_: Exception) {
             return Bi("Could not check launchers. Nothing was disabled.",
                 "முகப்புச் செயலிகளைச் சரிபார்க்க முடியவில்லை. எதுவும் முடக்கப்படவில்லை.")
         }
+        val homes = homeActivities.map { it.packageName }.toSet()
         if (homes.isEmpty()) {
             return Bi("No enabled HOME app could be verified. Nothing was disabled.",
                 "இயங்கும் முகப்புச் செயலியை உறுதிசெய்ய முடியவில்லை. எதுவும் முடக்கப்படவில்லை.")
@@ -277,7 +280,7 @@ object DisableManager {
         val usableHomes = if (packageName in homes) homes.filterTo(mutableSetOf()) { home ->
             enabledState(context, home) == true && suspensionState(context, home) == false
         } else emptySet()
-        if (HomeSafety.mustBlock(packageName, homes, usableHomes)) {
+        if (HomeSafety.mustBlock(packageName, homeActivities, usableHomes)) {
             return Bi("No other usable HOME app could be verified. Enable another launcher before disabling this one.",
                 "வேறு இயங்கக்கூடிய முகப்புச் செயலியை உறுதிசெய்ய முடியவில்லை. இதை முடக்கும்முன் வேறு முகப்புச் செயலியை இயக்கவும்.")
         }

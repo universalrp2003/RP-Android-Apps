@@ -10,8 +10,8 @@ manufacturer navigation can differ. The app does not enable debugging itself.
 
 Before either the disable command or its suspension fallback, the app queries enabled HOME
 activities. If the query fails or returns no HOME package, it refuses the change. For a target HOME
-package, it requires a *different* visible HOME package whose application is enabled and whose
-suspension status is known to be off. Multiple HOME activities from one package are not alternatives.
+package, it requires a *different* visible HOME package with an enabled, exported HOME activity,
+an enabled application and a suspension status known to be off. Multiple HOME activities from one package are not alternatives.
 An unknown or suspended alternative does not count. On older systems where suspension cannot be
 read, the check fails closed for HOME packages. The rule is repeated immediately before the
 fallback; it cannot prevent an external package-state change between a check and a shell command.

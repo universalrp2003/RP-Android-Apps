@@ -6,6 +6,10 @@ plugins {
 
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
 val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
+val requireStableSigner = providers.gradleProperty("appdisablerRequireStableSigner").orNull == "true"
+if (requireStableSigner && (!stableKeystore.exists() || releaseStorePassword.isNullOrBlank())) {
+    throw GradleException("The stable System App Disabler signer is required for this candidate")
+}
 
 android {
     // SisterApps.kt is now copied into this module; no shared srcDir to avoid voice/okhttp transitive errors
@@ -13,6 +17,7 @@ android {
 
     namespace = "com.universalrp.appdisabler"
     compileSdk = 36
+    testBuildType = providers.gradleProperty("appdisablerTestBuildType").orNull ?: "debug"
 
     defaultConfig {
         applicationId = "com.universalrp.appdisabler"
