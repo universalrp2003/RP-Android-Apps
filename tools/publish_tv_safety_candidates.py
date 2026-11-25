@@ -166,7 +166,7 @@ def publish(p, apk, checksum, before):
     result = {'release_id': public['id'], 'asset_id': a['id'], 'tag': p['tag'], 'published_at': public['published_at'],
               'apk_sha256': p['sha256'], 'bytes': p['bytes'], 'url': a['browser_download_url'],
               'candidate_run': p['run_id'], 'source_commit': p['source'], 'owner_authorized': True,
-              'physical_test_scope': 'Owner reported earlier candidates working on their TV and remote; corrected APK not physically retested.'}
+              'physical_test_scope': p.get('physical_test_scope', 'Owner reported earlier candidates working on their TV and remote; corrected APK not physically retested.')}
     (WORK / (p['tag'] + '-publication.json')).write_text(json.dumps(result, indent=2) + '\n')
     print('PUBLICATION RECEIPT ' + json.dumps(result), flush=True)
 
