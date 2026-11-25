@@ -145,12 +145,21 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                             }
                         }
                     }
-                    SystemClock.sleep(500)
-                    instrument.waitForIdleSync()
-                    val root = instrument.uiAutomation.rootInActiveWindow
                     val names = if (lang == AppLang.EN) listOf("Menu", "Switch to Tamil", "Guide", "Voice announcements on", "Settings")
                         else listOf("பட்டி", "ஆங்கிலத்திற்கு மாறு", "வழிகாட்டி", "குரல் அறிவிப்புகள் இயக்கத்தில்", "அமைப்புகள்")
-                    val nodes = names.map { name -> findDescription(root, name) ?: throw AssertionError("Missing accessible target $name, lang=$lang scale=$scale; tree:\n${describe(root)}") }
+                    // A newly launched Activity can take several seconds to become the active
+                    // accessibility window on a cold emulator. Do not inspect a null root once.
+                    var root: android.view.accessibility.AccessibilityNodeInfo? = null
+                    var candidates: List<android.view.accessibility.AccessibilityNodeInfo?> = emptyList()
+                    for (attempt in 0 until 40) {
+                        instrument.waitForIdleSync()
+                        root = instrument.uiAutomation.rootInActiveWindow
+                        candidates = names.map { findDescription(root, it) }
+                        if (candidates.all { it != null }) break
+                        SystemClock.sleep(250)
+                    }
+                    val nodes = candidates.mapIndexed { index, node -> node ?: throw AssertionError(
+                        "Missing accessible target ${names[index]}, lang=$lang scale=$scale; tree:\n${describe(root)}") }
                     val density = app.resources.displayMetrics.density
                     val bounds = nodes.map { node -> android.graphics.Rect().also { node.getBoundsInScreen(it) } }
                     bounds.forEach { rect ->
