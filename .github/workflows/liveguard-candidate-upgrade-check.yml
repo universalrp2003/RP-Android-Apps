@@ -61,8 +61,8 @@ jobs:
       - name: Build test APK and use the exact previously archived candidate
         run: |
           set -euo pipefail
-          gradle :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace
-          python3 - <<'PY'
+          gradle :cleaner:assembleRelease :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee /tmp/candidate-upgrade-build.log
+          python3 - <<'PY' 2>&1 | tee /tmp/candidate-upgrade-artifact.log
           import hashlib
           from pathlib import Path
           candidates = list(Path('/tmp/liveguard-candidate').glob('**/release/*.apk'))
@@ -84,3 +84,17 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: python3 tools/run_liveguard_candidate_upgrade.py
+      - name: Surface build and candidate errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text = []
+          for name in ['/tmp/candidate-upgrade-build.log', '/tmp/candidate-upgrade-artifact.log']:
+              path = Path(name)
+              if path.exists():
+                  lines = path.read_text(errors='replace').splitlines()
+                  relevant = [line for line in lines if line.startswith('e: ') or 'Error:' in line or ' FAILED' in line or 'What went wrong' in line or 'AssertionError' in line or 'Traceback' in line]
+                  text.extend(relevant[-35:] or lines[-15:])
+          if text: print('::error title=Candidate upgrade build::' + '\n'.join(text)[-7000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY
