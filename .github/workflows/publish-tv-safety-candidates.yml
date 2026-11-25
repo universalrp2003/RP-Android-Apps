@@ -35,4 +35,4 @@ jobs:
           name: tv-safety-publication-receipts
           path: ${{ runner.temp }}/tv-safety-publication/*-publication.json
           if-no-files-found: warn
-          retention-days: 90
+          retention-days: 30

@@ -75,3 +75,4 @@ jobs:
             appdisabler/app/build/outputs/androidTest-results/
             ${{ runner.temp }}/disabler-tv.log
           if-no-files-found: warn
+          retention-days: 14

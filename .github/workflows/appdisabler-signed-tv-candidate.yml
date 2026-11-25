@@ -125,6 +125,7 @@ jobs:
           name: appdisabler-signed-failure
           path: ${{ runner.temp }}/disabler-signed/*.log
           if-no-files-found: warn
+          retention-days: 14
       - name: Remove signing material
         if: always()
         run: rm -rf ci-keystore
