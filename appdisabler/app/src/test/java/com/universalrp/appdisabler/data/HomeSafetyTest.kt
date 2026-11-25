@@ -5,10 +5,20 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HomeSafetyTest {
-    @Test fun blocksOnlyRemainingHome() {
-        assertTrue(HomeSafety.isOnlyHome("launcher", setOf("launcher")))
-        assertFalse(HomeSafety.isOnlyHome("launcher", setOf("launcher", "other")))
-        assertFalse(HomeSafety.isOnlyHome("other", setOf("launcher")))
-        assertFalse(HomeSafety.isOnlyHome("launcher", emptySet()))
+    @Test fun onlyHomeIsBlocked() {
+        assertTrue(HomeSafety.mustBlock("launcher", setOf("launcher"), setOf("launcher")))
+        assertTrue(HomeSafety.mustBlock("launcher", setOf("launcher"), emptySet()))
+    }
+
+    @Test fun unverifiedOrSuspendedAlternativesDoNotCount() {
+        val homes = setOf("launcher", "other")
+        assertTrue(HomeSafety.mustBlock("launcher", homes, setOf("launcher")))
+        assertTrue(HomeSafety.mustBlock("launcher", homes, emptySet()))
+        assertFalse(HomeSafety.mustBlock("launcher", homes, setOf("launcher", "other")))
+        assertTrue(HomeSafety.mustBlock("launcher", setOf("launcher"), setOf("unrelated")))
+    }
+
+    @Test fun aNonHomePackageIsNotBlockedByThisRule() {
+        assertFalse(HomeSafety.mustBlock("other", setOf("launcher"), setOf("launcher")))
     }
 }

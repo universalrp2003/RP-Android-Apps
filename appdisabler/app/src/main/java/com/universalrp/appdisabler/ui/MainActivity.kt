@@ -6,10 +6,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import android.content.res.Configuration
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -31,6 +33,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -129,6 +136,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** Request initial focus only on TVs; do not pop up the keyboard on phones. */
+@Composable
+internal fun TvInitialFocus(requester: FocusRequester) {
+    val tv = (LocalConfiguration.current.uiMode and Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION
+    LaunchedEffect(tv, requester) {
+        if (tv) repeat(12) {
+            androidx.compose.runtime.withFrameNanos { }
+            if (try { requester.requestFocus() } catch (_: IllegalStateException) { false }) return@LaunchedEffect
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
@@ -139,6 +158,8 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
     var showAbout by remember { mutableStateOf(false) }
     var autoAsked by remember { mutableStateOf(false) }
     val taFirst = tamilFirst()
+    val initialFocus = remember { FocusRequester() }
+    TvInitialFocus(initialFocus)
 
     // Poll Shizuku every 2s; ask permission once when the server runs without permission.
     LaunchedEffect(Unit) {
@@ -179,6 +200,7 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
             NavigationBar {
                 NavigationBarItem(
                     selected = selectedWindow == 0,
+                    modifier = Modifier.focusRequester(initialFocus).testTag("disabler-nav-setup"),
                     onClick = { selectedWindow = 0 },
                     icon = { Icon(if (shizukuOk) Icons.Default.CheckCircle else Icons.Default.Settings, contentDescription = null) },
                     label = { Text(biStatic(T.navSetup, taFirst)) },
@@ -186,6 +208,7 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
                 )
                 NavigationBarItem(
                     selected = selectedWindow == 1,
+                    modifier = Modifier.testTag("disabler-nav-apps"),
                     onClick = { selectedWindow = 1 },
                     icon = { Icon(Icons.Default.List, contentDescription = null) },
                     label = { Text(biStatic(T.navApps, taFirst)) },
@@ -291,7 +314,7 @@ fun ShizukuSetupWindow(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(onClick = onOpenGuide, modifier = Modifier.weight(1f)) {
+                    OutlinedButton(onClick = onOpenGuide, modifier = Modifier.weight(1f).testTag("disabler-setup-guide")) {
                         Text(biStatic(T.btnFullGuide, taFirst), style = MaterialTheme.typography.labelSmall)
                     }
                     OutlinedButton(
@@ -307,7 +330,7 @@ fun ShizukuSetupWindow(
                         enabled = !testing
                     ) { Text(if (testing) biStatic(T.testing, taFirst) else biStatic(T.btnTestShell, taFirst), style = MaterialTheme.typography.labelSmall) }
                 }
-                Button(onClick = onGoToApps, modifier = Modifier.fillMaxWidth()) { Text(biStatic(T.btnGoApps, taFirst)) }
+                Button(onClick = onGoToApps, modifier = Modifier.fillMaxWidth().testTag("disabler-setup-apps")) { Text(biStatic(T.btnGoApps, taFirst)) }
             }
         }
 
@@ -415,9 +438,12 @@ private fun StatTile(
     active: Boolean,
     onClick: () -> Unit
 ) {
+    var focused by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .clip(MaterialTheme.shapes.small)
+            .border(if (focused) 3.dp else 0.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.small)
+            .onFocusChanged { focused = it.isFocused }
             .clickable(onClick = onClick)
             .background(
                 if (active) MaterialTheme.colorScheme.secondaryContainer
@@ -552,10 +578,10 @@ fun AppsListWindow(
 
     Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            OutlinedButton(onClick = { reviewOpen = true }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = { reviewOpen = true }, modifier = Modifier.weight(1f).testTag("disabler-compare")) {
                 Text("Compare / ஒப்பிடு", style = MaterialTheme.typography.labelMedium)
             }
-            OutlinedButton(onClick = { planOpen = true }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = { planOpen = true }, modifier = Modifier.weight(1f).testTag("disabler-plan")) {
                 Text("Plan / திட்டம் (${plan.size})", style = MaterialTheme.typography.labelMedium)
             }
         }
@@ -740,9 +766,10 @@ fun AppsListWindow(
                 Text(T.emptyList.en, style = MaterialTheme.typography.bodyMedium)
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f).testTag("disabler-app-list")) {
                 items(filtered, key = { it.packageName }) { app ->
                     AppRow(
+                        modifier = if (app.packageName == filtered.firstOrNull()?.packageName) Modifier.testTag("disabler-first-app") else Modifier,
                         app = app,
                         taFirst = taFirst,
                         running = running,
@@ -776,6 +803,7 @@ fun AppsListWindow(
 
     if (planOpen) {
         AlertDialog(
+            modifier = Modifier.testTag("disabler-plan-dialog"),
             onDismissRequest = { planOpen = false },
             title = { Text("Review plan / திட்டத்தைப் பார்க்கவும்") },
             text = {
@@ -991,6 +1019,7 @@ fun AppDetailsDialog(
         else "User-installed app. Its importance and effects depend on how you use it."
 
     AlertDialog(
+        modifier = Modifier.testTag("disabler-details-dialog"),
         onDismissRequest = onDismiss,
         title = { Text(app.label, fontWeight = FontWeight.Bold) },
         text = {
@@ -1061,13 +1090,17 @@ fun AppDetailsDialog(
 @Composable
 fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisable: () -> Unit,
            onRestoreUnknown: () -> Unit, onAskAi: () -> Unit, planned: Boolean,
-           onPlan: () -> Unit, onOpenDetails: () -> Unit) {
+           onPlan: () -> Unit, onOpenDetails: () -> Unit, modifier: Modifier = Modifier) {
     // The whole card is tinted by its rating, so the list can be read without stopping to parse
     // each line: a green name means safe, amber means it will ask, red means it will not act.
     val tint = ratingColour(app)
     val blocked = !app.needsRestore && (app.category == DisableCategory.CRITICAL || app.bootloopRisk)
+    var focused by remember { mutableStateOf(false) }
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onOpenDetails() },
+        modifier = modifier.fillMaxWidth()
+            .border(if (focused) 3.dp else 0.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+            .onFocusChanged { focused = it.hasFocus }
+            .clickable { onOpenDetails() },
         colors = CardDefaults.cardColors(containerColor = tint.copy(alpha = 0.07f))
     ) {
         Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -1133,6 +1166,7 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
             Column(verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
                 FilledTonalButton(
                     onClick = onDisable,
+                    modifier = Modifier.testTag("disabler-action-${app.packageName}"),
                     enabled = !blocked,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
                 ) {

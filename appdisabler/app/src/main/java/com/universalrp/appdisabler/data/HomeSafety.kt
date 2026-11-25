@@ -1,7 +1,7 @@
 package com.universalrp.appdisabler.data
 
-/** Evaluate distinct enabled HOME packages, not individual activities. */
+/** HOME activities are grouped by package. An uncertain alternative must not count as usable. */
 internal object HomeSafety {
-    fun isOnlyHome(target: String, enabledHomes: Set<String>): Boolean =
-        target in enabledHomes && enabledHomes.size == 1
+    fun mustBlock(target: String, homePackages: Set<String>, verifiedUsable: Set<String>): Boolean =
+        target in homePackages && verifiedUsable.none { it != target && it in homePackages }
 }

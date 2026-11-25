@@ -272,9 +272,14 @@ object DisableManager {
             return Bi("No enabled HOME app could be verified. Nothing was disabled.",
                 "இயங்கும் முகப்புச் செயலியை உறுதிசெய்ய முடியவில்லை. எதுவும் முடக்கப்படவில்லை.")
         }
-        if (HomeSafety.isOnlyHome(packageName, homes)) {
-            return Bi("This is the only enabled HOME app. Enable another launcher before disabling it.",
-                "இது மட்டும் முகப்புச் செயலியாக இயங்குகிறது. இதை முடக்கும்முன் வேறு முகப்புச் செயலியை இயக்கவும்.")
+        // An enabled but suspended or uncheckable alternative cannot be relied on for recovery.
+        // On older Android versions suspensionState may be unknown, so fail closed for HOME apps.
+        val usableHomes = if (packageName in homes) homes.filterTo(mutableSetOf()) { home ->
+            enabledState(context, home) == true && suspensionState(context, home) == false
+        } else emptySet()
+        if (HomeSafety.mustBlock(packageName, homes, usableHomes)) {
+            return Bi("No other usable HOME app could be verified. Enable another launcher before disabling this one.",
+                "வேறு இயங்கக்கூடிய முகப்புச் செயலியை உறுதிசெய்ய முடியவில்லை. இதை முடக்கும்முன் வேறு முகப்புச் செயலியை இயக்கவும்.")
         }
         // The keyboard currently in use: losing it means losing the ability to type anywhere.
         val activeIme = try {

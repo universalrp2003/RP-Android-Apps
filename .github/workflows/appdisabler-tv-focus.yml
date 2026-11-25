@@ -1,0 +1,77 @@
+name: System App Disabler TV focus tests (no publication)
+on:
+  push:
+    branches: ["arena/**"]
+    paths: ["appdisabler/**", ".github/workflows/appdisabler-tv-focus.yml"]
+  workflow_dispatch:
+permissions: {contents: read}
+concurrency:
+  group: disabler-tv-focus-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Test navigation without Shizuku on a disposable Android TV
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: android-tv
+          arch: x86
+          profile: tv_1080p
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            case "$(adb get-serialno)" in emulator-*) ;; *) echo 'Expected a disposable emulator'; exit 1 ;; esac
+            adb shell input keyevent KEYCODE_WAKEUP
+            adb shell wm dismiss-keyguard
+            bash -o pipefail -c 'gradle :appdisabler:connectedDebugAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/disabler-tv.log"'
+      - name: Require every focus test
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          roots = [ET.parse(p).getroot() for p in Path('appdisabler/app/build/outputs/androidTest-results/connected').rglob('*.xml')]
+          cases = [c for r in roots for c in r.iter('testcase') if c.get('classname', '').endswith('TvFocusTest')]
+          expected = {'navigationAndPlanAreReachableByRemote', 'guideBackButtonAndSystemBackReturnToSetup', 'appCardOpensDetailsWithoutDisablingAnything'}
+          assert len(cases) == len(expected) and {c.get('name') for c in cases} == expected, 'Missing or duplicate TV tests'
+          assert all(all(c.find(k) is None for k in ('error', 'failure', 'skipped')) for c in cases), 'A TV test failed or was skipped'
+          print(f'::notice title=Disabler TV navigation::{len(cases)} focus tests passed')
+          PY
+      - name: Surface test failures and compiler errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, re, xml.etree.ElementTree as ET
+          for p in Path('appdisabler/app/build/outputs/androidTest-results').rglob('*.xml'):
+              try: root = ET.parse(p).getroot()
+              except ET.ParseError: continue
+              for case in root.iter('testcase'):
+                  for kind in ('failure', 'error'):
+                      for failure in case.findall(kind):
+                          text = case.get('name', '') + '\n' + (failure.get('message') or '') + '\n' + (failure.text or '')
+                          print('::error title=Disabler TV test::' + text[:6500].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          log = Path(os.environ['RUNNER_TEMP'], 'disabler-tv.log')
+          if log.exists():
+              for line in log.read_text(errors='replace').splitlines():
+                  if re.search(r'(^e: |error:|FAILURE:|What went wrong|Execution failed)', line):
+                      print('::error title=Disabler TV build::' + line[:1500].replace('%','%25'))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: disabler-tv-focus-reports
+          path: |
+            appdisabler/app/build/reports/androidTests/
+            appdisabler/app/build/outputs/androidTest-results/
+            ${{ runner.temp }}/disabler-tv.log
+          if-no-files-found: warn
