@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
@@ -104,9 +105,22 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
 
     private fun findDescription(node: android.view.accessibility.AccessibilityNodeInfo?, text: String): android.view.accessibility.AccessibilityNodeInfo? {
         if (node == null) return null
-        if (node.isVisibleToUser && node.contentDescription?.toString()?.contains(text) == true && node.isClickable) return node
+        if (node.isVisibleToUser && node.contentDescription?.toString()?.contains(text) == true) {
+            var clickable: android.view.accessibility.AccessibilityNodeInfo? = node
+            while (clickable != null) {
+                if (clickable.isClickable) return clickable
+                clickable = clickable.parent
+            }
+        }
         for (i in 0 until node.childCount) findDescription(node.getChild(i), text)?.let { return it }
         return null
+    }
+
+    private fun describe(node: android.view.accessibility.AccessibilityNodeInfo?, depth: Int = 0): String {
+        if (node == null || depth > 8) return ""
+        val bounds = android.graphics.Rect().also { node.getBoundsInScreen(it) }
+        return "${" ".repeat(depth)}desc=${node.contentDescription} text=${node.text} clickable=${node.isClickable} visible=${node.isVisibleToUser} bounds=$bounds\n" +
+            (0 until node.childCount).joinToString("") { describe(node.getChild(it), depth + 1) }
     }
 
     @Test fun compactHomeHeaderKeepsAccessibleTargetsAndVoiceAction() {
@@ -126,7 +140,7 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                             val density = LocalDensity.current.density
                             CompositionLocalProvider(LocalDensity provides Density(density, scale)) {
                                 MaterialTheme {
-                                    HomeHeader(true, {}, {}, {}, { voiceTaps.incrementAndGet() }, {}, {}, Modifier.width(320.dp))
+                                    HomeHeader(true, {}, {}, {}, { voiceTaps.incrementAndGet() }, {}, {}, Modifier.width(320.dp).statusBarsPadding())
                                 }
                             }
                         }
@@ -136,7 +150,7 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                     val root = instrument.uiAutomation.rootInActiveWindow
                     val names = if (lang == AppLang.EN) listOf("Menu", "Switch to Tamil", "Guide", "Voice announcements on", "Settings")
                         else listOf("பட்டி", "ஆங்கிலத்திற்கு மாறு", "வழிகாட்டி", "குரல் அறிவிப்புகள் இயக்கத்தில்", "அமைப்புகள்")
-                    val nodes = names.map { name -> findDescription(root, name) ?: throw AssertionError("Missing accessible target $name, lang=$lang scale=$scale") }
+                    val nodes = names.map { name -> findDescription(root, name) ?: throw AssertionError("Missing accessible target $name, lang=$lang scale=$scale; tree:\n${describe(root)}") }
                     val density = app.resources.displayMetrics.density
                     val bounds = nodes.map { node -> android.graphics.Rect().also { node.getBoundsInScreen(it) } }
                     bounds.forEach { rect ->
