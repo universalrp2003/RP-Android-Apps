@@ -1,5 +1,8 @@
 name: System App Disabler signed TV candidate (no publication)
 on:
+  push:
+    branches: ["arena/**"]
+    paths: ["appdisabler/**", ".github/workflows/appdisabler-signed-tv-candidate.yml"]
   workflow_dispatch:
 permissions: {contents: read, actions: read}
 concurrency:
