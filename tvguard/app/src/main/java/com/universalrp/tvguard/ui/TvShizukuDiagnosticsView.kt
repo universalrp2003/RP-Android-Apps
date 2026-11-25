@@ -60,6 +60,9 @@ fun TvShizukuDiagnosticsView(context: Context, onBack: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TvFocusButton(text = stringResource(if (enabled) R.string.shizuku_disable else R.string.shizuku_enable), onClick = {
                     enabled = !enabled; prefs.enabled = enabled; snapshot = null; StatusOverlayService.restart(context)
+                    if (enabled) try {
+                        if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) Shizuku.requestPermission(7401)
+                    } catch (_: Exception) { /* Ask again with the Allow button when service is ready. */ }
                 }, modifier = Modifier.testTag("shizuku-toggle"))
                 TvFocusButton(text = stringResource(R.string.shizuku_open), onClick = {
                     val intent = context.packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api")

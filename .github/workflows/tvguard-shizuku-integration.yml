@@ -1,0 +1,61 @@
+name: TV Guard real Shizuku integration (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["tvguard/**", ".github/workflows/tvguard-shizuku-integration.yml"]
+  workflow_dispatch:
+permissions: {contents: read}
+concurrency:
+  group: tvguard-real-shizuku-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  shizuku:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Fetch official fixed Shizuku release for the disposable emulator
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/shizuku"
+          gh release download v13.6.0 --repo RikkaApps/Shizuku --pattern 'shizuku-v13.6.0.r1086.2650830c-release.apk' --dir "$RUNNER_TEMP/shizuku"
+          test "$(stat -c %s "$RUNNER_TEMP/shizuku/shizuku-v13.6.0.r1086.2650830c-release.apk")" = 2571773
+      - name: Build disposable debug app and test
+        run: gradle -PtvguardTestBuildType=debug :tvguard:assembleDebug :tvguard:assembleDebugAndroidTest --no-daemon --stacktrace
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Start real Shizuku as shell and exercise grant and snapshots on disposable TV
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: android-tv
+          arch: x86_64
+          profile: tv_1080p
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            set -euo pipefail
+            case "$(adb get-serialno)" in emulator-*) ;; *) exit 1 ;; esac
+            adb shell input keyevent KEYCODE_WAKEUP
+            adb shell wm dismiss-keyguard
+            adb install "$RUNNER_TEMP/shizuku/shizuku-v13.6.0.r1086.2650830c-release.apk"
+            adb install tvguard/app/build/outputs/apk/debug/tvguard-debug.apk
+            adb install tvguard/app/build/outputs/apk/androidTest/debug/tvguard-debug-androidTest.apk
+            apk=$(adb shell pm path moe.shizuku.privileged.api | tr -d '\r' | sed -n 's/^package://p' | head -1)
+            test -n "$apk"
+            starter=$(adb shell "find $(dirname "$apk")/lib -name libshizuku.so" | tr -d '\r' | head -1)
+            test -n "$starter"
+            adb shell "$starter"
+            adb shell am instrument -w -e shizukuIntegration true -e class com.universalrp.tvguard.ShizukuLiveDiagnosticsTest com.universalrp.tvguard.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/shizuku-test.log"
+            grep -Fq 'OK (1 test)' "$RUNNER_TEMP/shizuku-test.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tvguard-shizuku-integration-log
+          path: ${{ runner.temp }}/shizuku-test.log
+          if-no-files-found: warn
+          retention-days: 14
