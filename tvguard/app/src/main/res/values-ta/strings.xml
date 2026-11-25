@@ -167,7 +167,7 @@
     <!-- Status overlay over other apps -->
     <string name="overlay_notification_channel">நிலை மேலடுக்கு</string>
     <string name="overlay_notification_title">நிலை மேலடுக்கு இயக்கத்தில் உள்ளது</string>
-    <string name="overlay_notification_text">மற்ற ஆப்களின் மேல் காலி CPU, RAM, சேமிப்பகம், நெட்வொர்க் தரம் காட்டப்படுகிறது.</string>
+    <string name="overlay_notification_text">மற்ற ஆப்களின் மேல் CPU பயன்பாடு, கிடைக்கும் RAM, சேமிப்பகம், நெட்வொர்க் தரம் காட்டப்படுகிறது.</string>
     <string name="feature_status_overlay">மற்ற ஆப்களின் மேல் நிலைக் காட்டி</string>
     <string name="feature_status_overlay_desc">திரையின் மேலே ஒரே வரியில் ஐந்து அளவுகளைக் காட்டும்: செயலி சுமை, இலவச RAM, இலவச சேமிப்பு, வெப்பநிலை மற்றும் இணையத் தரம். "மற்ற ஆப்களுக்கு மேல் காட்டு" அனுமதி தேவை.</string>
     <string name="overlay_permission_needed">மேலடுக்குக்கு "மற்ற ஆப்களின் மேல் காட்ட" அனுமதி தேவை.</string>
@@ -238,4 +238,26 @@
     <string name="storage_honest_free">பில்லில் காட்டப்படும் இடம்</string>
     <string name="storage_honest_free_value">%2$s GiB இல் %1$s GiB இலவசம் %3$s</string>
     <string name="storage_capped_note"> (இயற்பியல் வட்டுக்கு வரம்பிடப்பட்டது; கோப்பு முறைமை அதிகமாகக் கூறுகிறது)</string>
+    <string name="running_recent">சமீபத்திய பயன்பாடு</string>
+    <string name="shizuku_title">ஷிசுகு விவரங்கள்</string>
+    <string name="shizuku_subtitle">விருப்பமான, படிக்க மட்டும் செயலி மற்றும் நினைவக விவரங்கள்</string>
+    <string name="shizuku_enable">விவரங்களை இயக்கு</string>
+    <string name="shizuku_disable">விவரங்களை அணை</string>
+    <string name="shizuku_open">ஷிசுகுவைத் திற</string>
+    <string name="shizuku_allow">டிவி காவலனுக்கு அனுமதி</string>
+    <string name="shizuku_refresh">புதுப்பி</string>
+    <string name="shizuku_disabled">விவரங்கள் அணைக்கப்பட்டுள்ளன. செயலி நிலை கேட்கப்படாது.</string>
+    <string name="shizuku_not_ready">ஷிசுகு இயங்கவில்லை அல்லது டிவி காவலனுக்கு அனுமதி இல்லை. ஷிசுகுவைத் திறந்து அதன் வழிமுறைகளில் தொடங்கி அனுமதி வழங்கவும். தொடங்க இணைத்தல் அல்லது ரூட் தேவைப்படலாம்; மறுதொடக்கத்திற்குப் பிறகு மீண்டும் தொடங்க வேண்டியிருக்கலாம்.</string>
+    <string name="shizuku_no_app">இந்த டிவியில் ஷிசுகுவைத் திறக்க முடியவில்லை. தனியாக நிறுவவும் அல்லது செயலிப் பட்டியலில் திறக்கவும்.</string>
+    <string name="shizuku_ready">இணைக்கப்பட்டது. படிக்க மட்டும்; எதுவும் முடக்கப்படாது.</string>
+    <string name="shizuku_limits">ஆண்ட்ராய்டு மற்றும் டிவியைப் பொறுத்து செயலிகள் மறைக்கப்படலாம். பகிர்ந்த நினைவகமும் அளவில் சேரும்; இவற்றைக் கூட்டி துல்லியமான செயலி நினைவகமாகக் கருத வேண்டாம். சமீபத்திய பயன்பாடு என்பது இயங்கும் நிலை அல்ல. சேமிப்பு அளவு வட்டின் உண்மையான கொள்ளளவுக்குச் சான்றல்ல.</string>
+    <string name="shizuku_unknown">கிடைக்கவில்லை</string>
+    <string name="shizuku_stats">கிடைக்கும் / மொத்த நினைவகம்: %1$s / %2$s
+தரவு சேமிப்பகத்தில் கிடைக்கும் / மொத்தம்: %3$s / %4$s
+தெரியும் நிறுவப்பட்ட செயலிகள்: %5$s
+தெரியும் இயக்கத்துடன் பொருந்தும் செயலிகள்: %6$s
+தெரியும் இயக்க வரிசைகள்: %7$s</string>
+    <string name="shizuku_processes">தெரியும் இயக்கங்கள் — பகிர்ந்த நினைவகமும் அடங்கும்; அதிகபட்சம் 80</string>
+    <string name="shizuku_process_line">இயக்க எண் %1$d · %2$s கிபி · %3$s</string>
+    <string name="shizuku_pill_count">%1$d செயலி</string>
 </resources>

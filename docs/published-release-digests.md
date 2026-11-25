@@ -1,3 +1,7 @@
+## TV Guard 1.5.3 — exact approved candidate
+
+- [Android TV Guard 1.5.3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.3): 11,900,631 bytes; SHA-256 `1d7452ce651551c1e1fd5c4a4dcc73764a6f317ac58a1d69cb71bd9e719ac3c1`. Candidate run 45558877424, publication 45562138924, release 457738965, asset 790395214; no rebuild. [Receipt](tvguard-v1.5.3-publication.json). Owner reported the candidate working on one TV; the installed hash was not independently read back.
+
 ## TV safety releases — exact owner-authorized candidates
 
 - [Android TV Guard 1.5.2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.2): 11,855,823 bytes; SHA-256 `66acfaa601394bed85b3628e22214b56903427c2cd37c042c36a285f22251443`. Signed candidate run 45546027796; release 457652999; asset 790046579. [Receipt](tvguard-v1.5.2-publication.json).

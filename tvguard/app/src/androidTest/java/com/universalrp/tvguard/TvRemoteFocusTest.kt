@@ -22,6 +22,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.pressKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.universalrp.tvguard.diagnostics.ShizukuDiagnosticsPreferences
 import com.universalrp.tvguard.launcher.TvAppCatalog
 import com.universalrp.tvguard.settings.TvFeature
 import com.universalrp.tvguard.settings.TvFeaturePreferences
@@ -449,5 +450,26 @@ class TvRemoteFocusTest {
         press("about-back", Key.DirectionDown, "about-website")
         press("about-website", Key.DirectionUp, "about-back")
         sendLauncherHomeIntent()
+    }
+
+    @Test
+    fun shizukuDiagnosticsSwitchWorksWithoutServiceUsingRemote() {
+        val prefs = ShizukuDiagnosticsPreferences(compose.activity)
+        val wasEnabled = prefs.enabled
+        try {
+            prefs.enabled = false
+            compose.onNodeWithTag("tab-tools").performClick()
+            compose.onNodeWithTag("tools-shizuku").performClick()
+            awaitFocus("shizuku-back")
+            press("shizuku-back", Key.DirectionDown, "shizuku-toggle")
+            toggleFocused("shizuku-toggle")
+            compose.waitUntil(timeoutMillis = 5_000) { prefs.enabled }
+            toggleFocused("shizuku-toggle")
+            compose.waitUntil(timeoutMillis = 5_000) { !prefs.enabled }
+            compose.onNodeWithTag("shizuku-back").performClick()
+            compose.waitUntil(timeoutMillis = 5_000) {
+                compose.onAllNodes(hasTestTag("tools-shizuku")).fetchSemanticsNodes().isNotEmpty()
+            }
+        } finally { prefs.enabled = wasEnabled }
     }
 }

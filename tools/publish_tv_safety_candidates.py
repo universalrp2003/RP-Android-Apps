@@ -118,7 +118,8 @@ def preflight(p, prior, tools):
     def permissions(path):
         return {line.strip() for line in cmd(tools / 'aapt', 'dump', 'permissions', path).splitlines() if line.startswith('uses-permission:')}
     added = permissions(apk) - permissions(old)
-    assert not added, f'Unexpected new permissions: {added}'
+    expected_added = set(p.get('expected_added_permissions', []))
+    assert added == expected_added, f'Unexpected permission changes: added={added}, expected={expected_added}'
     print('PREFLIGHT PASS', p['tag'], p['sha256'], p['bytes'], flush=True)
     return apk, checksum
 
@@ -166,7 +167,7 @@ def publish(p, apk, checksum, before):
     result = {'release_id': public['id'], 'asset_id': a['id'], 'tag': p['tag'], 'published_at': public['published_at'],
               'apk_sha256': p['sha256'], 'bytes': p['bytes'], 'url': a['browser_download_url'],
               'candidate_run': p['run_id'], 'source_commit': p['source'], 'owner_authorized': True,
-              'physical_test_scope': 'Owner reported earlier candidates working on their TV and remote; corrected APK not physically retested.'}
+              'physical_test_scope': p.get('physical_test_scope', 'Owner reported earlier candidates working on their TV and remote; corrected APK not physically retested.')}
     (WORK / (p['tag'] + '-publication.json')).write_text(json.dumps(result, indent=2) + '\n')
     print('PUBLICATION RECEIPT ' + json.dumps(result), flush=True)
 

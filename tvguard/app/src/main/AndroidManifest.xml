@@ -38,6 +38,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
+    <queries>
+        <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="rikka.shizuku" />
+    </queries>
+
     <application
         android:name=".TvGuardApp"
         android:allowBackup="false"
@@ -84,6 +89,12 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Displays the user's own CPU, RAM, storage and network readings over other apps while enabled." />
         </service>
+
+        <!-- Shizuku binds only after the user starts its service and grants this app access. -->
+        <provider android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false" android:enabled="true" android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <!-- FileProvider for APK install and Screenshot sharing -->
         <provider

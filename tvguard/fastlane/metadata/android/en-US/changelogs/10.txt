@@ -1,0 +1,1 @@
+Optional Shizuku diagnostics shows visible process and memory details and an approximate matched-package count. CPU pill shows sampled load. Shizuku needs its own service and permission. The security audit may miss findings; check settings directly.

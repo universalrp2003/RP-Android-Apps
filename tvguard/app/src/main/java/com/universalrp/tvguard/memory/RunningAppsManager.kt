@@ -6,7 +6,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import com.universalrp.tvguard.debloat.DebloatEngine
-import java.io.File
 
 data class RunningAppInfo(
     val packageName: String,
@@ -42,8 +41,8 @@ object RunningAppsManager {
             val pid = pids[i]
             val memInfo = memoryInfos.getOrNull(i)
             if (memInfo != null) {
-                val pssMb = (memInfo.totalPss / 1024).coerceAtLeast(1)
-                memMap[pid] = pssMb
+                val pssKb = memInfo.totalPss
+                if (pssKb > 0) memMap[pid] = (pssKb + 1023) / 1024
             }
         }
 
@@ -76,7 +75,7 @@ object RunningAppsManager {
 
             val isSystem = appInfo?.let { (it.flags and ApplicationInfo.FLAG_SYSTEM) != 0 } ?: false
             val isFg = proc.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-            val memMb = memMap[proc.pid] ?: readProcRssMb(proc.pid)
+            val memMb = memMap[proc.pid] ?: -1
 
             list.add(
                 RunningAppInfo(
@@ -127,15 +126,11 @@ object RunningAppsManager {
         }
         if (lastUsed.isEmpty()) return emptyList()
 
-        val memInfo = ActivityManager.MemoryInfo()
-        try { am.getMemoryInfo(memInfo) } catch (_: Throwable) { /* figures stay zero */ }
-        val totalMb = (memInfo.totalMem / (1024L * 1024L)).toInt()
-        val freeMb = (memInfo.availMem / (1024L * 1024L)).toInt()
-        // Shared across the listed apps, as a best-effort figure. It is deliberately coarse:
-        // per-app memory for other packages is not readable without privileged access.
-        val shareMb = ((totalMb - freeMb).coerceAtLeast(0) / lastUsed.size.coerceAtLeast(1))
+        // Usage events are history, not process measurements. Never divide system RAM among
+        // recently used apps: that produces plausible but invented per-app numbers.
+        val unknownMemory = -1
 
-        return lastUsed.entries.sortedByDescending { it.value }.take(MAX_LISTED).mapNotNull { (pkg, last) ->
+        return lastUsed.entries.sortedByDescending { it.value }.take(MAX_LISTED).mapNotNull { (pkg, _) ->
             val appInfo = try { pm.getApplicationInfo(pkg, 0) } catch (_: Throwable) { null }
             val label = appInfo?.let {
                 try { pm.getApplicationLabel(it).toString() } catch (_: Throwable) { pkg }
@@ -148,31 +143,17 @@ object RunningAppsManager {
                 packageName = pkg,
                 appName = label,
                 pid = -1,
-                memoryUsageMb = shareMb,
+                memoryUsageMb = unknownMemory,
                 isSystemApp = isSystem,
-                // Recently used within the last two minutes counts as foreground.
-                isForeground = now - last < FOREGROUND_MS,
+                // A recent event does not prove a process is still in the foreground.
+                isForeground = false,
                 icon = icon
             )
         }
     }
 
     private const val WINDOW_MS = 6L * 60L * 60L * 1000L
-    private const val FOREGROUND_MS = 2L * 60L * 1000L
-    private const val MAX_LISTED = 20
-
-    private fun readProcRssMb(pid: Int): Int {
-        return try {
-            val statm = File("/proc/$pid/statm")
-            if (statm.exists()) {
-                val parts = statm.readText().trim().split("\\s+".toRegex())
-                val rssPages = parts.getOrNull(1)?.toLongOrNull() ?: 0L
-                ((rssPages * 4096L) / (1024L * 1024L)).toInt()
-            } else 0
-        } catch (_: Throwable) {
-            0
-        }
-    }
+        private const val MAX_LISTED = 20
 
     fun closeApp(context: Context, packageName: String): Boolean {
         // Method 1: Root silent force-stop

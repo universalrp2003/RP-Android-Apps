@@ -75,8 +75,8 @@ class WebsiteUsabilityTest(unittest.TestCase):
     def test_a_card_naming_an_unknown_release_is_rejected(self):
         """A card's own date cannot be invented: it must come from a pinned release."""
         stale = self.source.replace(
-            '<time class="card-date" datetime="2026-11-25T04:31:22Z" data-release-tag="tvguard-v1.5.2">',
-            '<time class="card-date" datetime="2026-11-25T04:31:22Z" data-release-tag="not-a-release">',
+            '<time class="card-date" datetime="2026-11-25T06:39:17Z" data-release-tag="tvguard-v1.5.3">',
+            '<time class="card-date" datetime="2026-11-25T06:39:17Z" data-release-tag="not-a-release">',
             1,
         )
         self.assertNotEqual(stale, self.source)
@@ -113,14 +113,14 @@ class WebsiteUsabilityTest(unittest.TestCase):
         ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
         self.assertEqual(len(ids), 17)
         localization.verify_newest_first(site, ids)
-        self.assertEqual(ids[:6], ['app-system-app-disabler', 'app-tv-guard', 'app-sms-guard', 'app-vasanthi-ai', 'app-animal-sounds', 'app-elderly-launcher'])
+        self.assertEqual(ids[:6], ['app-tv-guard', 'app-system-app-disabler', 'app-sms-guard', 'app-vasanthi-ai', 'app-animal-sounds', 'app-elderly-launcher'])
 
         # Moving the oldest card to the front must be rejected.
         oldest = site.index('        <!-- Secret Message -->')
         end = site.index('</article>', oldest) + len('</article>')
         block = site[oldest:end]
         shuffled = site[:oldest] + site[end:]
-        first = shuffled.index('        <!-- System App Disabler -->')
+        first = shuffled.index('        <!-- Android TV Guard -->')
         shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
         shuffled_ids = re.findall(
             r'<h2 id="(app-[^"]+)"',
@@ -135,7 +135,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         end = pristine.index('</article>', middle) + len('</article>')
         block = pristine[middle:end]
         reordered = pristine[:middle] + pristine[end:]
-        top = reordered.index('        <!-- System App Disabler -->')
+        top = reordered.index('        <!-- Android TV Guard -->')
         reordered = reordered[:top] + block + '\n\n' + reordered[top:]
         ids2 = re.findall(
             r'<h2 id="(app-[^"]+)"',

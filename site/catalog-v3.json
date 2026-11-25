@@ -150,11 +150,11 @@
       "name": "Android TV Guard",
       "tamilName": "டிவி காவலன்",
       "packageName": "com.universalrp.tvguard",
-      "version": "1.5.2",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.2/Android-TV-Guard-v1.5.2.apk",
-      "size": 11855823,
-      "sha256": "66acfaa601394bed85b3628e22214b56903427c2cd37c042c36a285f22251443",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.2"
+      "version": "1.5.3",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.3/Android-TV-Guard-v1.5.3.apk",
+      "size": 11900631,
+      "sha256": "1d7452ce651551c1e1fd5c4a4dcc73764a6f317ac58a1d69cb71bd9e719ac3c1",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.3"
     },
     {
       "id": "appdisabler",

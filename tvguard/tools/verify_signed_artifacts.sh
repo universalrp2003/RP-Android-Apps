@@ -17,10 +17,11 @@ check_signer() {
   for digest in "${digests[@]}"; do test "$digest" = "$want"; done
 }
 
-candidate="$work/Android-TV-Guard-1.5.2-signed-candidate.apk"
+candidate="$work/Android-TV-Guard-1.5.3-signed-candidate.apk"
 fixture="$work/synthetic-older-same-key.apk"
 test_apk="$work/tvguard-release-androidTest.apk"
 for path in "$old" "$candidate" "$fixture" "$test_apk"; do test -s "$path"; done
+check_signer "$RUNNER_TEMP/tvguard-public-baseline/Android-TV-Guard-v1.5.2.apk" public-baseline "$expected"
 check_signer "$candidate" candidate "$expected"
 check_signer "$fixture" fixture "$expected"
 check_signer "$test_apk" androidTest "$expected"
@@ -39,7 +40,7 @@ for label in candidate fixture androidTest old-debug; do
   esac
   "$tools/aapt" dump badging "$path" >"$work/$label-badging.txt"
 done
-grep -Fq "package: name='com.universalrp.tvguard' versionCode='9' versionName='1.5.2'" "$work/candidate-badging.txt"
+grep -Fq "package: name='com.universalrp.tvguard' versionCode='10' versionName='1.5.3'" "$work/candidate-badging.txt"
 grep -Fq "package: name='com.universalrp.tvguard' versionCode='1' versionName='1.0'" "$work/fixture-badging.txt"
 grep -Fq "package: name='com.universalrp.tvguard' versionCode='1' versionName='1.0'" "$work/old-debug-badging.txt"
 grep -Fq "package: name='com.universalrp.tvguard.test'" "$work/androidTest-badging.txt"
@@ -52,5 +53,5 @@ if grep -Fq 'application-debuggable' "$work/candidate-badging.txt"; then
   echo 'Refusing to offer a debuggable release candidate.' >&2
   exit 1
 fi
-(cd "$work" && sha256sum Android-TV-Guard-1.5.2-signed-candidate.apk >Android-TV-Guard-1.5.2-signed-candidate.sha256)
+(cd "$work" && sha256sum Android-TV-Guard-1.5.3-signed-candidate.apk >Android-TV-Guard-1.5.3-signed-candidate.sha256)
 echo "PASS: candidate and tests use the pinned signer; package and versions are correct; candidate is non-debuggable."

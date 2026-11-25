@@ -18,6 +18,8 @@ import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.universalrp.tvguard.R
+import com.universalrp.tvguard.diagnostics.ShizukuDiagnostics
+import com.universalrp.tvguard.diagnostics.ShizukuDiagnosticsPreferences
 import com.universalrp.tvguard.security.SecurityAuditPreferences
 import com.universalrp.tvguard.settings.TvFeature
 import com.universalrp.tvguard.settings.TvFeaturePreferences
@@ -30,6 +32,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Draws the five readings over other apps while the user has it switched on, plus the opt-in
@@ -162,8 +165,21 @@ class StatusOverlayService : Service() {
                     break
                 }
                 val now = SystemClock.elapsedRealtime()
+                val wantProcessCell = ShizukuDiagnosticsPreferences(this@StatusOverlayService).enabled && ShizukuDiagnostics.ready()
+                if (rows.containsKey(OVERLAY_PROCESSES) != wantProcessCell) {
+                    lastProcesses = 0L
+                    removeOverlay()
+                    showOverlay()
+                }
                 try {
                     update("cpu", OverlaySampler.cpu())
+                    if (wantProcessCell && (lastProcesses == 0L || now - lastProcesses >= PROCESS_INTERVAL_MS)) {
+                        lastProcesses = now
+                        val count = withContext(Dispatchers.IO) { ShizukuDiagnostics.read(this@StatusOverlayService).matchedPackages }
+                        val stillReady = ShizukuDiagnosticsPreferences(this@StatusOverlayService).enabled && ShizukuDiagnostics.ready()
+                        update(OVERLAY_PROCESSES, if (count == null || !stillReady) OverlayMetric("Apps", "--", Band.UNAVAILABLE, false)
+                            else OverlayMetric("Apps", getString(R.string.shizuku_pill_count, count), Band.GOOD, true))
+                    }
                     if (ramMetric == null || now - lastRam >= RAM_INTERVAL_MS) {
                         ramMetric = OverlaySampler.ram(this@StatusOverlayService)
                         lastRam = now
@@ -196,6 +212,7 @@ class StatusOverlayService : Service() {
         }
     }
 
+    private var lastProcesses = 0L
     private var lastShield = 0L
     private fun shieldDue(): Boolean {
         if (!rows.containsKey(OVERLAY_SHIELD)) return false
@@ -295,6 +312,7 @@ class StatusOverlayService : Service() {
         private const val TEMP_INTERVAL_MS = 20_000L
         private const val NETWORK_INTERVAL_MS = 15_000L
         private const val SHIELD_INTERVAL_MS = 60_000L
+        private const val PROCESS_INTERVAL_MS = 30_000L
 
         /** True only when the saved settings ask for the overlay; the caller checks permission. */
         fun wanted(context: Context): Boolean {
@@ -357,6 +375,7 @@ internal val OVERLAY_METRICS = listOf("cpu", "ram", "storage", "temp", "net")
 
 /** The opt-in sixth cell, appended on the right only when the Security audit's shield switch is on. */
 internal const val OVERLAY_SHIELD = "shield"
+internal const val OVERLAY_PROCESSES = "processes"
 
 /**
  * Builds the pill: one fixed-height row, one weight-shared single-line cell per reading.
@@ -378,7 +397,8 @@ internal fun buildPill(context: Context): Pair<LinearLayout, Int> {
     val showShield = SecurityAuditPreferences(context).overlayShield &&
         TvFeaturePreferences(context).load().enabled(TvFeature.SECURITY_AUDIT)
     val keys = if (showShield) OVERLAY_METRICS + OVERLAY_SHIELD else OVERLAY_METRICS
-    keys.forEach { key ->
+    val visibleKeys = if (ShizukuDiagnosticsPreferences(context).enabled && ShizukuDiagnostics.ready()) keys + OVERLAY_PROCESSES else keys
+    visibleKeys.forEach { key ->
         val label = TextView(context).apply {
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
