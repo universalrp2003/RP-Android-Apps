@@ -7,6 +7,9 @@ import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import com.universalrp.cleansweep.data.NetworkReport
 import com.universalrp.cleansweep.data.WifiDetails
 import com.universalrp.cleansweep.ui.NetworkScreen
+import com.universalrp.cleansweep.ui.HomeHeader
 import com.universalrp.cleansweep.voice.NewsVoiceRotation
 import com.universalrp.cleansweep.voice.VoiceGenderMode
 import com.universalrp.voice.SharedNeuralVoiceEngine
@@ -90,6 +94,61 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                         requireVisible(expected)
                     } finally { instrument.runOnMainSync { activity.finish() } }
                 }
+            }
+        } finally {
+            runBlocking { settings.setLang(oldLang) }
+            app.getSharedPreferences(Lang.PREFS, Context.MODE_PRIVATE).edit().putString(Lang.KEY, oldLang.id).commit()
+            instrument.runOnMainSync { Lang.set(previous) }
+        }
+    }
+
+    private fun findDescription(node: android.view.accessibility.AccessibilityNodeInfo?, text: String): android.view.accessibility.AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.isVisibleToUser && node.contentDescription?.toString()?.contains(text) == true && node.isClickable) return node
+        for (i in 0 until node.childCount) findDescription(node.getChild(i), text)?.let { return it }
+        return null
+    }
+
+    @Test fun compactHomeHeaderKeepsAccessibleTargetsAndVoiceAction() {
+        val previous = Lang.current
+        val settings = SettingsRepo(app)
+        val oldLang = AppLang.fromId(runBlocking { settings.lang.first() })
+        try {
+            for (lang in listOf(AppLang.EN, AppLang.TA)) for (scale in listOf(1f, 2f)) {
+                runBlocking { settings.setLang(lang) }
+                app.getSharedPreferences(Lang.PREFS, Context.MODE_PRIVATE).edit().putString(Lang.KEY, lang.id).commit()
+                val activity = instrument.startActivitySync(Intent(app, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
+                val voiceTaps = java.util.concurrent.atomic.AtomicInteger()
+                try {
+                    instrument.runOnMainSync {
+                        Lang.set(lang)
+                        activity.setContent {
+                            val density = LocalDensity.current.density
+                            CompositionLocalProvider(LocalDensity provides Density(density, scale)) {
+                                MaterialTheme {
+                                    HomeHeader(true, {}, {}, {}, { voiceTaps.incrementAndGet() }, {}, {}, Modifier.width(320.dp))
+                                }
+                            }
+                        }
+                    }
+                    SystemClock.sleep(500)
+                    instrument.waitForIdleSync()
+                    val root = instrument.uiAutomation.rootInActiveWindow
+                    val names = if (lang == AppLang.EN) listOf("Menu", "Switch to Tamil", "Guide", "Voice announcements on", "Settings")
+                        else listOf("பட்டி", "ஆங்கிலத்திற்கு மாறு", "வழிகாட்டி", "குரல் அறிவிப்புகள் இயக்கத்தில்", "அமைப்புகள்")
+                    val nodes = names.map { name -> findDescription(root, name) ?: throw AssertionError("Missing accessible target $name, lang=$lang scale=$scale") }
+                    val density = app.resources.displayMetrics.density
+                    val bounds = nodes.map { node -> android.graphics.Rect().also { node.getBoundsInScreen(it) } }
+                    bounds.forEach { rect ->
+                        assertTrue("Target is too narrow: $rect", rect.width() >= (47f * density).toInt())
+                        assertTrue("Target is too short: $rect", rect.height() >= (47f * density).toInt())
+                    }
+                    for (a in bounds.indices) for (b in a + 1 until bounds.size)
+                        assertFalse("Header targets overlap: ${bounds[a]} ${bounds[b]}", android.graphics.Rect.intersects(bounds[a], bounds[b]))
+                    assertTrue(nodes[3].performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK))
+                    instrument.waitForIdleSync()
+                    assertEquals(1, voiceTaps.get())
+                } finally { instrument.runOnMainSync { activity.finish() } }
             }
         } finally {
             runBlocking { settings.setLang(oldLang) }

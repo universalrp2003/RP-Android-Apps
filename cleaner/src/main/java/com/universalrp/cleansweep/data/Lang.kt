@@ -118,6 +118,8 @@ object Lang {
         "What Live Guard may say" to "Live Guard சொல்லக்கூடியவை",
         "The last time Live Guard stopped by itself. Nothing is sent anywhere — this is here so you can read it out or screenshot it." to "Live Guard கடைசியாகத் தானாக நிறுத்தப்பட்ட விவரம். இது எங்கும் அனுப்பப்படாது; படிக்கவோ திரைப்பிடிப்பு எடுக்கவோ இங்கே உள்ளது.",
         "Live Guard AI" to "கைபேசி காவலன் AI",
+        "Switch to English" to "ஆங்கிலத்திற்கு மாறு",
+        "Switch to Tamil" to "தமிழுக்கு மாறு",
         "Live Guard AI report" to "கைபேசி காவலன் AI அறிக்கை",
         "Live Guard phone health report" to "கைபேசி காவலன் கைபேசி நல அறிக்கை",
         "Once a day Live Guard checks security settings, permissions, battery and system health. Speaks out loud strictly when High or Medium risk items are found." to "Live Guard தினமும் பாதுகாப்பு அமைப்புகள், அனுமதிகள், பேட்டரி மற்றும் கணினி நிலையைச் சோதிக்கும். அதிக அல்லது நடுத்தர ஆபத்து கண்டால் மட்டும் குரலில் எச்சரிக்கும்.",

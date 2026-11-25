@@ -133,7 +133,7 @@ fun WeatherMiniAlertBanner(
         WeatherSeverity.CYCLONE_SEVERE ->
             pickLang(tamil, "URGENT CYCLONE / STORM ALERT!", "அவசர புயல் / அதி கனமழை எச்சரிக்கை!")
         WeatherSeverity.VERY_HEAVY_RAIN ->
-            pickLang(tamil, "Very heavy rain warning — stay safe", "மிகக் கனமழை எச்சரிக்கை — கவனம்")
+            pickLang(tamil, "Very heavy rain forecast — stay alert", "மிகக் கனமழை முன்னறிவிப்பு — கவனம்")
         WeatherSeverity.RAIN_SOON -> {
             val mins = ((minutesUntilRain ?: 30).coerceIn(5, 60) + 2) / 5 * 5
             if (isStale && !isPreview) {
@@ -156,7 +156,7 @@ fun WeatherMiniAlertBanner(
         WeatherSeverity.CYCLONE_SEVERE ->
             pickLang(tamil, "Severe weather alert · Tap for details", "கடுமையான வானிலை எச்சரிக்கை · விவரத்திற்கு தட்டவும்")
         WeatherSeverity.VERY_HEAVY_RAIN ->
-            pickLang(tamil, "Heavy downpour / squall · Tap for details", "பலத்த மழை / காற்று · விவரத்திற்கு தட்டவும்")
+            pickLang(tamil, "Severe rain / squall forecast · Tap for details", "கனமழை / காற்று முன்னறிவிப்பு · விவரத்திற்கு தட்டவும்")
         WeatherSeverity.RAIN_SOON ->
             pickLang(tamil, "Rain forecast · Tap for details", "மழை முன்னறிவிப்பு · விவரத்திற்கு தட்டவும்")
         WeatherSeverity.CLEAR_OR_NORMAL -> ""

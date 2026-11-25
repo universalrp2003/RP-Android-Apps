@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -128,6 +129,79 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/** Compact screens and large text get two rows instead of overlapping small targets. */
+@Composable
+internal fun HomeHeader(
+    voiceOn: Boolean,
+    onOpenMenu: () -> Unit,
+    onLanguage: () -> Unit,
+    onGuide: () -> Unit,
+    onVoice: () -> Unit,
+    onVolume: () -> Unit,
+    onSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(modifier.fillMaxWidth().padding(
+        start = HomeLayoutPolicy.SCREEN_HORIZONTAL_DP.dp,
+        end = HomeLayoutPolicy.HEADER_TRAILING_DP.dp,
+        top = HomeLayoutPolicy.HEADER_VERTICAL_DP.dp,
+        bottom = HomeLayoutPolicy.HEADER_VERTICAL_DP.dp,
+    )) {
+        val compact = maxWidth < 360.dp || androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
+        @Composable fun menuAndTitle() {
+            IconButton(onClick = onOpenMenu, modifier = Modifier.size(HomeLayoutPolicy.MIN_CONTROL_DP.dp)) {
+                Icon(Icons.Outlined.Menu, contentDescription = tr("Menu"), tint = AccentCyan, modifier = Modifier.size(24.dp))
+            }
+            Spacer(Modifier.width(8.dp))
+        }
+        @Composable fun actions() {
+            val languageAction = if (Lang.isTamil) tr("Switch to English") else tr("Switch to Tamil")
+            TextButton(onClick = onLanguage, modifier = Modifier.size(HomeLayoutPolicy.MIN_CONTROL_DP.dp)
+                .semantics { contentDescription = languageAction }, contentPadding = PaddingValues(0.dp)) {
+                Text(if (Lang.isTamil) "EN" else "த", color = AccentCyan, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            }
+            IconButton(onClick = onGuide, modifier = Modifier.size(HomeLayoutPolicy.MIN_CONTROL_DP.dp)) {
+                Icon(Icons.Outlined.MenuBook, contentDescription = tr("Guide"), tint = AccentCyan, modifier = Modifier.size(19.dp))
+            }
+            Box(
+                modifier = Modifier.size(HomeLayoutPolicy.MIN_CONTROL_DP.dp)
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Switch
+                        stateDescription = if (voiceOn) tr("On") else tr("Off")
+                        onClick { onVoice(); true }
+                        onLongClick { onVolume(); true }
+                    }
+                    .pointerInput(voiceOn) { detectTapGestures(onTap = { onVoice() }, onLongPress = { onVolume() }) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(if (voiceOn) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
+                    contentDescription = if (voiceOn) tr("Voice announcements on. Tap to turn off") else tr("Voice announcements off. Tap to turn on"),
+                    tint = if (voiceOn) AccentCyan else TextSecondary, modifier = Modifier.size(20.dp))
+            }
+            IconButton(onClick = onSettings, modifier = Modifier.size(HomeLayoutPolicy.MIN_CONTROL_DP.dp)) {
+                Icon(Icons.Outlined.Settings, contentDescription = tr("Settings"), tint = TextSecondary, modifier = Modifier.size(20.dp))
+            }
+        }
+        if (compact) {
+            Column(Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    menuAndTitle()
+                    Text(tr(Lang.appName()), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) { actions() }
+            }
+        } else {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                menuAndTitle()
+                Text(tr(Lang.appName()), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                actions()
+            }
+        }
+    }
+}
+
 @Composable
 fun HomeScreen(
     state: UiState,
@@ -176,115 +250,15 @@ fun HomeScreen(
             .fillMaxSize()
             .statusBarsPadding()
     ) {
-        // Top bar - neat and compact header, prevents wrapping on small screens.
-        // 2.42: every inset comes from HomeLayoutPolicy, so the header, the LED strip, the
-        // news strip and the card list all share one edge instead of 14/16/14/16.
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = HomeLayoutPolicy.SCREEN_HORIZONTAL_DP.dp,
-                    end = HomeLayoutPolicy.HEADER_TRAILING_DP.dp,
-                    top = HomeLayoutPolicy.HEADER_VERTICAL_DP.dp,
-                    bottom = HomeLayoutPolicy.HEADER_VERTICAL_DP.dp,
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // 2.51: the logo became the menu button, so every subject is one swipe or one tap
-            // away instead of a long scroll down this list.
-            IconButton(
-                onClick = onOpenMenu,
-                modifier = Modifier.size(34.dp),
-            ) {
-                Icon(
-                    Icons.Outlined.Menu,
-                    contentDescription = tr("Menu"),
-                    tint = AccentCyan,
-                    modifier = Modifier.size(24.dp),
-                )
-            }
-            Spacer(Modifier.width(HomeLayoutPolicy.HEADER_ICON_GAP_DP.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    tr(Lang.appName()),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                )
-            }
-            // One tap between தமிழ் and English, right where the eye already is. The full
-            // choice (and the note about the launcher name) stays in Settings → Language.
-            TextButton(
-                onClick = { vm.setLanguage(if (Lang.isTamil) AppLang.EN else AppLang.TA) },
-                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
-            ) {
-                Text(
-                    if (Lang.isTamil) "EN" else "த",
-                    color = AccentCyan,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            // A compact, always-visible shortcut opens the complete, expandable guide directly.
-            IconButton(
-                onClick = { vm.navigate(Screen.GUIDE) },
-                modifier = Modifier.size(32.dp),
-            ) {
-                Icon(
-                    Icons.Outlined.MenuBook,
-                    contentDescription = tr("Guide"),
-                    tint = AccentCyan,
-                    modifier = Modifier.size(19.dp),
-                )
-            }
-            // One voice symbol, one tap. The owner asked for exactly this: a single button on the
-            // home screen that turns spoken announcements on and off, rather than an icon that
-            // merely reports the state and opens a page to change it.
-            //
-            // The icon already showed on/off through its shape and colour, so it is now the
-            // control rather than an indicator. A long press still opens the volume slider, which
-            // is the master level and stays reachable without burying the toggle.
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .semantics(mergeDescendants = true) {
-                        role = Role.Switch
-                        stateDescription = if (state.voiceOn) tr("On") else tr("Off")
-                        onClick { vm.setVoiceOn(!state.voiceOn); true }
-                        onLongClick { showVolume = true; true }
-                    }
-                    .pointerInput(state.voiceOn) {
-                        detectTapGestures(
-                            onTap = { vm.setVoiceOn(!state.voiceOn) },
-                            onLongPress = { showVolume = true },
-                        )
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    if (state.voiceOn) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
-                    contentDescription = if (state.voiceOn) {
-                        tr("Voice announcements on. Tap to turn off")
-                    } else {
-                        tr("Voice announcements off. Tap to turn on")
-                    },
-                    tint = if (state.voiceOn) AccentCyan else TextSecondary,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            IconButton(
-                onClick = { vm.navigate(Screen.SETTINGS) },
-                modifier = Modifier.size(38.dp),
-            ) {
-                Icon(
-                    Icons.Outlined.Settings,
-                    contentDescription = tr("Settings"),
-                    tint = TextSecondary,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
+        HomeHeader(
+            voiceOn = state.voiceOn,
+            onOpenMenu = onOpenMenu,
+            onLanguage = { vm.setLanguage(if (Lang.isTamil) AppLang.EN else AppLang.TA) },
+            onGuide = { vm.navigate(Screen.GUIDE) },
+            onVoice = { vm.setVoiceOn(!state.voiceOn) },
+            onVolume = { showVolume = true },
+            onSettings = { vm.navigate(Screen.SETTINGS) },
+        )
 
         // 2.95 — the running/glowing LED sweep that sat above the news card is gone: it repainted
         // every frame for decoration and was the heaviest thing on Home. A plain static rule keeps

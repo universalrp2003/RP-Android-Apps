@@ -22,6 +22,6 @@ command = ['adb', 'shell', 'am', 'instrument', '-w', '-r', '-e', 'expectedCandid
            'com.universalrp.cleansweep.test/androidx.test.runner.AndroidJUnitRunner']
 result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 print(result.stdout)
-if result.returncode != 0 or 'OK (2 tests)' not in result.stdout or 'FAILURES!!!' in result.stdout:
+if result.returncode != 0 or 'OK (3 tests)' not in result.stdout or 'FAILURES!!!' in result.stdout:
     sys.exit('Native review tests failed or did not finish (see output above).')
-print(f'PASS: 2 native checks on disposable emulator; target SHA-256 {sha}. Not a physical-phone/audio test.')
+print(f'PASS: 3 native checks on disposable emulator; target SHA-256 {sha}. Not a physical-phone/audio test.')
