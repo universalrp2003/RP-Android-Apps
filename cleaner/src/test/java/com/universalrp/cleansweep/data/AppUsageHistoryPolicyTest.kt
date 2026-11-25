@@ -71,11 +71,11 @@ class AppUsageHistoryPolicyTest {
     }
 
     @Test fun missingOrUnrecognizedInstallerIsUnknownNotProofOfSideloading() {
-        val missing = row(null, false).copy(pkg = "missing")
-        val blank = missing.copy(pkg = "blank", installer = "")
-        val recognized = missing.copy(pkg = "recognized", installer = "com.android.vending")
-        val other = missing.copy(pkg = "other", installer = "org.example.installer")
-        val system = missing.copy(pkg = "system", isSystem = true)
+        val missing = row(null, false).copy(pkg = "com.review.missing")
+        val blank = missing.copy(pkg = "com.review.blank", installer = "")
+        val recognized = missing.copy(pkg = "com.review.recognized", installer = "com.android.vending")
+        val other = missing.copy(pkg = "com.review.other", installer = "org.example.installer")
+        val system = missing.copy(pkg = "com.review.system", isSystem = true)
         assertEquals("Installer not reported", BloatRules.installerReviewTag(false, null))
         assertEquals("Installer not reported", BloatRules.installerReviewTag(false, ""))
         assertEquals("Installer ID not recognized", BloatRules.installerReviewTag(false, other.installer))
@@ -95,7 +95,7 @@ class AppUsageHistoryPolicyTest {
         assertTrue(unknownId.detail.contains("does not authenticate"))
         for (includeNames in listOf(false, true)) {
             val text = AiReport.build(AiConfig(includeAppNames = includeNames), null, report, null, null, null)
-            assertTrue(text.contains("3 with installer ID missing or unrecognized (not proof of sideloading or safety)"))
+            assertTrue("Unexpected AI summary: $text", text.contains("3 with installer ID missing or unrecognized (not proof of sideloading or safety)"))
             assertFalse(text.contains("3 not from a store"))
         }
     }
