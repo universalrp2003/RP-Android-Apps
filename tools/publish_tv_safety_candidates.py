@@ -73,7 +73,18 @@ def preflight(p, prior, tools):
     subprocess.run(['git', 'diff', '--exit-code', p['source'], 'HEAD', '--', *p['compiled_paths']], check=True)
     a = one([a for a in api(f'actions/runs/{p["run_id"]}/artifacts')['artifacts'] if a['name'] == p['artifact']])
     assert a['id'] == p['artifact_id'] and not a['expired'] and a.get('digest') == 'sha256:' + p['archive_sha256']
-    assert not [r for r in prior if r['tag_name'] == p['tag']], 'Release or draft already exists'
+    matching = [r for r in prior if r['tag_name'] == p['tag']]
+    draft_id = p.get('resume_draft_id')
+    if draft_id:
+        assert all(r['id'] == draft_id for r in matching), 'Unexpected release or draft'
+        draft = api(f'releases/{draft_id}')
+        assert draft['draft'] and not draft['prerelease'] and draft['tag_name'] == p['tag'] and draft['target_commitish'] == p['source']
+        assets = {a['name']: a for a in draft['assets']}
+        assert set(assets) == {p['asset'], p['asset'] + '.sha256'}
+        assert assets[p['asset']]['id'] == p['resume_apk_asset_id'] and assets[p['asset']]['digest'] == 'sha256:' + p['sha256'] and assets[p['asset']]['size'] == p['bytes']
+        assert assets[p['asset'] + '.sha256']['id'] == p['resume_checksum_asset_id']
+    else:
+        assert not matching, 'Release or draft already exists'
     assert not cmd('git', 'ls-remote', '--tags', 'origin', f'refs/tags/{p["tag"]}'), 'Tag already exists'
     baseline = one([r for r in prior if not r['draft'] and r['tag_name'] == p['previous_tag']])
     old_asset = one([a for a in baseline['assets'] if a['name'] == p['previous_asset']])
@@ -124,9 +135,15 @@ def wait_assets(release_id, p):
 
 
 def publish(p, apk, checksum, before):
-    subprocess.run(['gh', 'release', 'create', p['tag'], str(apk), str(checksum), '--repo', REPO,
-                    '--target', p['source'], '--title', p['title'], '--notes-file', p['notes'], '--draft'], check=True)
-    draft = one([r for r in releases() if r['tag_name'] == p['tag']])
+    if p.get('resume_draft_id'):
+        draft = api(f'releases/{p["resume_draft_id"]}')
+    else:
+        # The create response supplies the ID directly; release listings can lag new drafts.
+        payload = json.dumps({'tag_name': p['tag'], 'target_commitish': p['source'], 'name': p['title'],
+                              'body': Path(p['notes']).read_text(), 'draft': True, 'prerelease': False})
+        draft = json.loads(subprocess.run(['gh', 'api', '--method', 'POST', f'repos/{REPO}/releases', '--input', '-'],
+                                          input=payload, text=True, capture_output=True, check=True).stdout)
+        subprocess.run(['gh', 'release', 'upload', p['tag'], str(apk), str(checksum), '--repo', REPO], check=True)
     assert draft['draft'] and not draft['prerelease'] and draft['target_commitish'] == p['source']
     draft, assets = wait_assets(draft['id'], p)
     actual = apk.parent / 'draft-download.apk'

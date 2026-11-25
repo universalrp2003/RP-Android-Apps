@@ -32,7 +32,10 @@
         "settings.gradle.kts",
         "gradle.properties",
         "gradle/"
-      ]
+      ],
+      "resume_draft_id": 457652999,
+      "resume_apk_asset_id": 790046579,
+      "resume_checksum_asset_id": 790046571
     },
     {
       "package": "com.universalrp.appdisabler",
