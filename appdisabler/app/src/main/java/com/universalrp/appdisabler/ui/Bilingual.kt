@@ -79,8 +79,8 @@ object T {
     val statusPermission = Bi("Shizuku running — permission needed", "Shizuku இயங்குகிறது — அனுமதி தேவை")
     val statusMissing = Bi("Shizuku not running", "Shizuku இயங்கவில்லை")
     val bodyReady = Bi(
-        "Open the Apps window and turn off what you do not need. Everything can be restored with one tap.",
-        "Apps சாளரத்தைத் திறந்து தேவையற்றவற்றை முடக்குங்கள். அனைத்தையும் ஒரு தட்டில் மீட்டெடுக்கலாம்."
+        "Review each app before changing it. Enable requests recovery, but recovery can fail.",
+        "மாற்றும்முன் ஒவ்வொரு செயலியையும் கவனமாகச் சரிபார்க்கவும். இயக்கு என்பதைத் தேர்ந்தெடுத்தாலும் மீட்பு தோல்வியடையலாம்."
     )
     val bodyPermission = Bi(
         "Tap “Allow Shizuku permission”, then Allow in the Shizuku dialog. Without it every action fails.",

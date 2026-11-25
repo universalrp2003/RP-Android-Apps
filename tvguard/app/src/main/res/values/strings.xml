@@ -181,7 +181,7 @@
     <string name="security_subtitle">ADB, installers, admins, accessibility, HOME</string>
     <string name="security_intro">Nothing is changed here. Each line links to the system screen where that setting lives; a link opens that screen, and only there can anything be changed.</string>
     <string name="security_summary_ok">No issues found in the settings visible to this app; this is not a security guarantee.</string>
-    <string name="security_summary_counts">%1$d alerts, %2$d warnings. Open the linked screens to review.</string>
+    <string name="security_summary_counts">Alerts: %1$d; warnings: %2$d. Open the linked screens to review.</string>
     <string name="security_shield_title">Security shield in the status strip</string>
     <string name="security_shield_desc">Adds a sixth cell to the floating pill: secure, review or alert, from the checks below. Needs the status pill on.</string>
     <string name="security_shield_strip_off">The status pill is off, so the shield is not drawn yet.</string>
