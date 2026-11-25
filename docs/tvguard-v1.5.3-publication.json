@@ -1,0 +1,16 @@
+{
+  "tag": "tvguard-v1.5.3",
+  "source": "96c7885fcfaf220e28d40418e6bd973ba46cc1ca",
+  "release_id": 457738965,
+  "asset_id": 790395214,
+  "published_at": "2026-11-25T06:39:17Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.3/Android-TV-Guard-v1.5.3.apk",
+  "bytes": 11900631,
+  "apk_sha256": "1d7452ce651551c1e1fd5c4a4dcc73764a6f317ac58a1d69cb71bd9e719ac3c1",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "candidate_run": 45558877424,
+  "artifact_id": 14997038159,
+  "publication_run": 45562138924,
+  "rebuilt": false,
+  "physical_test_scope": "Owner reported candidate working on one TV and shared diagnostics and pill screenshots; the installed device hash was not independently read back."
+}

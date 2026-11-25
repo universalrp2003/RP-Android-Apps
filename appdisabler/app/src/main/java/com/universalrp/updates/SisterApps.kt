@@ -165,7 +165,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "tvguard", name = "Android TV Guard (டிவி காவலன்)", tamilName = "டிவி காவலன்",
-            tagPrefix = "tvguard", version = "1.5.2", publishedVersion = "1.5.2",
+            tagPrefix = "tvguard", version = "1.5.3", publishedVersion = "1.5.3",
             packageName = "com.universalrp.tvguard",
             aboutLabel = "Android TV Guard (டிவி காவலன்) — Android TV release",
         ),

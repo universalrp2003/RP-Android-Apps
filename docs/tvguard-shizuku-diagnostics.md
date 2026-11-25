@@ -1,6 +1,6 @@
-# TV Guard Shizuku diagnostics — 1.5.3 candidate
+# TV Guard Shizuku diagnostics — 1.5.3
 
-This is **work in progress, not a published version**. Public TV Guard remains 1.5.2.
+Version 1.5.3 is public as the exact verified signed candidate; see [publication receipt](tvguard-v1.5.3-publication.json).
 
 ## Use and consent
 
@@ -12,7 +12,7 @@ Process RSS includes shared pages: per-process RSS must not be added into an exa
 
 The status strip CPU value is now **non-idle processor load between samples**, not free CPU capacity. It shows unavailable until a valid second sample. The existing recently-used fallback no longer divides device RAM among apps and claims those amounts belong to each app; it shows `-- MB` when a process measurement is unavailable. Recently used is not the same as currently running.
 
-This candidate does not fix the separately documented [TV Guard 1.5.2 security-audit partial-read limitations](tvguard-security-audit.md). The shield is not proof of safety.
+This release does not fix the separately documented [TV Guard 1.5.2 security-audit partial-read limitations](tvguard-security-audit.md). The shield is not proof of safety.
 
 ## Verification and release status
 
@@ -20,4 +20,4 @@ This candidate does not fix the separately documented [TV Guard 1.5.2 security-a
 - [Real Shizuku run 45558466007](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/45558466007) passed with official Shizuku 13.6.0 started as shell on a disposable TV emulator. It exercised the actual permission dialog, matched TV Guard to a visible process, checked RAM and storage, and verified that turning diagnostics on/off adds/removes the process pill cell. This used a debug build of the same source, not the signed APK.
 - [TV focus run 45558880909](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/45558880909) passed seven D-pad tests. Local source checks: 573 Python tests and resource validation passed.
 - [Read-only receipt inspection run 45559820681](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/45559820681) re-downloaded and verified the candidate APK, hash, byte count, source and receipt without rebuilding.
-- **Not physically tested and not published.** User approval is required before a public release. The candidate can be retrieved from the signed workflow artifact by an authenticated repository user. Never uninstall or clear data to force an update; update only if Android accepts the existing signer. The earlier public 1.5.2 security-audit limitation remains.
+- The owner reported the candidate working on one TV and shared screenshots of live diagnostics and the pill; the installed-device hash was not independently read back. The exact tested candidate was published without rebuilding in run 45562138924. Never uninstall or clear data to force an update; update only if Android accepts the existing signer. The earlier public 1.5.2 security-audit limitation remains.

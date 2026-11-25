@@ -25,3 +25,5 @@ PRIVACY
 No account, no analytics, no ads. The Wi-Fi hub runs only while you switch it on, on your own network. Hardware readings stay on the device.
 
 Requirements: Android TV 8.0 or later. Removing preinstalled apps requires root or wireless ADB, which Android itself demands; without either, TV Guard can only open the standard uninstall dialog for apps you installed yourself. Some readings, such as temperature, depend on what your TV exposes to apps, and the app says so when a reading is unavailable. Not verified on every TV model, and not a Google Play Protect clearance.
+
+Optional Shizuku diagnostics: open a separate read-only screen for visible process RSS, RAM and data-filesystem storage, with an approximate matched-package count on the strip. Start Shizuku separately and grant TV Guard permission. A process snapshot is not a complete list of active apps; RSS includes shared memory.
