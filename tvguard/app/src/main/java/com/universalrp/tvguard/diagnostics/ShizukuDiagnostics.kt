@@ -65,6 +65,10 @@ object ShizukuDiagnostics {
         finally { process?.destroy(); executor.shutdownNow() }
     }
 
+    internal fun matchedPackageCount(rows: List<ProcessRow>?, packages: Set<String>?): Int? =
+        if (rows == null || packages == null) null
+        else rows.map { it.name.substringBefore(':') }.filter { it in packages }.toSet().size
+
     fun read(context: Context): Snapshot {
         val app = context.applicationContext
         val rows = ps()?.let(::parsePs)
@@ -72,7 +76,7 @@ object ShizukuDiagnostics {
             @Suppress("DEPRECATION")
             app.packageManager.getInstalledPackages(0).map { it.packageName }.toSet()
         } catch (_: Exception) { null }
-        val matched = if (rows != null && packages != null) rows.map { it.name.substringBefore(':') }.filter { it in packages }.toSet().size else null
+        val matched = matchedPackageCount(rows, packages)
         val mem = try {
             val manager = app.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
             ActivityManager.MemoryInfo().also { manager.getMemoryInfo(it) }.takeIf { it.totalMem > 0 && it.availMem in 0..it.totalMem }

@@ -62,7 +62,8 @@ python3 tvguard/tools/verify_instrumentation.py "$work/tv-focus.log" \
   --test downFromDebloaterHeaderEntersItsControlsAndHomeReturnsToFirstApp \
   --test networkAndAboutHeadersLeadIntoTheirOwnContent \
   --test appendedExpertSwitchesAreReachableScrolledAndOffByDefault \
-  --test securityAuditOpensFromToolsAndDpadReachesActions
+  --test securityAuditOpensFromToolsAndDpadReachesActions \
+  --test shizukuDiagnosticsSwitchWorksWithoutServiceUsingRemote
 
 # Also check that the focus tests restored the synthetic choices.
 run_probe verify
@@ -73,4 +74,4 @@ test "${#installed_paths[@]}" -eq 1
 installed_sha="$(adb shell sha256sum "${installed_paths[0]}" | tr -d '\r' | awk '{print $1}')"
 candidate_sha="$(sha256sum "$candidate" | awk '{print $1}')"
 test "$installed_sha" = "$candidate_sha"
-echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; same-key update preserved synthetic favorites, hidden apps, feature choices and a private file; five TV focus tests passed on the exact candidate APK, with the tile options opened by the Menu key now that the held-OK long press has been removed."
+echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; same-key update preserved synthetic favorites, hidden apps, feature choices and a private file; seven TV focus tests passed on the exact candidate APK, with the tile options opened by the Menu key now that the held-OK long press has been removed."

@@ -54,7 +54,7 @@ fun TvShizukuDiagnosticsView(context: Context, onBack: () -> Unit) {
     }
     fun bytes(n: Long?): String = n?.let { String.format(Locale.US, "%.1f GiB", it / 1073741824.0) } ?: unknown
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TvFocusButton(text = stringResource(R.string.btn_back), onClick = onBack, modifier = Modifier.focusRequester(back).testTag("shizuku-back")) }
+        item { TvFocusButton(text = stringResource(R.string.back_to_tools), onClick = onBack, modifier = Modifier.focusRequester(back).testTag("shizuku-back")) }
         item { Text(stringResource(R.string.shizuku_title), color = Color.White, fontSize = 24.sp) }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

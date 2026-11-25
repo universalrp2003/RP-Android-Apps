@@ -259,5 +259,5 @@ Packages matched to a visible process: %6$s
 Visible process rows: %7$s</string>
     <string name="shizuku_processes">Visible processes — RSS includes shared memory; showing up to 80</string>
     <string name="shizuku_process_line">PID %1$d · %2$s KiB RSS · %3$s</string>
-    <string name="shizuku_pill_count">%1$d apps</string>
+    <string name="shizuku_pill_count">%1$d pkg</string>
 </resources>
