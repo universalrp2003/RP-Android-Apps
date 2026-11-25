@@ -167,7 +167,7 @@
     <!-- Status overlay over other apps -->
     <string name="overlay_notification_channel">Status overlay</string>
     <string name="overlay_notification_title">Status overlay is on</string>
-    <string name="overlay_notification_text">Showing free CPU, RAM, storage and network quality over other apps.</string>
+    <string name="overlay_notification_text">Showing CPU load, available RAM, storage and network quality over other apps.</string>
     <string name="feature_status_overlay">Status pill over other apps</string>
     <string name="feature_status_overlay_desc">Draws the five readings on one line at the top of the screen: processor load, free RAM, free storage, temperature and internet quality. Needs "Display over other apps". Secure or system screens may hide it.</string>
     <string name="overlay_permission_needed">Allow "display over other apps" to use the overlay.</string>
@@ -238,4 +238,5 @@
     <string name="storage_honest_free">Free space shown in the pill</string>
     <string name="storage_honest_free_value">%1$s GiB free of %2$s GiB %3$s</string>
     <string name="storage_capped_note"> (limited to the physical disk; the filesystem claims more)</string>
+    <string name="running_recent">Recent activity</string>
 </resources>

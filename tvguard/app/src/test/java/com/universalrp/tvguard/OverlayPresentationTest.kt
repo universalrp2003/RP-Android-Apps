@@ -105,4 +105,10 @@ class OverlayPresentationTest {
         val moved = OverlayPlacement.BOTTOM_RIGHT.nudged(16, 16)
         assertEquals(OverlayPlacement.BOTTOM_RIGHT.gravity, moved.gravity)
     }
+    @org.junit.Test fun processorPillShowsLoadNotUnusedCapacity() {
+        assertEquals("75%", OverlaySampler.cpuMetric(75).value)
+        assertEquals(Band.WARN, OverlaySampler.cpuMetric(75).band)
+        assertEquals("--%", OverlaySampler.cpuMetric(null).value)
+        assertEquals("--%", OverlaySampler.cpuMetric(101).value)
+    }
 }

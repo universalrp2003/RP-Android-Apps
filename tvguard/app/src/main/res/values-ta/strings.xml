@@ -167,7 +167,7 @@
     <!-- Status overlay over other apps -->
     <string name="overlay_notification_channel">நிலை மேலடுக்கு</string>
     <string name="overlay_notification_title">நிலை மேலடுக்கு இயக்கத்தில் உள்ளது</string>
-    <string name="overlay_notification_text">மற்ற ஆப்களின் மேல் காலி CPU, RAM, சேமிப்பகம், நெட்வொர்க் தரம் காட்டப்படுகிறது.</string>
+    <string name="overlay_notification_text">மற்ற ஆப்களின் மேல் CPU பயன்பாடு, கிடைக்கும் RAM, சேமிப்பகம், நெட்வொர்க் தரம் காட்டப்படுகிறது.</string>
     <string name="feature_status_overlay">மற்ற ஆப்களின் மேல் நிலைக் காட்டி</string>
     <string name="feature_status_overlay_desc">திரையின் மேலே ஒரே வரியில் ஐந்து அளவுகளைக் காட்டும்: செயலி சுமை, இலவச RAM, இலவச சேமிப்பு, வெப்பநிலை மற்றும் இணையத் தரம். "மற்ற ஆப்களுக்கு மேல் காட்டு" அனுமதி தேவை.</string>
     <string name="overlay_permission_needed">மேலடுக்குக்கு "மற்ற ஆப்களின் மேல் காட்ட" அனுமதி தேவை.</string>
@@ -238,4 +238,5 @@
     <string name="storage_honest_free">பில்லில் காட்டப்படும் இடம்</string>
     <string name="storage_honest_free_value">%2$s GiB இல் %1$s GiB இலவசம் %3$s</string>
     <string name="storage_capped_note"> (இயற்பியல் வட்டுக்கு வரம்பிடப்பட்டது; கோப்பு முறைமை அதிகமாகக் கூறுகிறது)</string>
+    <string name="running_recent">சமீபத்திய பயன்பாடு</string>
 </resources>

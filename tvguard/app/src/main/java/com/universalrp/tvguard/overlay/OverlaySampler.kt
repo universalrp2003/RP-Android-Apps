@@ -47,7 +47,7 @@ object OverlaySampler {
 
     private var previousCpu: CpuTimes? = null
 
-    /** CPU free capacity, i.e. 100 - utilisation. */
+    /** CPU load: non-idle percentage between two /proc/stat samples. */
     suspend fun cpu(): OverlayMetric = withContextIo {
         val stat = try {
             File("/proc/stat").readText()
@@ -57,18 +57,12 @@ object OverlaySampler {
         val current = stat?.let { CpuUsage.parse(it) }
         val usage = CpuUsage.percentage(previousCpu, current)
         previousCpu = current
-        if (usage == null) {
-            OverlayMetric("CPU", "--%", Band.UNAVAILABLE, false)
-        } else {
-            val free = (100 - usage).coerceIn(0, 100)
-            OverlayMetric(
-                "CPU",
-                "$free%",
-                StatusThresholds.cpu(usage),
-                true,
-            )
-        }
+        cpuMetric(usage)
     }
+
+    internal fun cpuMetric(usage: Int?): OverlayMetric =
+        if (usage == null || usage !in 0..100) OverlayMetric("CPU", "--%", Band.UNAVAILABLE, false)
+        else OverlayMetric("CPU", "$usage%", StatusThresholds.cpu(usage), true)
 
     /**
      * Available RAM from ActivityManager's memory info. Reports MiB, which is what a user

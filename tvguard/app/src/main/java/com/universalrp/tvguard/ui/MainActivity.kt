@@ -2162,7 +2162,7 @@ fun TvRunningAppCard(
 
                 // RAM Pill
                 Text(
-                    text = "${app.memoryUsageMb} MB",
+                    text = if (app.memoryUsageMb < 0) "-- MB" else "${app.memoryUsageMb} MB",
                     color = if (isFocused) Color.Black else if (app.memoryUsageMb > 150) Color(0xFFFF5252) else Color(0xFF00E676),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -2181,7 +2181,7 @@ fun TvRunningAppCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (app.isForeground) "Foreground" else if (app.isSystemApp) "System" else "Background",
+                    text = if (app.pid < 0) stringResource(R.string.running_recent) else if (app.isForeground) "Foreground" else if (app.isSystemApp) "System" else "Background",
                     color = if (isFocused) Color(0xFFE2E8F0) else Color(0xFF94A3B8),
                     fontSize = 11.sp
                 )
