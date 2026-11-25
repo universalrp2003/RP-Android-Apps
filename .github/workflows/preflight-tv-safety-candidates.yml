@@ -2,8 +2,8 @@ name: Preflight exact TV safety candidates (no publication)
 on:
   push:
     branches: ["arena/30198928-rp-android-apps"]
-    paths: ["docs/tv-safety-candidate-pins.json"]
-permissions: {contents: read, actions: read}
+    paths: ["docs/tv-safety-candidate-pins.json", ".github/workflows/preflight-tv-safety-candidates.yml"]
+permissions: {contents: write, actions: read}
 jobs:
   preflight:
     runs-on: ubuntu-24.04
