@@ -706,11 +706,11 @@ fun AppsListWindow(
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("disabler-search-field"),
                     placeholder = { Text(biStatic(T.searchHint, taFirst), style = MaterialTheme.typography.bodySmall) },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     trailingIcon = {
-                        IconButton(onClick = { searchOpen = false; query = "" }) {
+                        IconButton(onClick = { searchOpen = false; query = "" }, modifier = Modifier.testTag("disabler-search-close")) {
                             Icon(Icons.Default.Close, contentDescription = "Close search")
                         }
                     },
@@ -719,7 +719,7 @@ fun AppsListWindow(
                     textStyle = MaterialTheme.typography.bodySmall
                 )
             } else {
-                IconButton(onClick = { searchOpen = true }) {
+                IconButton(onClick = { searchOpen = true }, modifier = Modifier.testTag("disabler-search-open")) {
                     Icon(Icons.Default.Search, contentDescription = "Search")
                 }
                 Spacer(Modifier.weight(1f))
@@ -737,8 +737,8 @@ fun AppsListWindow(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FilterChip(selected = tab == 0 && !runningOnly, onClick = { tab = 0; runningOnly = false }, label = { Text("All", style = MaterialTheme.typography.labelSmall) })
-            FilterChip(selected = tab == 1 && !runningOnly, onClick = { tab = 1; runningOnly = false }, label = { Text("System", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(modifier = Modifier.testTag("disabler-filter-all"), selected = tab == 0 && !runningOnly, onClick = { tab = 0; runningOnly = false }, label = { Text("All", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(modifier = Modifier.testTag("disabler-filter-system"), selected = tab == 1 && !runningOnly, onClick = { tab = 1; runningOnly = false }, label = { Text("System", style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = tab == 2 && !runningOnly, onClick = { tab = 2; runningOnly = false }, label = { Text("Off", style = MaterialTheme.typography.labelSmall) })
             VerticalDivider(Modifier.height(20.dp))
             // With no category filter the list would otherwise hide everything the header counted.
@@ -939,8 +939,10 @@ fun AppsListWindow(
                     Text(app.label, fontWeight = FontWeight.Bold)
                     Text(app.packageName, style = MaterialTheme.typography.labelSmall)
                     Text(ratingLabel(app), style = MaterialTheme.typography.labelMedium)
-                    if (DisableManager.visibleDeviceOwner(context) == true) {
-                        Text(biStatic(T.managedWarning, taFirst), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    when (DisableManager.visibleDeviceOwner(context)) {
+                        true -> Text(biStatic(T.managedWarning, taFirst), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        null -> Text(biStatic(T.managementUnknown, taFirst), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        false -> Unit
                     }
                     app.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                     Text("Any app may be needed on your phone. Recovery can fail. Change one app, then test your phone. No app data backup is included.\nஎந்த செயலியும் தேவைப்படலாம். மீண்டும் இயக்க முடியாமல் போகலாம். ஒன்றை மட்டும் மாற்றி கைபேசியைச் சோதிக்கவும்.", style = MaterialTheme.typography.bodyMedium)

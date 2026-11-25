@@ -35,11 +35,12 @@ python3 tvguard/tools/verify_instrumentation.py "$work/tv-focus.log" \
   --class-name com.universalrp.appdisabler.TvFocusTest \
   --test navigationAndPlanAreReachableByRemote \
   --test guideBackButtonAndSystemBackReturnToSetup \
-  --test appCardOpensDetailsWithoutDisablingAnything
+  --test appCardOpensDetailsWithoutDisablingAnything \
+  --test searchAndFilterControlsWorkWithRemote
 probe verify
 mapfile -t paths < <(adb shell pm path "$pkg" | tr -d '\r' | sed -n 's/^package://p')
 test "${#paths[@]}" -eq 1
 installed="$(adb shell sha256sum "${paths[0]}" | tr -d '\r' | awk '{print $1}')"
 expected="$(sha256sum "$candidate" | awk '{print $1}')"
 test "$installed" = "$expected"
-echo "::notice title=Signed Disabler TV checks::Public 0.4.1 updated in place; UID and synthetic preferences, inventory and private file survived; three TV focus tests passed on SHA-256 $expected. No real package was disabled."
+echo "::notice title=Signed Disabler TV checks::Public 0.4.1 updated in place; UID and synthetic preferences, inventory and private file survived; four TV focus tests passed on SHA-256 $expected. No real package was disabled."

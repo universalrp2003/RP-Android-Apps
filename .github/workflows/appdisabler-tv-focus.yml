@@ -41,7 +41,7 @@ jobs:
           import xml.etree.ElementTree as ET
           roots = [ET.parse(p).getroot() for p in Path('appdisabler/app/build/outputs/androidTest-results/connected').rglob('*.xml')]
           cases = [c for r in roots for c in r.iter('testcase') if c.get('classname', '').endswith('TvFocusTest')]
-          expected = {'navigationAndPlanAreReachableByRemote', 'guideBackButtonAndSystemBackReturnToSetup', 'appCardOpensDetailsWithoutDisablingAnything'}
+          expected = {'navigationAndPlanAreReachableByRemote', 'guideBackButtonAndSystemBackReturnToSetup', 'appCardOpensDetailsWithoutDisablingAnything', 'searchAndFilterControlsWorkWithRemote'}
           assert len(cases) == len(expected) and {c.get('name') for c in cases} == expected, 'Missing or duplicate TV tests'
           assert all(all(c.find(k) is None for k in ('error', 'failure', 'skipped')) for c in cases), 'A TV test failed or was skipped'
           print(f'::notice title=Disabler TV navigation::{len(cases)} focus tests passed')

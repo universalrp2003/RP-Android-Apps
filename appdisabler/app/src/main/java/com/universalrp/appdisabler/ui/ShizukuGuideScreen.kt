@@ -37,7 +37,7 @@ fun ShizukuGuideScreen(onBack: () -> Unit) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 BiText(T.g1Title, style = MaterialTheme.typography.titleSmall, bold = true)
                 BiText(T.g1Body)
-                Button(onClick = {
+                Button(modifier = Modifier.testTag("disabler-guide-start"), onClick = {
                     if (!openShizuku(context)) {
                         openHelpLink(context, "https://shizuku.rikka.app/download/")
                     }

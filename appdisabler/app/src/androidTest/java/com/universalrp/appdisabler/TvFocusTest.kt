@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.universalrp.appdisabler.ui.MainActivity
@@ -54,8 +55,27 @@ class TvFocusTest {
     @Test fun guideBackButtonAndSystemBackReturnToSetup() {
         compose.onNodeWithTag("disabler-setup-guide").performScrollTo().performClick()
         awaitFocus("disabler-guide-back")
+        compose.onNodeWithTag("disabler-guide-back").performKeyInput { pressKey(Key.DirectionDown) }
+        awaitFocus("disabler-guide-start")
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.onNodeWithTag("disabler-nav-setup").assertExists()
+    }
+
+    @Test fun searchAndFilterControlsWorkWithRemote() {
+        compose.onNodeWithTag("disabler-nav-apps").performClick()
+        compose.waitUntil(timeoutMillis = 30_000) {
+            compose.onAllNodes(hasTestTag("disabler-search-open")).fetchSemanticsNodes().isNotEmpty()
+        }
+        requestFocus("disabler-search-open")
+        compose.onNodeWithTag("disabler-search-open").performKeyInput { pressKey(Key.DirectionCenter) }
+        requestFocus("disabler-search-field")
+        compose.onNodeWithTag("disabler-search-field").performTextInput("no-such-package-for-test")
+        compose.onNodeWithTag("disabler-search-close").performClick()
+        compose.onNodeWithTag("disabler-search-field").assertDoesNotExist()
+        requestFocus("disabler-filter-all")
+        compose.onNodeWithTag("disabler-filter-all").performKeyInput { pressKey(Key.DirectionRight) }
+        awaitFocus("disabler-filter-system")
+        compose.onNodeWithTag("disabler-filter-system").performKeyInput { pressKey(Key.DirectionCenter) }
     }
 
     @Test fun appCardOpensDetailsWithoutDisablingAnything() {

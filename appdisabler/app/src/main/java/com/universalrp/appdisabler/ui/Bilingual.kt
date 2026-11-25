@@ -288,6 +288,10 @@ object T {
     val thisApp = Bi("this app", "இந்த ஆப்")
 
     // ---------- guide screen ----------
+    val managementUnknown = Bi(
+        "Device management status could not be checked. Ask the provider or administrator before changing managed devices.",
+        "சாதன நிர்வாக நிலையைச் சரிபார்க்க முடியவில்லை. மாற்றும்முன் வழங்குநர் அல்லது நிர்வாகியிடம் கேளுங்கள்."
+    )
     val managedWarning = Bi(
         "A device owner is visible on this device. Changes can interfere with the provider or administrator; recovery may not be possible.",
         "இந்தச் சாதனத்தில் நிர்வாகி தெரிகிறார். மாற்றங்கள் வழங்குநரின் நிர்வாகத்தை பாதிக்கலாம்; மீட்க முடியாமல் போகலாம்."

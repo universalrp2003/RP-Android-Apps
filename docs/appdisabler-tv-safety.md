@@ -30,7 +30,7 @@ a warning does **not** prove the device is unmanaged.
 
 The TV test workflow `.github/workflows/appdisabler-tv-focus.yml` runs on a disposable Android TV
 emulator without granting Shizuku: it checks Setup/Apps navigation, the planning dialog, guide Back,
-and opening an app's details without disabling it. Unit tests check the HOME decision for missing,
+search and filters, and opening an app's details without disabling it. Unit tests check the HOME decision for missing,
 suspended/unknown and verified alternatives. The candidate workflow runs unit tests, lint and APK
 assembly. These tests do not establish that Shizuku works on any particular TV, that all screens are
 reachable with every remote, or that an essential app can be safely disabled or recovered. A real TV
