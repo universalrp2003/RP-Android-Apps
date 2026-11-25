@@ -223,7 +223,8 @@ enum class ToolsSubView {
     HIDDEN_APPS,
     ABOUT,
     EXPERT,
-    SECURITY
+    SECURITY,
+    SHIZUKU
 }
 
 /** Lazy items and Dialog windows can attach after the first composition. */
@@ -712,6 +713,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     onOpenHiddenApps = { toolsSubView = ToolsSubView.HIDDEN_APPS },
                                     onOpenAbout = { toolsSubView = ToolsSubView.ABOUT },
                                     onOpenSecurity = { toolsSubView = ToolsSubView.SECURITY },
+                                    onOpenShizuku = { toolsSubView = ToolsSubView.SHIZUKU },
                                     onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
                                     // Ask before opening a system screen, and explain why.
                                     // One tap goes straight to the system page: the extra
@@ -902,6 +904,10 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     onChange = { updateFeatures(it) },
                                     onBack = { toolsSubView = ToolsSubView.OVERVIEW }
                                 )
+                            }
+
+                            ToolsSubView.SHIZUKU -> {
+                                TvShizukuDiagnosticsView(context, onBack = { toolsSubView = ToolsSubView.OVERVIEW })
                             }
 
                             ToolsSubView.SECURITY -> {
@@ -1740,6 +1746,7 @@ fun TvToolsView(
     onOpenHiddenApps: () -> Unit,
     onOpenAbout: () -> Unit,
     onOpenSecurity: () -> Unit,
+    onOpenShizuku: () -> Unit,
     onSetDefaultLauncher: () -> Unit,
     onGrantStorage: () -> Unit,
     overlayPlacement: OverlayPlacement,
@@ -1777,6 +1784,13 @@ fun TvToolsView(
                     .focusable()
                     .focusProperties { down = FocusRequester.Default }
             )
+        }
+        // Optional read-only diagnostics have their own explicit switch and do not require Expert.
+        item {
+            Row(Modifier.fillMaxWidth()) {
+                TvActionCard(stringResource(R.string.shizuku_title), stringResource(R.string.shizuku_subtitle),
+                    Icons.Default.Info, Color(0xFF38BDF8), onOpenShizuku, Modifier.weight(1f).testTag("tools-shizuku"))
+            }
         }
         // Essential launcher settings remain available in lightweight mode.
         item {

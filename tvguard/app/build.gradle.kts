@@ -42,10 +42,10 @@ android {
         // per-reading switches and the long-press menu are gone, the pill switch no longer
         // depends on the in-app header, and uploaded files appear in the hub. It updates the
         // rejected code 4 install in place.
-        versionCode = if (upgradeFixture) 1 else 9
+        versionCode = if (upgradeFixture) 1 else 10
         // The upgrade fixture deliberately impersonates the older 1.0 / code 1 install so a
         // same-signer in-place upgrade can be exercised; only the real candidate moves on.
-        versionName = if (upgradeFixture) "1.0" else "1.5.2"
+        versionName = if (upgradeFixture) "1.0" else "1.5.3"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
@@ -110,6 +110,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
 
     // D-pad/Home integration tests run only when connectedAndroidTest is requested.
     androidTestImplementation(composeBom)

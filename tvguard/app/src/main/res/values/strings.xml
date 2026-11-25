@@ -239,4 +239,25 @@
     <string name="storage_honest_free_value">%1$s GiB free of %2$s GiB %3$s</string>
     <string name="storage_capped_note"> (limited to the physical disk; the filesystem claims more)</string>
     <string name="running_recent">Recent activity</string>
+    <string name="shizuku_title">Shizuku diagnostics</string>
+    <string name="shizuku_subtitle">Optional, read-only process and memory details</string>
+    <string name="shizuku_enable">Turn diagnostics on</string>
+    <string name="shizuku_disable">Turn diagnostics off</string>
+    <string name="shizuku_open">Open Shizuku</string>
+    <string name="shizuku_allow">Allow TV Guard</string>
+    <string name="shizuku_refresh">Refresh</string>
+    <string name="shizuku_disabled">Diagnostics are off. No Shizuku process queries are made.</string>
+    <string name="shizuku_not_ready">Shizuku is not running or TV Guard is not authorized. Open Shizuku, start it using its supported setup, then allow TV Guard. Starting it may require user pairing or root and may be needed again after reboot.</string>
+    <string name="shizuku_no_app">Cannot open Shizuku on this TV. Install it separately or start it from your apps list.</string>
+    <string name="shizuku_ready">Connected. Read-only snapshots; nothing is disabled or stopped.</string>
+    <string name="shizuku_limits">Process visibility depends on Android and the TV. RSS includes shared memory and must not be added as exact app RAM. Recently used is not the same as running. Storage numbers are filesystem reports, not proof of physical capacity.</string>
+    <string name="shizuku_unknown">Unavailable</string>
+    <string name="shizuku_stats">RAM available / total: %1$s / %2$s
+Data filesystem available / total: %3$s / %4$s
+Installed packages visible: %5$s
+Packages matched to a visible process: %6$s
+Visible process rows: %7$s</string>
+    <string name="shizuku_processes">Visible processes — RSS includes shared memory; showing up to 80</string>
+    <string name="shizuku_process_line">PID %1$d · %2$s KiB RSS · %3$s</string>
+    <string name="shizuku_pill_count">%1$d apps</string>
 </resources>
