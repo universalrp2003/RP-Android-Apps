@@ -1,9 +1,9 @@
 package com.universalrp.tvguard
 
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import android.view.View
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -12,6 +12,8 @@ import androidx.test.uiautomator.Until
 import com.universalrp.tvguard.diagnostics.ShizukuDiagnostics
 import com.universalrp.tvguard.diagnostics.ShizukuDiagnosticsPreferences
 import com.universalrp.tvguard.ui.MainActivity
+import com.universalrp.tvguard.overlay.buildPill
+import com.universalrp.tvguard.overlay.OVERLAY_PROCESSES
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -48,8 +50,14 @@ class ShizukuLiveDiagnosticsTest {
             assertTrue(snapshot.matchedPackages!! > 0)
             assertNotNull(snapshot.availableRam)
             assertNotNull(snapshot.storageFree)
+            compose.runOnIdle {
+                assertNotNull("connected diagnostics must add the process pill cell", buildPill(compose.activity).first.findViewWithTag<View>(OVERLAY_PROCESSES))
+            }
             compose.onNodeWithTag("shizuku-toggle").performClick()
             assertFalse(preferences.enabled)
+            compose.runOnIdle {
+                assertNull("switching diagnostics off must remove the process pill cell", buildPill(compose.activity).first.findViewWithTag<View>(OVERLAY_PROCESSES))
+            }
         } finally { preferences.enabled = previous }
     }
 }

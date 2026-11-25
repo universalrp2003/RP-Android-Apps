@@ -6,7 +6,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import com.universalrp.tvguard.debloat.DebloatEngine
-import java.io.File
 
 data class RunningAppInfo(
     val packageName: String,
@@ -76,7 +75,7 @@ object RunningAppsManager {
 
             val isSystem = appInfo?.let { (it.flags and ApplicationInfo.FLAG_SYSTEM) != 0 } ?: false
             val isFg = proc.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-            val memMb = memMap[proc.pid] ?: readProcRssMb(proc.pid)
+            val memMb = memMap[proc.pid] ?: -1
 
             list.add(
                 RunningAppInfo(
@@ -155,22 +154,6 @@ object RunningAppsManager {
 
     private const val WINDOW_MS = 6L * 60L * 60L * 1000L
         private const val MAX_LISTED = 20
-
-    private fun readProcRssMb(pid: Int): Int {
-        return try {
-            val statm = File("/proc/$pid/statm")
-            if (statm.exists()) {
-                val parts = statm.readText().trim().split("\\s+".toRegex())
-                val rssPages = parts.getOrNull(1)?.toLongOrNull() ?: return -1
-                if (rssPages <= 0) return -1
-                // This legacy fallback cannot know the system page size reliably. Avoid
-                // manufacturing a number from an assumed 4 KiB page size.
-                -1
-            } else -1
-        } catch (_: Throwable) {
-            -1
-        }
-    }
 
     fun closeApp(context: Context, packageName: String): Boolean {
         // Method 1: Root silent force-stop
