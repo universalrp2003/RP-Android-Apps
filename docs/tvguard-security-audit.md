@@ -75,6 +75,8 @@ its link is the end of the chain. Links open system screens and are not pressed 
 
 ## Limitations, stated plainly
 
+- **Known 1.5.2 partial-read limitations:** an installer whose application details cannot be read is silently omitted; a failed HOME lookup is represented like no default; and a missing USB ADB setting defaults to off. A secure/clear result can therefore be incomplete even without a visible read error. Check the Android settings directly; do not rely on the shield as proof of safety. These are limitations of the released APK, not a claim of a fix.
+
 - Device-owner detection checks only visible active admins for the current user; it does not prove that other users or profiles are unmanaged. An error reading the audit is shown as unavailable, not clear.
 - It reports what Android exposes to an app. A rooted or provider-signed modification can hide
   from these settings; a clean result is not proof of a clean box.

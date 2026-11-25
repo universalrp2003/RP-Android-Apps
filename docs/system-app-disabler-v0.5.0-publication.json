@@ -1,0 +1,16 @@
+{
+  "tag": "system-app-disabler-v0.5.0",
+  "source": "2ca5752602686c9ebfc15f314301eb7cc04bc053",
+  "release_id": 457654445,
+  "asset_id": 790052792,
+  "published_at": "2026-11-25T04:31:29Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.5.0/System-App-Disabler-v0.5.0.apk",
+  "bytes": 11685145,
+  "apk_sha256": "1f9846d8d995520530ea1d9b2602daf16f8856c4371191c8d0561cba3d97b920",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "candidate_run": 45546028062,
+  "artifact_id": 14990519978,
+  "publication_run": 45547302204,
+  "rebuilt": false,
+  "physical_test_scope": "Owner reported earlier candidates worked on their TV and remote; corrected published APK was not retested on physical TV."
+}

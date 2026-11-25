@@ -1,0 +1,16 @@
+{
+  "tag": "tvguard-v1.5.2",
+  "source": "2ca5752602686c9ebfc15f314301eb7cc04bc053",
+  "release_id": 457652999,
+  "asset_id": 790046579,
+  "published_at": "2026-11-25T04:31:22Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.2/Android-TV-Guard-v1.5.2.apk",
+  "bytes": 11855823,
+  "apk_sha256": "66acfaa601394bed85b3628e22214b56903427c2cd37c042c36a285f22251443",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "candidate_run": 45546027796,
+  "artifact_id": 14992170333,
+  "publication_run": 45547302204,
+  "rebuilt": false,
+  "physical_test_scope": "Owner reported earlier candidates worked on their TV and remote; corrected published APK was not retested on physical TV."
+}

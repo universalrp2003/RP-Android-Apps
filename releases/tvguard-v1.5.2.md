@@ -6,10 +6,14 @@
 - The owner reported that the earlier candidate worked with the remote on their TV setup. This wording-corrected signed build was checked on a disposable TV emulator, including same-key upgrade and D-pad tests; **it has not been retested on the physical TV**. The installed hash of the earlier candidate was not independently read back. Settings screens and remote behavior may differ by manufacturer.
 - Install over the existing app only if Android accepts the update. Do not uninstall or bypass a security warning to force installation.
 
+**Known limitation:** Android package visibility can hide installers and management state. In this release an installer whose package details cannot be read can be omitted, and an unavailable HOME lookup may look like no default. USB ADB read uses an off default if the setting is absent. Treat a clear or secure result as incomplete, not proof that these settings are safe; check Android settings directly.
+
 ## தமிழ்
 
 விருப்பமாக இயக்கும் பாதுகாப்புச் சரிபார்ப்பு, இந்த ஆப்புக்குத் தெரியும் பிழைத்திருத்தம், வெளியிலிருந்து நிறுவும் ஆப்கள், நிர்வாகிகள், அணுகல்தன்மைச் சேவைகள் மற்றும் முகப்புச் செயலியைப் பார்க்கிறது. முடிந்த இடங்களில் தொடர்புடைய அமைப்புகளைத் திறக்கலாம்; இங்கே அமைப்புகள் மாற்றப்படாது.
 
 விருப்பமான ஆறாவது நிலைக் குறியீடு முடிவைச் சுருக்கிக் காட்டும். படிக்க முடியாத தகவல் பாதுகாப்பானது என்று கருதப்படாது. எல்லாம் சரி என்ற முடிவு முழுப் பாதுகாப்புக்கான உறுதி அல்ல.
+
+சில செயலிகளின் தகவலைப் படிக்க முடியாவிட்டால் அவை பட்டியலில் விடுபடலாம்; முகப்புச் செயலி அல்லது USB பிழைத்திருத்த நிலையும் முழுமையற்றதாக இருக்கலாம். பாதுகாப்பு முடிவு உறுதியல்ல; ஆண்ட்ராய்டு அமைப்புகளில் நேரடியாகச் சரிபார்க்கவும்.
 
 இந்தத் துல்லியமான உருவாக்கம் சோதனைத் தொலைக்காட்சிச் சூழலில் சரிபார்க்கப்பட்டது; உண்மையான சாதனத்தில் சோதிக்கப்பட்டதாகக் கூறவில்லை. அமைப்புகளும் ரிமோட் இயக்கமும் சாதனத்துக்கு மாறலாம். பாதுகாப்பு எச்சரிக்கையைத் தவிர்த்து நிறுவ வேண்டாம்.

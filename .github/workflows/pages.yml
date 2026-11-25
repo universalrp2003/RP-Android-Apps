@@ -68,8 +68,8 @@ jobs:
               ("ramesh-radio-v1.31", "Ramesh-Radio-v1.31.apk", 15179972, "fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22"),
               ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
               ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
-              ("tvguard-v1.5.1", "Android-TV-Guard-v1.5.1.apk", 11797331, "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b"),
-              ("system-app-disabler-v0.4.1", "System-App-Disabler-v0.4.1.apk", 11684389, "d4a51560e1cd77eb240d2132cfad568796be5f4f642f6dfce5bcecdbd5294aea"),
+              ("tvguard-v1.5.2", "Android-TV-Guard-v1.5.2.apk", 11855823, "66acfaa601394bed85b3628e22214b56903427c2cd37c042c36a285f22251443"),
+              ("system-app-disabler-v0.5.0", "System-App-Disabler-v0.5.0.apk", 11685145, "1f9846d8d995520530ea1d9b2602daf16f8856c4371191c8d0561cba3d97b920"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -105,10 +105,10 @@ jobs:
           test -f site/robots.txt
           test -s site/apks/CleanSweep-v3.01.apk
           test -s site/apks/CleanSweep-v3.01.zip
-          test -s site/apks/Android-TV-Guard-v1.5.1.apk
-          test -s site/apks/Android-TV-Guard-v1.5.1.zip
-          test -s site/apks/System-App-Disabler-v0.4.1.apk
-          test -s site/apks/System-App-Disabler-v0.4.1.zip
+          test -s site/apks/Android-TV-Guard-v1.5.2.apk
+          test -s site/apks/Android-TV-Guard-v1.5.2.zip
+          test -s site/apks/System-App-Disabler-v0.5.0.apk
+          test -s site/apks/System-App-Disabler-v0.5.0.zip
           test -s site/apks/Animal-Sounds-v0.22.apk
           test -s site/apks/Animal-Sounds-v0.22.zip
           test -s site/apks/Weekly-Money-v1.5.apk

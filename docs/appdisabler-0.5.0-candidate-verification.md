@@ -1,3 +1,5 @@
+> Historical record of an earlier **superseded** candidate, not the published APK. The corrected candidate and publication are documented in [system-app-disabler-v0.5.0-publication.json](system-app-disabler-v0.5.0-publication.json).
+
 # System App Disabler 0.5.0 candidate verification
 
 **Unpublished candidate; not a physical-TV test or a guarantee that disabling is safe.**

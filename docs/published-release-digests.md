@@ -1,3 +1,10 @@
+## TV safety releases — exact owner-authorized candidates
+
+- [Android TV Guard 1.5.2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.2): 11,855,823 bytes; SHA-256 `66acfaa601394bed85b3628e22214b56903427c2cd37c042c36a285f22251443`. Signed candidate run 45546027796; release 457652999; asset 790046579. [Receipt](tvguard-v1.5.2-publication.json).
+- [System App Disabler 0.5.0](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.5.0): 11,685,145 bytes; SHA-256 `1f9846d8d995520530ea1d9b2602daf16f8856c4371191c8d0561cba3d97b920`. Signed candidate run 45546028062; release 457654445; asset 790052792. [Receipt](system-app-disabler-v0.5.0-publication.json).
+
+Publisher run 45547302204 rechecked signed tested candidates and their draft and public bytes without rebuilding. The owner reported earlier candidates worked with their TV and remote; the corrected published APKs were not retested on the physical TV. No physical installed-hash, real disable/recovery or settings-link verification is claimed. No new permissions versus previous public versions. Earlier public release assets were preserved.
+
 ## Live Guard 3.01 — radio timeout fix
 
 - [CleanSweep-v3.01.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.01/CleanSweep-v3.01.apk): 14,781,231 bytes; SHA-256 `b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f`.

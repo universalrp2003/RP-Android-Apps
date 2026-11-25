@@ -1,3 +1,5 @@
+> Historical record of an earlier **superseded** candidate, not the published APK. The corrected candidate and publication are documented in [tvguard-v1.5.2-publication.json](tvguard-v1.5.2-publication.json).
+
 # Android TV Guard 1.5.2 candidate verification
 
 **Unpublished candidate; not a physical-device acceptance or a security guarantee.**
