@@ -32,6 +32,9 @@
       "gradle.properties",
       "gradle/"
     ],
-    "physical_test_scope": "Owner reported candidate working on one TV and shared screenshots of diagnostics and pill; the installed device hash was not independently read back."
+    "physical_test_scope": "Owner reported candidate working on one TV and shared screenshots of diagnostics and pill; the installed device hash was not independently read back.",
+    "expected_added_permissions": [
+      "uses-permission: name='moe.shizuku.manager.permission.API_V23'"
+    ]
   }
 }

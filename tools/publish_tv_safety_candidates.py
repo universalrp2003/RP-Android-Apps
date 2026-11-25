@@ -118,7 +118,8 @@ def preflight(p, prior, tools):
     def permissions(path):
         return {line.strip() for line in cmd(tools / 'aapt', 'dump', 'permissions', path).splitlines() if line.startswith('uses-permission:')}
     added = permissions(apk) - permissions(old)
-    assert not added, f'Unexpected new permissions: {added}'
+    expected_added = set(p.get('expected_added_permissions', []))
+    assert added == expected_added, f'Unexpected permission changes: added={added}, expected={expected_added}'
     print('PREFLIGHT PASS', p['tag'], p['sha256'], p['bytes'], flush=True)
     return apk, checksum
 
