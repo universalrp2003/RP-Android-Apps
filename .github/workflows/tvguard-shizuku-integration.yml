@@ -37,21 +37,7 @@ jobs:
           profile: tv_1080p
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: |
-            set -euo pipefail
-            case "$(adb get-serialno)" in emulator-*) ;; *) exit 1 ;; esac
-            adb shell input keyevent KEYCODE_WAKEUP
-            adb shell wm dismiss-keyguard
-            adb install "$RUNNER_TEMP/shizuku/shizuku-v13.6.0.r1086.2650830c-release.apk"
-            adb install tvguard/app/build/outputs/apk/debug/tvguard-debug.apk
-            adb install tvguard/app/build/outputs/apk/androidTest/debug/tvguard-debug-androidTest.apk
-            apk=$(adb shell pm path moe.shizuku.privileged.api | tr -d '\r' | sed -n 's/^package://p' | head -1)
-            test -n "$apk"
-            starter=$(adb shell "find $(dirname "$apk")/lib -name libshizuku.so" | tr -d '\r' | head -1)
-            test -n "$starter"
-            adb shell "$starter"
-            adb shell am instrument -w -e shizukuIntegration true -e class com.universalrp.tvguard.ShizukuLiveDiagnosticsTest com.universalrp.tvguard.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/shizuku-test.log"
-            grep -Fq 'OK (1 test)' "$RUNNER_TEMP/shizuku-test.log"
+          script: bash tvguard/tools/shizuku_integration_smoke.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
