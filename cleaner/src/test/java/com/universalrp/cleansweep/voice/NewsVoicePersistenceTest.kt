@@ -30,4 +30,25 @@ class NewsVoicePersistenceTest {
         assertEquals(NewsVoiceRotation.pool(mode)[3].id, NewsVoiceRotation.selected(reopened, mode).id)
         assertEquals(SharedNeuralVoiceEngine.MALE_VOICES.first().id, NewsVoiceRotation.selected(reopened, VoiceGenderMode.MALE).id)
     }
+    @Test fun fullCyclePersistsAndGenderChoicesHaveSeparateCursors() {
+        val app = RuntimeEnvironment.getApplication()
+        val p = app.getSharedPreferences("rotation_cycle_test", Context.MODE_PRIVATE)
+        p.edit().clear().commit()
+        val mode = VoiceGenderMode.RANDOM
+        val expected = NewsVoiceRotation.pool(mode)
+        val actual = mutableListOf<String>()
+        repeat(expected.size) {
+            val reopened = app.getSharedPreferences("rotation_cycle_test", Context.MODE_PRIVATE)
+            val voice = NewsVoiceRotation.selected(reopened, mode)
+            actual += voice.id
+            assertTrue(NewsVoiceRotation.recordStarted(reopened, mode, voice, true))
+        }
+        assertEquals(expected.map { it.id }, actual)
+        assertEquals(expected.first().id, NewsVoiceRotation.selected(p, mode).id)
+        val male = NewsVoiceRotation.selected(p, VoiceGenderMode.MALE)
+        assertTrue(NewsVoiceRotation.recordStarted(p, VoiceGenderMode.MALE, male, false))
+        assertEquals(male.englishNeuralId, p.getString("news_voice_last_name", null))
+        assertEquals(expected.first().id, NewsVoiceRotation.selected(p, mode).id)
+        assertEquals(SharedNeuralVoiceEngine.MALE_VOICES[1].id, NewsVoiceRotation.selected(p, VoiceGenderMode.MALE).id)
+    }
 }

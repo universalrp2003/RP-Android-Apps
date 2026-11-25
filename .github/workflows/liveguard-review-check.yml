@@ -31,6 +31,22 @@ jobs:
         run: |
           set -o pipefail
           gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleDebug :radio:compileDebugKotlin :oorarivippu:compileDebugKotlin --no-daemon --stacktrace 2>&1 | tee /tmp/liveguard-review-build.log
+      - name: Require the new regression suites to have run
+        run: |
+          python3 - <<'PYTEST'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          files = list(Path('cleaner/build/test-results/testReleaseUnitTest').glob('TEST-*.xml'))
+          required = ['NewsCompletedStoriesTest', 'NewsStrictVoiceCacheTest', 'NewsVoicePersistenceTest', 'NewsVoiceRotationTest', 'WeatherPresentationPolicyTest']
+          for name in required:
+              matches = [p for p in files if name in p.name]
+              assert len(matches) == 1, f'Missing executed suite {name}'
+              root = ET.parse(matches[0]).getroot()
+              assert int(root.get('tests', '0')) > 0 and root.get('failures') == '0' and root.get('errors') == '0'
+              print(name, 'tests=', root.get('tests'), 'skipped=', root.get('skipped'))
+              assert root.get('skipped') == '0'
+          print('Executed release JVM tests:', sum(int(ET.parse(p).getroot().get('tests', '0')) for p in files))
+          PYTEST
       - name: Surface errors
         if: failure()
         run: |
@@ -46,3 +62,40 @@ jobs:
             cleaner/build/reports/lint-results-*.xml
           retention-days: 7
           if-no-files-found: ignore
+
+  native:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - name: Compile unpublished release and native checks
+        run: |
+          set -o pipefail
+          gradle :cleaner:assembleRelease :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee /tmp/liveguard-review-native-build.log
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Check native screens and playback-start persistence on a disposable emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 tools/run_liveguard_review_native.py
+      - name: Surface native build errors
+        if: failure()
+        run: |
+          test ! -f /tmp/liveguard-review-native-build.log || grep -E '^e: |^e: file:|Error:| FAILED|What went wrong' -A 5 /tmp/liveguard-review-native-build.log | tail -150 || true

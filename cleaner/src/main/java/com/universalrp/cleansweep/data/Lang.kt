@@ -118,6 +118,8 @@ object Lang {
         "What Live Guard may say" to "Live Guard சொல்லக்கூடியவை",
         "The last time Live Guard stopped by itself. Nothing is sent anywhere — this is here so you can read it out or screenshot it." to "Live Guard கடைசியாகத் தானாக நிறுத்தப்பட்ட விவரம். இது எங்கும் அனுப்பப்படாது; படிக்கவோ திரைப்பிடிப்பு எடுக்கவோ இங்கே உள்ளது.",
         "Live Guard AI" to "கைபேசி காவலன் AI",
+        "Live Guard AI report" to "கைபேசி காவலன் AI அறிக்கை",
+        "Live Guard phone health report" to "கைபேசி காவலன் கைபேசி நல அறிக்கை",
         "Once a day Live Guard checks security settings, permissions, battery and system health. Speaks out loud strictly when High or Medium risk items are found." to "Live Guard தினமும் பாதுகாப்பு அமைப்புகள், அனுமதிகள், பேட்டரி மற்றும் கணினி நிலையைச் சோதிக்கும். அதிக அல்லது நடுத்தர ஆபத்து கண்டால் மட்டும் குரலில் எச்சரிக்கும்.",
         "Live Guard opens Android app settings; Android asks you to confirm any stop or uninstall." to "Live Guard Android செயலி அமைப்புகளைத் திறக்கும்; நிறுத்தவோ நீக்கவோ Android உங்கள் உறுதிப்படுத்தலைக் கேட்கும்.",
         "Android may require Location or Nearby devices permission to show Wi-Fi details. Verified device choices and names can be saved. Optional AI analysis sends displayed device facts only when you request it and allow network sharing." to "Wi-Fi விவரங்களைக் காட்ட Android-க்கு இருப்பிடம் அல்லது அருகிலுள்ள சாதன அனுமதி தேவைப்படலாம். உறுதிசெய்த சாதனத் தேர்வுகளும் பெயர்களும் சேமிக்கப்படலாம். விருப்ப AI ஆய்வை நீங்கள் கோரி பிணையப் பகிர்வை அனுமதித்தால் மட்டுமே காட்டப்பட்ட சாதன விவரங்கள் அனுப்பப்படும்.",

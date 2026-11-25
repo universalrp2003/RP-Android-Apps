@@ -112,7 +112,8 @@ fun HomeWeatherAlertCard(state: UiState, vm: MainViewModel) {
     val result = com.universalrp.cleansweep.data.SimpleWeatherStore.read(context, id)
     val precise = com.universalrp.cleansweep.data.WeatherPresentationPolicy.preciseWatchAvailable(result?.snapshot, w.lastCheckedAtMs, System.currentTimeMillis())
     val weatherVoiceEnabled = com.universalrp.cleansweep.voice.Announcer.allows(context, com.universalrp.cleansweep.voice.Announcer.Event.WEATHER_ALERT)
-    val summary = homeWeatherSummary(w, precise, state.voiceOn, weatherVoiceEnabled)
+    val matchingSnapshot = com.universalrp.cleansweep.data.WeatherPresentationPolicy.matchesSnapshot(result?.snapshot, w.lastCheckedAtMs)
+    val summary = homeWeatherSummary(w, precise, state.voiceOn, weatherVoiceEnabled, matchingSnapshot)
 
     PanelCard(
         modifier = Modifier
@@ -180,12 +181,12 @@ fun HomeWeatherAlertCard(state: UiState, vm: MainViewModel) {
     }
 }
 
-private fun homeWeatherSummary(w: WeatherUiSnapshot, precise: Boolean, voiceOn: Boolean, weatherVoiceEnabled: Boolean): String {
+private fun homeWeatherSummary(w: WeatherUiSnapshot, precise: Boolean, voiceOn: Boolean, weatherVoiceEnabled: Boolean, matchingSnapshot: Boolean): String {
     if (!w.enabled) return watchWords("Rain & severe-weather watch — off", "மழை / கடும் வானிலை கண்காணிப்பு — அணைப்பு")
     if (w.locationMode == LocationResolutionMode.NEEDS_SAVED_PLACE && w.activePlaceName.isBlank())
         return watchWords("Choose your default town / PIN code", "வழக்கமான ஊர் / அஞ்சல் குறியீட்டைத் தேர்ந்தெடுக்கவும்")
     val where = w.activePlaceName.ifBlank { w.savedPlaceName }.ifBlank { tr("GPS automatic") }
-    val fresh = System.currentTimeMillis() - w.lastCheckedAtMs in 0..com.universalrp.cleansweep.data.SimpleWeatherPolicy.FRESH_MS
+    val fresh = matchingSnapshot && System.currentTimeMillis() - w.lastCheckedAtMs in 0..com.universalrp.cleansweep.data.SimpleWeatherPolicy.FRESH_MS
     val forecast = when (w.severity) {
         WeatherSeverity.CYCLONE_SEVERE -> watchWords("Severe storm report", "கடுமையான புயல் தகவல்")
         WeatherSeverity.VERY_HEAVY_RAIN -> watchWords("Heavy rain indicated in forecast", "முன்னறிவிப்பில் கனமழை காட்டப்படுகிறது")

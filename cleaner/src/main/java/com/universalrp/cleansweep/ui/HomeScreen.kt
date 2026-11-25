@@ -25,6 +25,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PhoneAndroid
@@ -243,6 +248,12 @@ fun HomeScreen(
             Box(
                 modifier = Modifier
                     .size(38.dp)
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Switch
+                        stateDescription = if (state.voiceOn) tr("On") else tr("Off")
+                        onClick { vm.setVoiceOn(!state.voiceOn); true }
+                        onLongClick { showVolume = true; true }
+                    }
                     .pointerInput(state.voiceOn) {
                         detectTapGestures(
                             onTap = { vm.setVoiceOn(!state.voiceOn) },
@@ -319,7 +330,7 @@ fun HomeScreen(
         // Only the visible rain banner needs a periodic clock; it must not keep showing
         // an old "in 30 minutes" as if no time had passed.
         var weatherClockMs by androidx.compose.runtime.remember { mutableStateOf(System.currentTimeMillis()) }
-        androidx.compose.runtime.LaunchedEffect(miniWeatherSeverity) {
+        androidx.compose.runtime.LaunchedEffect(miniWeatherSeverity, state.weather.lastCheckedAtMs) {
             weatherClockMs = System.currentTimeMillis()
             while (miniWeatherSeverity == com.universalrp.weather.WeatherSeverity.RAIN_SOON) {
                 kotlinx.coroutines.delay(60_000L)
@@ -329,15 +340,19 @@ fun HomeScreen(
         val isWeatherPreview = state.weather.previewSeverity != null
         val rainMinutes = if (isWeatherPreview) state.weather.minutesUntilRain else
             com.universalrp.cleansweep.data.WeatherPresentationPolicy.remainingMinutes(state.weather.minutesUntilRain, state.weather.lastCheckedAtMs, weatherClockMs)
+        val weatherStoreId = if (state.weather.savedPlaceName.isNotBlank()) com.universalrp.cleansweep.data.SimpleWeatherStore.HOME else com.universalrp.cleansweep.data.SimpleWeatherStore.GPS
+        val latestForecast = if (miniWeatherSeverity != com.universalrp.weather.WeatherSeverity.CLEAR_OR_NORMAL && !isWeatherPreview)
+            com.universalrp.cleansweep.data.SimpleWeatherStore.read(androidx.compose.ui.platform.LocalContext.current, weatherStoreId)?.snapshot else null
         com.universalrp.weather.WeatherMiniAlertBanner(
             severity = miniWeatherSeverity,
             placeName = state.weather.activePlaceName.ifBlank { state.weather.savedPlaceName },
             minutesUntilRain = rainMinutes,
             tamil = Lang.isTamil,
             isPreview = isWeatherPreview,
-            isStale = !isWeatherPreview && com.universalrp.cleansweep.data.WeatherPresentationPolicy.forecastIsOlder(
-                if (miniWeatherSeverity == com.universalrp.weather.WeatherSeverity.RAIN_SOON) state.weather.minutesUntilRain else null,
-                state.weather.lastCheckedAtMs, weatherClockMs),
+            isStale = !isWeatherPreview && (!com.universalrp.cleansweep.data.WeatherPresentationPolicy.matchesSnapshot(latestForecast, state.weather.lastCheckedAtMs) ||
+                com.universalrp.cleansweep.data.WeatherPresentationPolicy.forecastIsOlder(
+                    if (miniWeatherSeverity == com.universalrp.weather.WeatherSeverity.RAIN_SOON) state.weather.minutesUntilRain else null,
+                    state.weather.lastCheckedAtMs, weatherClockMs)),
             onClick = {
                 vm.refreshWeatherUiState()
                 vm.navigate(Screen.WEATHER)

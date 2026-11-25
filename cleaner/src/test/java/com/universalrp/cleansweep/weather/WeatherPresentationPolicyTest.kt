@@ -22,6 +22,8 @@ class WeatherPresentationPolicyTest {
     @Test fun preciseStatusRequiresMatchingFreshMinuteDataNotJustSourceName() {
         val minute = snapshot(WeatherSourceKind.TOMORROW_IO_1M, 30)
         assertTrue(WeatherPresentationPolicy.preciseWatchAvailable(minute, fetched, fetched + 60_000L))
+        assertFalse(WeatherPresentationPolicy.matchesSnapshot(null, fetched))
+        assertFalse(WeatherPresentationPolicy.matchesSnapshot(minute, 0))
         assertFalse(WeatherPresentationPolicy.preciseWatchAvailable(null, fetched, fetched + 60_000L))
         assertFalse(WeatherPresentationPolicy.preciseWatchAvailable(minute, fetched + 1, fetched + 60_000L))
         assertFalse(WeatherPresentationPolicy.preciseWatchAvailable(minute, fetched, fetched + 11 * 60_000L))

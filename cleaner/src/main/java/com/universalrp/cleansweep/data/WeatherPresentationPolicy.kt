@@ -13,6 +13,9 @@ object WeatherPresentationPolicy {
         fetchedAtMs <= 0 || nowMs - fetchedAtMs !in 0..SimpleWeatherPolicy.FRESH_MS ||
             (minutesAtFetch != null && nowMs - fetchedAtMs > minutesAtFetch.toLong() * 60_000L)
 
+    fun matchesSnapshot(snapshot: WeatherNowcastSnapshot?, displayedAtMs: Long): Boolean =
+        snapshot != null && displayedAtMs > 0 && snapshot.fetchedAtMs == displayedAtMs
+
     fun preciseWatchAvailable(snapshot: WeatherNowcastSnapshot?, displayedAtMs: Long, nowMs: Long): Boolean =
-        snapshot != null && snapshot.fetchedAtMs == displayedAtMs && SimpleWeatherPolicy.precise(snapshot, nowMs)
+        matchesSnapshot(snapshot, displayedAtMs) && snapshot != null && SimpleWeatherPolicy.precise(snapshot, nowMs)
 }

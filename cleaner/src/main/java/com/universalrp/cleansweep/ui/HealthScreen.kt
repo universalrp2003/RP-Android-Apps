@@ -184,8 +184,8 @@ private fun StatusBarPillCard(state: UiState, vm: MainViewModel) {
                     state.statusPill && state.statusPillAllowed ->
                         tr("Charger connected: watts only. Unplugged: data and D/U lights return with background monitoring. — W means the phone did not report power.")
                     state.statusPill ->
-                        "Switched on, but Android still needs “Display over other apps” before " +
-                            "anything can be drawn there."
+                        watchWords("Switched on, but Android still needs Display over other apps before the overlay can appear.",
+                            "இயக்கப்பட்டுள்ளது; மிதக்கும் காட்சி தெரிய Android-ல் பிற செயலிகளுக்கு மேல் காட்டும் அனுமதி தேவை.")
                     else ->
                         watchWords("Android does not let normal apps add items to the system status bar. Live Guard can draw a small overlay beside the clock showing charging watts when reported.",
                             "Android சாதாரண செயலிகளை நிலைப் பட்டியில் உருப்படி சேர்க்க அனுமதிக்காது. கிடைக்கும் மின்னேற்ற வாட்ஸை Live Guard கடிகாரம் அருகே சிறிய மிதக்கும் காட்சியாகக் காட்டலாம்.")

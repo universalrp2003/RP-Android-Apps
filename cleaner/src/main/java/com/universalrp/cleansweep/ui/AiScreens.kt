@@ -1160,7 +1160,7 @@ private fun SmallAction(
 private fun copyToClipboard(context: Context, text: String) {
     try {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("CleanSweep AI report", text))
+        clipboard.setPrimaryClip(ClipData.newPlainText(tr("Live Guard AI report"), text))
     } catch (e: Exception) {
         // Nothing sensible to do if the clipboard is unavailable.
     }
@@ -1171,7 +1171,7 @@ private fun share(context: Context, text: String) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
-            putExtra(Intent.EXTRA_SUBJECT, "CleanSweep phone health report")
+            putExtra(Intent.EXTRA_SUBJECT, tr("Live Guard phone health report"))
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(
