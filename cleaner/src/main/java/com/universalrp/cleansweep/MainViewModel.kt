@@ -2009,7 +2009,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun appFilters(): List<Pair<String, String>> = listOf(
         AppFilter.ALL to "All",
         AppFilter.BLOAT to "Bloatware",
-        AppFilter.UNUSED to "Unused",
+        AppFilter.UNUSED to "Last recorded use 30+ days ago",
         AppFilter.PREINSTALLED to "Preinstalled",
         AppFilter.SIDELOADED to "Not from a store",
         AppFilter.RISKY to "Sensitive permissions",
@@ -2024,8 +2024,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 row.label.lowercase().contains(query) ||
                 row.pkg.lowercase().contains(query)
             val matchesFilter = when (s.appFilter) {
-                AppFilter.BLOAT -> row.isKnownBloatStub || (row.isPreinstalled && row.labelsBloat())
-                AppFilter.UNUSED -> row.isUnused && !row.isSystem
+                AppFilter.BLOAT -> row.isKnownBloatStub
+                AppFilter.UNUSED -> row.hasOldUsageRecord && !row.isSystem
                 AppFilter.PREINSTALLED -> row.isPreinstalled
                 AppFilter.SIDELOADED -> row.isSideloaded
                 AppFilter.RISKY -> row.riskyPermissions.isNotEmpty()
@@ -2034,10 +2034,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             matchesQuery && matchesFilter
         }
     }
-
-    /** A preinstalled app counts as bloatware when it is unused *and* sizable. */
-    private fun AppRow.labelsBloat(): Boolean =
-        isUnused && (riskyPermissions.isNotEmpty() || totalBytes > 20L * 1024 * 1024)
 
     fun openAppInfo(pkg: String) {
         try {

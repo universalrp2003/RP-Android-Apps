@@ -57,9 +57,11 @@ data class AppRow(
     val permissionsObserved: Boolean = true,
     val unavailablePermissionChecks: Set<String> = emptySet(),
     val identity: PackageIdentity? = null,
+    /** Whether the Android usage query succeeded, not whether its history is complete. */
+    val usageHistoryAvailable: Boolean = false,
 ) {
     val totalBytes: Long get() = if (dataBytes > 0L) dataBytes + cacheBytes else apkBytes + cacheBytes
-    val isUnused: Boolean get() = lastUsedMs == null || lastUsedMs < System.currentTimeMillis() - 30L * 24 * 3600 * 1000
+    val hasOldUsageRecord: Boolean get() = AppUsageHistoryPolicy.hasOldRecord(usageHistoryAvailable, lastUsedMs, System.currentTimeMillis())
     val isPreinstalled: Boolean get() = isSystem && !isUpdatedSystem
     val isSideloaded: Boolean get() = !isSystem && installer == null
     val isKnownBloatStub: Boolean get() = pkg in BloatRules.KNOWN_STUB_PACKAGES
@@ -69,10 +71,11 @@ data class AppInventoryReport(
     val rows: List<AppRow>,
     val usageAccessGranted: Boolean,
     val scannedAtMs: Long,
+    val usageHistoryAvailable: Boolean = false,
 ) {
     val totalBytes: Long get() = rows.sumOf { it.totalBytes }
     val preinstalledCount: Int get() = rows.count { it.isPreinstalled }
-    val unusedCount: Int get() = rows.count { it.isUnused && !it.isSystem }
+    val oldUsageRecordCount: Int get() = if (usageHistoryAvailable) rows.count { it.hasOldUsageRecord && !it.isSystem } else 0
     val sideloadedCount: Int get() = rows.count { it.isSideloaded }
     val riskyCount: Int get() = rows.count { it.riskyPermissions.isNotEmpty() }
     val stubCount: Int get() = rows.count { it.isKnownBloatStub }
@@ -163,7 +166,9 @@ object AppInventoryLoader {
     ): AppInventoryReport = withContext(Dispatchers.IO) {
         val pm = context.packageManager
         val usageAccess = AppCacheRepo.hasUsageAccess(context)
-        val stats = if (usageAccess) usageStats(context) else emptyMap()
+        val stats = if (usageAccess) usageStats(context) else null
+        val historyAvailable = stats != null
+        val nowMs = System.currentTimeMillis()
         val storageStats = context.getSystemService(Context.STORAGE_STATS_SERVICE)
             as? StorageStatsManager
 
@@ -229,7 +234,7 @@ object AppInventoryLoader {
             } }
 
             val installer = installerOf(pm, ai.packageName)
-            val lastUsed = stats[ai.packageName]
+            val lastUsed = AppUsageHistoryPolicy.recordedTime(historyAvailable, stats?.get(ai.packageName), nowMs)
             val risky = BloatRules.riskyLabels(liveGranted)
             val revokedRisky = BloatRules.riskyLabels(liveRevoked)
             val launcher = hasLauncherActivity(pm, ai.packageName)
@@ -239,8 +244,8 @@ object AppInventoryLoader {
             if (isSystem && !updatedSystem) tags.add("Preinstalled")
             if (updatedSystem) tags.add("Bundled (updated)")
             if (ai.packageName in BloatRules.KNOWN_STUB_PACKAGES) tags.add("Bloatware stub")
-            if (!isSystem && (lastUsed == null || lastUsed < System.currentTimeMillis() - 30L * 24 * 3600 * 1000)) {
-                tags.add("Unused 30+ days")
+            if (!isSystem && AppUsageHistoryPolicy.hasOldRecord(historyAvailable, lastUsed, nowMs)) {
+                tags.add(AppUsageHistoryPolicy.OLD_RECORD_TAG)
             }
             if (!isSystem && !BloatRules.isTrustedInstaller(installer)) tags.add("Sideloaded")
             if (!launcher && !isSystem) tags.add("No launcher icon")
@@ -272,6 +277,7 @@ object AppInventoryLoader {
                     permissionsObserved = permissionsObserved,
                     unavailablePermissionChecks = permissionReading.unavailableChecks,
                     identity = signingIdentity(info),
+                    usageHistoryAvailable = historyAvailable,
                 )
             )
         }
@@ -285,21 +291,21 @@ object AppInventoryLoader {
             ),
             usageAccessGranted = usageAccess,
             scannedAtMs = System.currentTimeMillis(),
+            usageHistoryAvailable = historyAvailable,
         )
     }
 
-    private fun usageStats(context: Context): Map<String, Long> {
+    private fun usageStats(context: Context): Map<String, Long>? {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
-            ?: return emptyMap()
+            ?: return null
         val end = System.currentTimeMillis()
         val begin = end - 30L * 24 * 3600 * 1000
         return try {
-            usm.queryUsageStats(UsageStatsManager.INTERVAL_MONTHLY, begin, end)
-                .orEmpty()
+            (usm.queryUsageStats(UsageStatsManager.INTERVAL_MONTHLY, begin, end) ?: return null)
                 .groupBy { it.packageName }
                 .mapValues { entry -> entry.value.maxOf { it.lastTimeUsed } }
         } catch (e: Exception) {
-            emptyMap()
+            null
         }
     }
 

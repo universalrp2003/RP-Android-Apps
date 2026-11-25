@@ -169,7 +169,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                 ) {
                     vm.appFilters().forEach { (id, label) ->
                         Chip(
-                            label = label,
+                            label = tr(label),
                             selected = state.appFilter == id,
                             onClick = { vm.setAppFilter(id) },
                         )
@@ -188,11 +188,15 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "${loaded.stubCount} known preinstall stubs • ${loaded.unusedCount} unused " +
-                                    "30+ days • ${loaded.sideloadedCount} not from a store • " +
-                                    "${loaded.riskyCount} with sensitive permissions",
+                                tr("%s known preinstall stubs • %s not from a store • %s with sensitive permissions",
+                                    loaded.stubCount, loaded.sideloadedCount, loaded.riskyCount),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
+                            )
+                            Text(
+                                if (loaded.usageHistoryAvailable) tr("%s third-party apps have a last recorded use 30+ days ago", loaded.oldUsageRecordCount)
+                                else tr("Usage history unavailable; inactivity is unknown."),
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary,
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(tr("Permission/settings review only — not proof that the phone is safe."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
@@ -201,11 +205,11 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
                             )
-                            if (!loaded.usageAccessGranted) {
+                            if (!loaded.usageHistoryAvailable) {
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    "Grant \"Usage access\" (the App cache screen does it) to see sizes " +
-                                        "and last-used dates — without it Android hides them.",
+                                    if (!loaded.usageAccessGranted) tr("Allow Usage access in the App cache screen, then reload. Android may still provide incomplete records.")
+                                    else tr("Android did not return usage history. Try reloading; a missing record does not mean an app was unused."),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = WarnAmber,
                                 )
@@ -238,10 +242,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
 
             item {
                 Text(
-                    "Tags are facts from Android, not opinions: \"Preinstalled\" means the phone shipped " +
-                        "with it, \"Unused 30+ days\" comes from Android's own usage records, " +
-                        "\"Sideloaded\" means no app store installed it. Use \"Analyse my phone\" on the " +
-                        "Phone health screen for advice on what is safe to remove.",
+                    tr("Usage records can be incomplete. A missing record or an old last recorded use does not prove inactivity or that an app is safe to remove. Review apps before making changes."),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                 )
@@ -306,11 +307,11 @@ private fun TagPill(text: String) {
         text.contains("Bloat") -> DangerRed
         text.contains("Sideloaded") -> WarnAmber
         text.contains("Sensitive") -> WarnAmber
-        text.contains("Unused") -> AccentViolet
+        text == "Last recorded use 30+ days ago" -> AccentViolet
         else -> AccentCyan
     }
     Text(
-        text,
+        tr(text),
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(SurfaceHigh)
@@ -335,9 +336,12 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                 InfoRow("Installed", dateFormat.format(Date(row.firstInstallMs)))
                 InfoRow("Updated", if (row.updatedMs > 0) dateFormat.format(Date(row.updatedMs)) else "never")
                 InfoRow(
-                    "Last used",
-                    row.lastUsedMs?.let { dateFormat.format(Date(it)) } ?: "no record in 30 days",
+                    tr("Last recorded use"),
+                    if (!row.usageHistoryAvailable) tr("Usage history unavailable")
+                    else row.lastUsedMs?.let { dateFormat.format(Date(it)) } ?: tr("No usage record returned; activity unknown"),
                 )
+                Text(tr("Android usage history may be incomplete; this is not proof of inactivity."),
+                    style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                 InfoRow("Installer", row.installer ?: "not from a store / unknown")
                 InfoRow("Type", if (row.isSystem) "System app (preinstalled)" else "Installed by you")
                 // v2.7: granted vs revoked. The old dialog listed everything the app ever asked

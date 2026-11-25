@@ -100,6 +100,23 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "%s known preinstall stubs • %s not from a store • %s with sensitive permissions" to "%s அறியப்பட்ட முன்நிறுவல் துணைச் செயலிகள் • %s செயலிக் கடையிலிருந்து வந்ததாகத் தெரியவில்லை • %s முக்கிய அனுமதிகளுடன்",
+        "%s third-party apps have a last recorded use 30+ days ago" to "%s மூன்றாம் தரப்புச் செயலிகளின் கடைசிப் பயன்பாட்டுப் பதிவு 30+ நாட்களுக்கு முன்பு உள்ளது",
+        "Usage history unavailable; inactivity is unknown." to "பயன்பாட்டு வரலாறு கிடைக்கவில்லை; பயன்படுத்தப்படாததா என்பது தெரியாது.",
+        "Allow Usage access in the App cache screen, then reload. Android may still provide incomplete records." to "செயலி தற்காலிகச் சேமிப்பு திரையில் பயன்பாட்டு அணுகலை அனுமதித்துப் புதுப்பிக்கவும். Android வழங்கும் பதிவுகள் முழுமையற்றதாக இருக்கலாம்.",
+        "Android did not return usage history. Try reloading; a missing record does not mean an app was unused." to "Android பயன்பாட்டு வரலாற்றை வழங்கவில்லை. புதுப்பிக்க முயற்சிக்கவும்; பதிவு இல்லாததால் செயலி பயன்படுத்தப்படவில்லை என்று பொருளல்ல.",
+        "Usage records can be incomplete. A missing record or an old last recorded use does not prove inactivity or that an app is safe to remove. Review apps before making changes." to "பயன்பாட்டுப் பதிவுகள் முழுமையற்றதாக இருக்கலாம். பதிவு இல்லாததோ பழைய பதிவோ செயலி பயன்படுத்தப்படவில்லை அல்லது அதை நீக்குவது பாதுகாப்பானது என்பதற்குச் சான்றல்ல. மாற்றும் முன் செயலிகளைச் சரிபார்க்கவும்.",
+        "Last recorded use" to "கடைசியாகப் பதிவான பயன்பாடு",
+        "Last recorded use 30+ days ago" to "கடைசிப் பயன்பாட்டுப் பதிவு 30+ நாட்களுக்கு முன்",
+        "Usage history unavailable" to "பயன்பாட்டு வரலாறு கிடைக்கவில்லை",
+        "No usage record returned; activity unknown" to "பயன்பாட்டுப் பதிவு கிடைக்கவில்லை; பயன்பாடு தெரியாது",
+        "Android usage history may be incomplete; this is not proof of inactivity." to "Android பயன்பாட்டு வரலாறு முழுமையற்றதாக இருக்கலாம்; இது பயன்படுத்தப்படவில்லை என்பதற்குச் சான்றல்ல.",
+        "Permission state unavailable" to "அனுமதி நிலை கிடைக்கவில்லை",
+        "Bundled (updated)" to "முன்நிறுவப்பட்டது (புதுப்பிக்கப்பட்டது)",
+        "Bloatware stub" to "அறியப்பட்ட முன்நிறுவல் துணைச் செயலி",
+        "Sideloaded" to "வெளியிலிருந்து நிறுவப்பட்டிருக்கலாம்",
+        "No launcher icon" to "தொடக்கத் திரைச் சின்னம் இல்லை",
+        "Permissions removed" to "அனுமதிகள் அகற்றப்பட்டன",
         "%s findings across %s apps · %s high, %s medium, %s low" to "%s கண்டறிதல்கள், %s செயலிகளில் · %s அதிகம், %s நடுத்தரம், %s குறைவு",
         "Not scanned yet" to "இன்னும் ஸ்கேன் செய்யவில்லை",
         "Scan unavailable — no addresses probed" to "ஸ்கேன் கிடைக்கவில்லை — முகவரிகள் சோதிக்கப்படவில்லை",

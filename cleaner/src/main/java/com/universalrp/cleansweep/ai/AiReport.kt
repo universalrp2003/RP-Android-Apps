@@ -105,8 +105,8 @@ object AiReport {
         if (config.includeAppNames && apps != null) {
             out.appendLine("== Installed apps (${apps.rows.size} entries) ==")
             out.appendLine(
-                "Totals: ${apps.preinstalledCount} preinstalled, ${apps.unusedCount} unused third-party " +
-                    "(30+ days), ${apps.sideloadedCount} not from a store, ${apps.riskyCount} with sensitive permissions"
+                "Totals: ${apps.preinstalledCount} preinstalled, ${usageSummary(apps)}, " +
+                    "${apps.sideloadedCount} not from a store, ${apps.riskyCount} with sensitive permissions"
             )
             out.appendLine(
                 "Format: name | package | size | last used | tags | permissions of note"
@@ -117,7 +117,7 @@ object AiReport {
             out.appendLine("== Installed apps ==")
             out.appendLine(
                 "The user chose not to share app names. Totals only: ${apps.rows.size} apps, " +
-                    "${apps.preinstalledCount} preinstalled, ${apps.unusedCount} unused third-party, " +
+                    "${apps.preinstalledCount} preinstalled, ${usageSummary(apps)}, " +
                     "${apps.sideloadedCount} not from a store, ${apps.riskyCount} with sensitive permissions."
             )
             out.appendLine()
@@ -208,7 +208,7 @@ object AiReport {
     private fun appLines(apps: AppInventoryReport): List<String> {
         val interesting = apps.rows
             .filter { row ->
-                row.isKnownBloatStub || row.isPreinstalled || row.isUnused ||
+                row.isKnownBloatStub || row.isPreinstalled || row.hasOldUsageRecord ||
                     row.isSideloaded || row.riskyPermissions.isNotEmpty()
             }
             .sortedWith(
@@ -222,7 +222,7 @@ object AiReport {
                 append(row.label.take(40))
                 append(" | ").append(row.pkg)
                 append(" | ").append(gb(row.totalBytes))
-                append(" | ").append(lastUsedLabel(row.lastUsedMs))
+                append(" | ").append(lastUsedLabel(if (row.usageHistoryAvailable) row.lastUsedMs else null))
                 append(if (row.isPreinstalled) " | SYSTEM/PREINSTALLED: do not recommend removal" else " | USER-INSTALLED: removal only if user confirms not needed")
                 if (row.tags.isNotEmpty()) append(" | ").append(row.tags.joinToString(", "))
                 if (row.riskyPermissions.isNotEmpty()) {
@@ -238,14 +238,18 @@ object AiReport {
         return lines
     }
 
+    private fun usageSummary(apps: AppInventoryReport): String =
+        if (apps.usageHistoryAvailable) "${apps.oldUsageRecordCount} third-party apps with last recorded use 30+ days ago (partial Android history; not proof of inactivity)"
+        else "usage history unavailable; inactivity count unknown"
+
     private fun lastUsedLabel(ms: Long?): String {
-        if (ms == null || ms <= 0) return "no usage record available (not proof of inactivity)"
+        if (ms == null || ms <= 0 || ms > System.currentTimeMillis()) return "no usage record available (not proof of inactivity)"
         val days = ((System.currentTimeMillis() - ms) / (24L * 3600 * 1000)).coerceAtLeast(0)
         return when {
             days <= 0 -> "used today"
             days == 1L -> "used yesterday"
             days < 30 -> "used ${days}d ago"
-            else -> "unused ${days}d"
+            else -> "last recorded use ${days}d ago (not proof of inactivity)"
         }
     }
 
