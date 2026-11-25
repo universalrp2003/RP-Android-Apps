@@ -21,6 +21,7 @@ candidate="$work/Android-TV-Guard-1.5.3-signed-candidate.apk"
 fixture="$work/synthetic-older-same-key.apk"
 test_apk="$work/tvguard-release-androidTest.apk"
 for path in "$old" "$candidate" "$fixture" "$test_apk"; do test -s "$path"; done
+check_signer "$RUNNER_TEMP/tvguard-public-baseline/Android-TV-Guard-v1.5.2.apk" public-baseline "$expected"
 check_signer "$candidate" candidate "$expected"
 check_signer "$fixture" fixture "$expected"
 check_signer "$test_apk" androidTest "$expected"

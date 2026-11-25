@@ -240,6 +240,15 @@ jobs:
           run-id: 42930753694
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/tvguard-old-debug
+      - name: Download the exact public TV Guard 1.5.2 baseline
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tvguard-public-baseline"
+          gh release download tvguard-v1.5.2 --repo "$GITHUB_REPOSITORY" --pattern Android-TV-Guard-v1.5.2.apk --dir "$RUNNER_TEMP/tvguard-public-baseline"
+          apk="$RUNNER_TEMP/tvguard-public-baseline/Android-TV-Guard-v1.5.2.apk"
+          test "$(stat -c %s "$apk")" = 11855823
+          echo '66acfaa601394bed85b3628e22214b56903427c2cd37c042c36a285f22251443  '"$apk" | sha256sum -c -
       - name: Build the synthetic old version and the signed candidate
         shell: bash
         run: |
@@ -305,7 +314,7 @@ jobs:
               'exactCandidateInstalledAndTested': True, 'published': False,
               'tests': ['release unit tests and lint', 'API 34 Android TV focus tests',
                         'different-signer replacement rejected without deleting old data',
-                        'synthetic same-signer code 1 to code 10 update preserves favorites, hidden apps, feature choices and a private file'],
+                        'synthetic same-signer code 1 and public 1.5.2 updates preserve selected launcher data and a private file'],
               'limitations': 'Disposable emulator only; physical TV, remote, voice, root and screenshot behavior are not verified.'
           }
           (work / 'verification.json').write_text(json.dumps(receipt, indent=2) + '\n')

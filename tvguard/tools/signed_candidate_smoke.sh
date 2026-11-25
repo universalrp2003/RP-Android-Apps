@@ -7,6 +7,7 @@ work="$RUNNER_TEMP/tvguard-signed-candidate"
 old="$RUNNER_TEMP/tvguard-old-debug/tvguard-debug.apk"
 fixture="$work/synthetic-older-same-key.apk"
 candidate="$work/Android-TV-Guard-1.5.3-signed-candidate.apk"
+public="$RUNNER_TEMP/tvguard-public-baseline/Android-TV-Guard-v1.5.2.apk"
 test_apk="$work/tvguard-release-androidTest.apk"
 package=com.universalrp.tvguard
 runner=com.universalrp.tvguard.test/androidx.test.runner.AndroidJUnitRunner
@@ -16,7 +17,7 @@ case "$serial" in
   emulator-*) ;;
   *) echo 'Refusing to change packages on anything except a disposable emulator.' >&2; exit 1 ;;
 esac
-for path in "$old" "$fixture" "$candidate" "$test_apk"; do test -s "$path"; done
+for path in "$old" "$fixture" "$candidate" "$test_apk" "$public"; do test -s "$path"; done
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard
 
@@ -68,10 +69,22 @@ python3 tvguard/tools/verify_instrumentation.py "$work/tv-focus.log" \
 # Also check that the focus tests restored the synthetic choices.
 run_probe verify
 
+# Also upgrade the real public 1.5.2 bytes in place; only this disposable emulator is reset.
+adb uninstall "$package"
+adb install "$public"
+adb install -r -t "$test_apk"
+run_probe seed
+uid_before="$(adb shell pm list packages -U "$package" | tr -d '\r' | sed -n 's/.*uid://p')"
+test -n "$uid_before"
+adb install -r "$candidate"
+uid_after="$(adb shell pm list packages -U "$package" | tr -d '\r' | sed -n 's/.*uid://p')"
+test "$uid_before" = "$uid_after"
+run_probe verify
+
 # Verify the APK exercised by the emulator is exactly the candidate to be offered.
 mapfile -t installed_paths < <(adb shell pm path "$package" | tr -d '\r' | sed -n 's/^package://p')
 test "${#installed_paths[@]}" -eq 1
 installed_sha="$(adb shell sha256sum "${installed_paths[0]}" | tr -d '\r' | awk '{print $1}')"
 candidate_sha="$(sha256sum "$candidate" | awk '{print $1}')"
 test "$installed_sha" = "$candidate_sha"
-echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; same-key update preserved synthetic favorites, hidden apps, feature choices and a private file; seven TV focus tests passed on the exact candidate APK, with the tile options opened by the Menu key now that the held-OK long press has been removed."
+echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; synthetic and public 1.5.2 same-key updates preserved synthetic favorites, hidden apps, feature choices and a private file; seven TV focus tests passed on the exact candidate APK, with the tile options opened by the Menu key now that the held-OK long press has been removed."
