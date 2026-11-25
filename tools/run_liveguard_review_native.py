@@ -23,5 +23,7 @@ command = ['adb', 'shell', 'am', 'instrument', '-w', '-r', '-e', 'expectedCandid
 result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 print(result.stdout)
 if result.returncode != 0 or 'OK (3 tests)' not in result.stdout or 'FAILURES!!!' in result.stdout:
+    detail = result.stdout[-7000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+    print('::error title=Live Guard native test::' + detail)
     sys.exit('Native review tests failed or did not finish (see output above).')
 print(f'PASS: 3 native checks on disposable emulator; target SHA-256 {sha}. Not a physical-phone/audio test.')

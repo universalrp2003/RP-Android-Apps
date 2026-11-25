@@ -45,13 +45,23 @@ jobs:
               assert int(root.get('tests', '0')) > 0 and root.get('failures') == '0' and root.get('errors') == '0'
               print(name, 'tests=', root.get('tests'), 'skipped=', root.get('skipped'))
               assert root.get('skipped') == '0'
-          print('Executed release JVM tests:', sum(int(ET.parse(p).getroot().get('tests', '0')) for p in files))
+          total = sum(int(ET.parse(p).getroot().get('tests', '0')) for p in files)
+          print('::notice title=Live Guard release JVM::' + str(total) + ' tests; all five new suites executed with zero skips')
           PYTEST
       - name: Surface errors
         if: failure()
         run: |
-          python3 tools/report_failing_tests.py || true
-          test ! -f /tmp/liveguard-review-build.log || grep -E '^e: |^e: file:|Error:| FAILED|What went wrong' -A 5 /tmp/liveguard-review-build.log | tail -150 || true
+          python3 - <<'PYERROR'
+          from pathlib import Path
+          import subprocess
+          text = subprocess.run(['python3', 'tools/report_failing_tests.py'], text=True, stdout=subprocess.PIPE).stdout
+          p = Path('/tmp/liveguard-review-build.log')
+          if p.exists():
+              lines = p.read_text(errors='replace').splitlines()
+              selected = [line for line in lines if line.startswith('e: ') or 'Error:' in line or ' FAILED' in line or 'What went wrong' in line]
+              text += '\n' + '\n'.join(selected[-35:])
+          if text.strip(): print('::error title=Live Guard verification::' + text[-7000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PYERROR
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -98,4 +108,10 @@ jobs:
       - name: Surface native build errors
         if: failure()
         run: |
-          test ! -f /tmp/liveguard-review-native-build.log || grep -E '^e: |^e: file:|Error:| FAILED|What went wrong' -A 5 /tmp/liveguard-review-native-build.log | tail -150 || true
+          python3 - <<'PYERROR'
+          from pathlib import Path
+          p = Path('/tmp/liveguard-review-native-build.log')
+          if p.exists():
+              lines = [line for line in p.read_text(errors='replace').splitlines() if line.startswith('e: ') or 'Error:' in line or ' FAILED' in line or 'What went wrong' in line]
+              if lines: print('::error title=Live Guard native build::' + '\n'.join(lines[-35:])[-7000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PYERROR
