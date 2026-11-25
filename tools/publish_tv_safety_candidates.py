@@ -158,7 +158,12 @@ def main():
     assert os.environ.get('GITHUB_ACTIONS') == 'true'
     assert os.environ.get('GITHUB_REF') == f'refs/heads/{BRANCH}'
     assert os.environ.get('GH_REPO') == REPO
-    data = json.loads(Path('docs/approved-tv-safety-candidates.json').read_text())
+    pins = Path('docs/tv-safety-candidate-pins.json')
+    data = json.loads(pins.read_text())
+    dry_run = os.environ.get('TV_SAFETY_PREFLIGHT_ONLY') == 'true'
+    if not dry_run:
+        approval = json.loads(Path('docs/publish-tv-safety-go.json').read_text())
+        assert approval['owner_authorized'] is True and approval['pins_sha256'] == digest(pins)
     assert data['owner_authorized'] is True and len(data['candidates']) == 2
     assert {p['tag'] for p in data['candidates']} == {'tvguard-v1.5.2', 'system-app-disabler-v0.5.0'}
     WORK.mkdir(parents=True, exist_ok=True)
@@ -166,6 +171,9 @@ def main():
     before = snapshots(prior)
     tools = tools_dir()
     ready = [(p, *preflight(p, prior, tools)) for p in data['candidates']]
+    if dry_run:
+        print('PASS: both candidates passed preflight; no release was created')
+        return
     for p, apk, checksum in ready:
         publish(p, apk, checksum, before)
     print('PASS: both exact candidates are public; previous release assets are unchanged')
