@@ -2011,7 +2011,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         AppFilter.BLOAT to "Listed packages",
         AppFilter.UNUSED to "Last recorded use 30+ days ago",
         AppFilter.PREINSTALLED to "Preinstalled",
-        AppFilter.SIDELOADED to "Not from a store",
+        AppFilter.SIDELOADED to "Installer needs review",
         AppFilter.RISKY to "Sensitive permissions",
     )
 
@@ -2026,7 +2026,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 AppFilter.BLOAT -> row.isListedReviewPackage
                 AppFilter.UNUSED -> row.hasOldUsageRecord && !row.isSystem
                 AppFilter.PREINSTALLED -> row.isPreinstalled
-                AppFilter.SIDELOADED -> row.isSideloaded
+                AppFilter.SIDELOADED -> row.installerNeedsReview
                 AppFilter.RISKY -> row.riskyPermissions.isNotEmpty()
                 else -> true
             }

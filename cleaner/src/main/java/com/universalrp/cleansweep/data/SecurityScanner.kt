@@ -207,23 +207,7 @@ object SecurityScanner {
         }
 
         // ------------------------------------------------------ trust checks
-        val sideloaded = apps.filter { it.isSideloaded }
-        if (sideloaded.isNotEmpty()) {
-            findings.add(
-                Finding(
-                    id = "sideloaded",
-                    title = if (sideloaded.size == 1) "1 app was not installed from an app store"
-                    else "${sideloaded.size} apps were not installed from an app store",
-                    detail = "An app installed from a file has not been reviewed by any store. That is " +
-                        "normal for betas and mods — just make sure you know where each one came from.",
-                    severity = Severity.MEDIUM,
-                    count = sideloaded.size,
-                    samples = sideloaded.map { it.label },
-                    affectedApps = sideloaded.map { FindingApp(it.label, it.pkg) },
-                    fixHint = "Open each one below and uninstall anything you do not recognise.",
-                )
-            )
-        }
+        missingInstallerFinding(apps)?.let { findings.add(it) }
 
         // Granted permissions, not declared ones: an app the user already cut off from SMS
         // must disappear from this finding (v2.7 — \"revoked but still showing\").
@@ -279,27 +263,7 @@ object SecurityScanner {
 
         listedPackageFinding(apps)?.let { findings.add(it) }
 
-        val suspiciousInstallers = apps.filter { app ->
-            if (app.isSystem || app.installer == null) return@filter false
-            !BloatRules.isTrustedInstaller(app.installer)
-        }
-        if (suspiciousInstallers.isNotEmpty()) {
-            findings.add(
-                Finding(
-                    id = "odd_installer",
-                    title = if (suspiciousInstallers.size == 1) "1 app came from an unusual installer"
-                    else "${suspiciousInstallers.size} apps came from an unusual installer",
-                    detail = "The installer package is the app that put this one on your phone. " +
-                        "Browser or file-manager installs show up here. " +
-                        "Recognised installer identifiers are omitted from this heuristic; an identifier is not authenticated store identity or a safety verdict.",
-                    severity = Severity.LOW,
-                    count = suspiciousInstallers.size,
-                    samples = suspiciousInstallers.map { "${it.label} ← ${it.installer}" },
-                    affectedApps = suspiciousInstallers.map { FindingApp(it.label, it.pkg) },
-                    fixHint = "Open the listed app’s information page and verify its installation source.",
-                )
-            )
-        }
+        unrecognizedInstallerFinding(apps)?.let { findings.add(it) }
 
         // ------------------------------------------------------ device checks
         val locked = isScreenLocked(context)
@@ -414,6 +378,31 @@ object SecurityScanner {
         com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context)
         runCatching { SecurityHistoryRepo.record(context, report, apps) }
         report
+    }
+
+    /** Historical IDs are retained for saved history and settings routes; matches are informational. */
+    internal fun missingInstallerFinding(apps: List<AppRow>): Finding? {
+        val matches = apps.filter { !it.isSystem && it.installer.isNullOrBlank() }
+        if (matches.isEmpty()) return null
+        return Finding(
+            id = "sideloaded", title = "Installer not reported",
+            detail = "Android did not report an installer ID for these apps. This does not establish whether they came from a store or a file, or whether they are safe.",
+            severity = Severity.INFO, count = matches.size, samples = matches.map { it.label },
+            affectedApps = matches.map { FindingApp(it.label, it.pkg) },
+            fixHint = "If you wish, review the app's source and purpose. A missing installer ID alone is not a reason to remove it.",
+        )
+    }
+
+    internal fun unrecognizedInstallerFinding(apps: List<AppRow>): Finding? {
+        val matches = apps.filter { !it.isSystem && !it.installer.isNullOrBlank() && !BloatRules.isTrustedInstaller(it.installer) }
+        if (matches.isEmpty()) return null
+        return Finding(
+            id = "odd_installer", title = "Installer ID not recognized",
+            detail = "Android reported an installer ID that is not on the local list. The list is incomplete, and an installer ID does not authenticate its source or establish safety.",
+            severity = Severity.INFO, count = matches.size, samples = matches.map { "${it.label} ← ${it.installer}" },
+            affectedApps = matches.map { FindingApp(it.label, it.pkg) },
+            fixHint = "If you wish, review the app's source and purpose before changing anything.",
+        )
     }
 
     /** Keep the historical finding ID for saved history and settings routes. */

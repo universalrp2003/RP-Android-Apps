@@ -189,8 +189,8 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                tr("%s listed packages • %s not from a store • %s with sensitive permissions",
-                                    loaded.listedPackageCount, loaded.sideloadedCount, loaded.riskyCount),
+                                tr("%s listed packages • %s installer IDs missing or unrecognized • %s with sensitive permissions",
+                                    loaded.listedPackageCount, loaded.installerReviewCount, loaded.riskyCount),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                             )
@@ -199,6 +199,8 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                                 else tr("Usage history unavailable; inactivity is unknown."),
                                 style = MaterialTheme.typography.bodySmall, color = TextSecondary,
                             )
+                            Text(tr("Installer IDs can be missing or misleading; they do not establish an app's origin or safety."),
+                                style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Spacer(Modifier.height(4.dp))
                             Text(tr("Permission/settings review only — not proof that the phone is safe."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Text(
@@ -306,7 +308,7 @@ private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
 private fun TagPill(text: String) {
     val colour = when {
         text == "Listed package (review manually)" -> AccentViolet
-        text.contains("Sideloaded") -> WarnAmber
+        text == "Installer not reported" || text == "Installer ID not recognized" -> WarnAmber
         text.contains("Sensitive") -> WarnAmber
         text == "Last recorded use 30+ days ago" -> AccentViolet
         else -> AccentCyan
@@ -343,8 +345,8 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                 )
                 Text(tr("Android usage history may be incomplete; this is not proof of inactivity."),
                     style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                InfoRow("Installer", row.installer ?: "not from a store / unknown")
-                InfoRow("Type", if (row.isSystem) "System app (preinstalled)" else "Installed by you")
+                InfoRow(tr("Installer"), row.installer?.takeIf { it.isNotBlank() } ?: tr("Installer not reported"))
+                InfoRow(tr("Type"), if (row.isSystem) tr("System app") else tr("Non-system app"))
                 // v2.7: granted vs revoked. The old dialog listed everything the app ever asked
                 // for, so a revoked permission kept showing as held. Now \"has\" means Android
                 // grants it right now, and taken-away permissions are listed as removed.

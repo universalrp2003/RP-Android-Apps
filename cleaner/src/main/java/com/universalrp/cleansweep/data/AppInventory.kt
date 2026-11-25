@@ -63,7 +63,7 @@ data class AppRow(
     val totalBytes: Long get() = if (dataBytes > 0L) dataBytes + cacheBytes else apkBytes + cacheBytes
     val hasOldUsageRecord: Boolean get() = AppUsageHistoryPolicy.hasOldRecord(usageHistoryAvailable, lastUsedMs, System.currentTimeMillis())
     val isPreinstalled: Boolean get() = isSystem && !isUpdatedSystem
-    val isSideloaded: Boolean get() = !isSystem && installer == null
+    val installerNeedsReview: Boolean get() = BloatRules.installerReviewTag(isSystem, installer) != null
     val isListedReviewPackage: Boolean get() = pkg in BloatRules.REVIEW_PACKAGES
 }
 
@@ -76,7 +76,7 @@ data class AppInventoryReport(
     val totalBytes: Long get() = rows.sumOf { it.totalBytes }
     val preinstalledCount: Int get() = rows.count { it.isPreinstalled }
     val oldUsageRecordCount: Int get() = if (usageHistoryAvailable) rows.count { it.hasOldUsageRecord && !it.isSystem } else 0
-    val sideloadedCount: Int get() = rows.count { it.isSideloaded }
+    val installerReviewCount: Int get() = rows.count { it.installerNeedsReview }
     val riskyCount: Int get() = rows.count { it.riskyPermissions.isNotEmpty() }
     val listedPackageCount: Int get() = rows.count { it.isListedReviewPackage }
 }
@@ -132,6 +132,14 @@ object BloatRules {
 
     fun riskyLabels(permissions: List<String>): List<String> =
         permissions.mapNotNull { RISKY_PERMISSIONS[it] }.distinct()
+
+    /** A reported identifier is not authenticated provenance, and a missing one proves nothing. */
+    fun installerReviewTag(isSystem: Boolean, installer: String?): String? = when {
+        isSystem -> null
+        installer.isNullOrBlank() -> "Installer not reported"
+        !isTrustedInstaller(installer) -> "Installer ID not recognized"
+        else -> null
+    }
 
     fun isTrustedInstaller(installer: String?): Boolean {
         if (installer == null) return false
@@ -243,7 +251,7 @@ object AppInventoryLoader {
             if (!isSystem && AppUsageHistoryPolicy.hasOldRecord(historyAvailable, lastUsed, nowMs)) {
                 tags.add(AppUsageHistoryPolicy.OLD_RECORD_TAG)
             }
-            if (!isSystem && !BloatRules.isTrustedInstaller(installer)) tags.add("Sideloaded")
+            BloatRules.installerReviewTag(isSystem, installer)?.let { tags.add(it) }
             if (!launcher && !isSystem) tags.add("No launcher icon")
             if (risky.isNotEmpty()) tags.add("Sensitive permissions")
             if (revokedRisky.isNotEmpty()) tags.add("Permissions removed")
@@ -306,12 +314,12 @@ object AppInventoryLoader {
     }
 
     private fun installerOf(pm: PackageManager, pkg: String): String? = try {
-        if (Build.VERSION.SDK_INT >= 30) {
+        (if (Build.VERSION.SDK_INT >= 30) {
             pm.getInstallSourceInfo(pkg).installingPackageName
         } else {
             @Suppress("DEPRECATION")
             pm.getInstallerPackageName(pkg)
-        }
+        })?.takeIf { it.isNotBlank() }
     } catch (e: Exception) {
         null
     }

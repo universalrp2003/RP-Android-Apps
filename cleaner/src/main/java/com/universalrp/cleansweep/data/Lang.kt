@@ -100,6 +100,18 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "Installer needs review" to "நிறுவியைச் சரிபார்க்கலாம்",
+        "Installer not reported" to "நிறுவி தெரிவிக்கப்படவில்லை",
+        "Installer ID not recognized" to "நிறுவி அடையாளம் அறியப்படவில்லை",
+        "Installer IDs can be missing or misleading; they do not establish an app's origin or safety." to "நிறுவி அடையாளங்கள் விடுபடலாம் அல்லது தவறாக வழிநடத்தலாம்; அவை செயலியின் மூலத்தையோ பாதுகாப்பையோ உறுதிப்படுத்தாது.",
+        "Installer" to "நிறுவி",
+        "Type" to "வகை",
+        "System app" to "கணினிச் செயலி",
+        "Non-system app" to "கணினி அல்லாத செயலி",
+        "Android did not report an installer ID for these apps. This does not establish whether they came from a store or a file, or whether they are safe." to "இந்தச் செயலிகளுக்கு Android நிறுவி அடையாளத்தைத் தெரிவிக்கவில்லை. அவை செயலிக் கடையிலிருந்தோ கோப்பிலிருந்தோ வந்தனவா அல்லது பாதுகாப்பானவையா என்பதை இது உறுதிப்படுத்தாது.",
+        "If you wish, review the app's source and purpose. A missing installer ID alone is not a reason to remove it." to "விரும்பினால் செயலியின் மூலத்தையும் நோக்கத்தையும் சரிபார்க்கவும். நிறுவி அடையாளம் இல்லை என்பது மட்டும் அதை அகற்றக் காரணமல்ல.",
+        "Android reported an installer ID that is not on the local list. The list is incomplete, and an installer ID does not authenticate its source or establish safety." to "உள்ளூர் பட்டியலில் இல்லாத நிறுவி அடையாளத்தை Android தெரிவித்துள்ளது. பட்டியல் முழுமையானதல்ல; நிறுவி அடையாளம் மூலத்தையோ பாதுகாப்பையோ உறுதிப்படுத்தாது.",
+        "If you wish, review the app's source and purpose before changing anything." to "விரும்பினால் மாற்றம் செய்வதற்கு முன் செயலியின் மூலத்தையும் நோக்கத்தையும் பரிசீலிக்கவும்.",
         "Preinstalled" to "முன்நிறுவப்பட்டது",
         "Sensitive permissions" to "முக்கிய அனுமதிகள்",
         "Not from a store" to "செயலிக் கடையிலிருந்து வந்ததாகத் தெரியவில்லை",
@@ -112,7 +124,7 @@ object Lang {
         "Listed package (review manually)" to "பட்டியலிட்ட செயலி (நேரில் சரிபார்க்கவும்)",
         "Installed apps and usage records" to "நிறுவப்பட்ட செயலிகளும் பயன்பாட்டுப் பதிவுகளும்",
         "This package matches a review list. The name alone does not prove it was preinstalled, is unsafe, or can be disabled without affecting other apps. Review it before making changes." to "இந்தச் செயலி சரிபார்ப்புப் பட்டியலில் உள்ளது. பெயரை மட்டும் கொண்டு அது முன்நிறுவப்பட்டது, பாதுகாப்பற்றது அல்லது பிற செயலிகளைப் பாதிக்காமல் முடக்கலாம் என்று உறுதிப்படுத்த முடியாது. மாற்றும் முன் சரிபார்க்கவும்.",
-        "%s listed packages • %s not from a store • %s with sensitive permissions" to "%s பட்டியலிட்ட செயலிகள் • %s செயலிக் கடையிலிருந்து வந்ததாகத் தெரியவில்லை • %s முக்கிய அனுமதிகளுடன்",
+        "%s listed packages • %s installer IDs missing or unrecognized • %s with sensitive permissions" to "%s பட்டியலிட்ட செயலிகள் • %s நிறுவி அடையாளங்கள் இல்லை அல்லது அறியப்படவில்லை • %s முக்கிய அனுமதிகளுடன்",
         "%s third-party apps have a last recorded use 30+ days ago" to "%s மூன்றாம் தரப்புச் செயலிகளின் கடைசிப் பயன்பாட்டுப் பதிவு 30+ நாட்களுக்கு முன்பு உள்ளது",
         "Usage history unavailable; inactivity is unknown." to "பயன்பாட்டு வரலாறு கிடைக்கவில்லை; பயன்படுத்தப்படாததா என்பது தெரியாது.",
         "Allow Usage access in the App cache screen, then reload. Android may still provide incomplete records." to "செயலி தற்காலிகச் சேமிப்பு திரையில் பயன்பாட்டு அணுகலை அனுமதித்துப் புதுப்பிக்கவும். Android வழங்கும் பதிவுகள் முழுமையற்றதாக இருக்கலாம்.",

@@ -70,6 +70,36 @@ class AppUsageHistoryPolicyTest {
         assertNull(SecurityScanner.listedPackageFinding(listOf(row(null, false))))
     }
 
+    @Test fun missingOrUnrecognizedInstallerIsUnknownNotProofOfSideloading() {
+        val missing = row(null, false).copy(pkg = "missing")
+        val blank = missing.copy(pkg = "blank", installer = "")
+        val recognized = missing.copy(pkg = "recognized", installer = "com.android.vending")
+        val other = missing.copy(pkg = "other", installer = "org.example.installer")
+        val system = missing.copy(pkg = "system", isSystem = true)
+        assertEquals("Installer not reported", BloatRules.installerReviewTag(false, null))
+        assertEquals("Installer not reported", BloatRules.installerReviewTag(false, ""))
+        assertEquals("Installer ID not recognized", BloatRules.installerReviewTag(false, other.installer))
+        assertNull(BloatRules.installerReviewTag(false, recognized.installer))
+        assertNull(BloatRules.installerReviewTag(true, null))
+        val rows = listOf(missing, blank, recognized, other, system)
+        assertEquals(listOf(true, true, false, true, false), rows.map { it.installerNeedsReview })
+        val report = AppInventoryReport(rows, false, now)
+        assertEquals(3, report.installerReviewCount)
+        val noId = SecurityScanner.missingInstallerFinding(rows)!!
+        assertEquals(2, noId.count)
+        assertEquals(Severity.INFO, noId.severity)
+        assertTrue(noId.detail.contains("does not establish"))
+        val unknownId = SecurityScanner.unrecognizedInstallerFinding(rows)!!
+        assertEquals(1, unknownId.count)
+        assertEquals(Severity.INFO, unknownId.severity)
+        assertTrue(unknownId.detail.contains("does not authenticate"))
+        for (includeNames in listOf(false, true)) {
+            val text = AiReport.build(AiConfig(includeAppNames = includeNames), null, report, null, null, null)
+            assertTrue(text.contains("3 with installer ID missing or unrecognized (not proof of sideloading or safety)"))
+            assertFalse(text.contains("3 not from a store"))
+        }
+    }
+
     @Test fun aiLabelsOldDateAsARecordNotAClaimOfInactivity() {
         val old = System.currentTimeMillis() - 45 * thirtyDays / 30
         val text = AiReport.build(AiConfig(), null, AppInventoryReport(listOf(row(old, true)), true, now, true), null, null, null)

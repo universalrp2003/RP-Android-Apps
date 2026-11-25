@@ -138,7 +138,9 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                         revokedPermissions = emptyList(), riskyPermissions = emptyList(), revokedRiskyPermissions = emptyList(),
                         tags = emptyList(), canUninstall = true, apkPath = null, usageHistoryAvailable = available,
                     )
-                    val report = AppInventoryReport(listOf(row), usageAccessGranted = case != 0,
+                    val noRecord = row.copy(pkg = "com.example.nohistory", label = "No History Fixture", lastUsedMs = null)
+                    val recent = row.copy(pkg = "com.example.recent", label = "Recent Fixture", lastUsedMs = System.currentTimeMillis() - 1000)
+                    val report = AppInventoryReport(if (old) listOf(row, noRecord, recent) else listOf(row), usageAccessGranted = case != 0,
                         scannedAtMs = System.currentTimeMillis(), usageHistoryAvailable = available)
                     val state = UiState(appInventory = report, appFilter = if (old) AppFilter.UNUSED else AppFilter.ALL)
                     val expected = when {
@@ -154,6 +156,17 @@ class LiveGuardReviewNativeTest : ExactCandidateNativeTest() {
                         instrument.runOnMainSync {
                             Lang.set(lang)
                             val vm = ViewModelProvider(activity)[MainViewModel::class.java]
+                            if (old) {
+                                assertEquals(listOf("Inventory Fixture"), vm.filteredApps(state).map { it.label })
+                                val installerRows = listOf(
+                                    row.copy(pkg = "missing", installer = null, label = "Missing"),
+                                    row.copy(pkg = "unknown", installer = "org.example.installer", label = "Unknown"),
+                                    row.copy(pkg = "recognized", installer = "com.android.vending", label = "Recognized"),
+                                    row.copy(pkg = "system", isSystem = true, installer = null, label = "System"),
+                                )
+                                val installerState = state.copy(appInventory = report.copy(rows = installerRows), appFilter = AppFilter.SIDELOADED)
+                                assertEquals(listOf("Missing", "Unknown"), vm.filteredApps(installerState).map { it.label })
+                            }
                             activity.setContent {
                                 val density = LocalDensity.current.density
                                 CompositionLocalProvider(LocalDensity provides Density(density, 2f)) {

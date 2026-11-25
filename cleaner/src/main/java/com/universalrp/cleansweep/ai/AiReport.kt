@@ -31,7 +31,8 @@ object AiReport {
            are not third-party apps. Do not recommend removing system, biometric, banking,
            keyboard or home-control apps merely because they seem unused.
         7. Uninstall only user-selected third-party apps the user confirms they no longer need.
-           No usage record means unknown, not proof of 30 days of inactivity.
+           No usage record means unknown, not proof of 30 days of inactivity. Missing or
+           unrecognized installer IDs do not prove sideloading, origin, or safety.
         8. Raw thermal zones are uncalibrated and sensor-specific. Never declare a hotspot safe,
            overheating or under light load from its value alone. Use Android thermal status
            and battery readings, and state uncertainty. Uptime is not the phone's age.
@@ -106,7 +107,7 @@ object AiReport {
             out.appendLine("== Installed apps (${apps.rows.size} entries) ==")
             out.appendLine(
                 "Totals: ${apps.preinstalledCount} preinstalled, ${usageSummary(apps)}, " +
-                    "${apps.sideloadedCount} not from a store, ${apps.riskyCount} with sensitive permissions"
+                    "${apps.installerReviewCount} with installer ID missing or unrecognized (not proof of sideloading or safety), ${apps.riskyCount} with sensitive permissions"
             )
             out.appendLine(
                 "Format: name | package | size | last used | tags | permissions of note"
@@ -118,7 +119,7 @@ object AiReport {
             out.appendLine(
                 "The user chose not to share app names. Totals only: ${apps.rows.size} apps, " +
                     "${apps.preinstalledCount} preinstalled, ${usageSummary(apps)}, " +
-                    "${apps.sideloadedCount} not from a store, ${apps.riskyCount} with sensitive permissions."
+                    "${apps.installerReviewCount} with installer ID missing or unrecognized (not proof of sideloading or safety), ${apps.riskyCount} with sensitive permissions."
             )
             out.appendLine()
         }
@@ -209,7 +210,7 @@ object AiReport {
         val interesting = apps.rows
             .filter { row ->
                 row.isListedReviewPackage || row.isPreinstalled || row.hasOldUsageRecord ||
-                    row.isSideloaded || row.riskyPermissions.isNotEmpty()
+                    row.installerNeedsReview || row.riskyPermissions.isNotEmpty()
             }
             .sortedWith(
                 compareByDescending<com.universalrp.cleansweep.data.AppRow> { it.isListedReviewPackage }
@@ -223,7 +224,7 @@ object AiReport {
                 append(" | ").append(row.pkg)
                 append(" | ").append(gb(row.totalBytes))
                 append(" | ").append(lastUsedLabel(if (row.usageHistoryAvailable) row.lastUsedMs else null))
-                append(if (row.isPreinstalled) " | SYSTEM/PREINSTALLED: do not recommend removal" else " | USER-INSTALLED: removal only if user confirms not needed")
+                append(if (row.isPreinstalled) " | SYSTEM/PREINSTALLED: do not recommend removal" else " | NON-SYSTEM: removal only if user confirms not needed")
                 if (row.tags.isNotEmpty()) append(" | ").append(row.tags.joinToString(", "))
                 if (row.riskyPermissions.isNotEmpty()) {
                     append(" | ").append(row.riskyPermissions.take(4).joinToString("; "))
