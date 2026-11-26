@@ -1,6 +1,7 @@
 package com.universalrp.kurippu
 
 import android.content.Context
+import android.content.ClipboardManager
 import android.database.sqlite.SQLiteDatabase
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.*
@@ -16,7 +17,7 @@ class NotebookTest {
     @get:Rule val rule = createComposeRule()
     private lateinit var context: Context
     private var store: NotebookStore? = null
-    @Before fun setup() { context = ApplicationProvider.getApplicationContext(); context.deleteDatabase("kurippu.db") }
+    @Before fun setup() { context = ApplicationProvider.getApplicationContext(); context.deleteDatabase("kurippu.db"); context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE).edit().clear().commit() }
     @After fun finish() { store?.close(); context.deleteDatabase("kurippu.db") }
     private fun open(): NotebookStore = NotebookStore(context).also { store = it }
     private fun legacyDb(): SQLiteDatabase {
@@ -55,6 +56,27 @@ class NotebookTest {
         assertEquals(listOf("செலவு", "குறிப்பு"), db.pages().map { it.title })
         assertTrue(db.load(2).all { it.text.isEmpty() && it.amount.isEmpty() })
     }
+    @Test fun migrateV3KeepsAllPagesAndDoesNotHidePopulatedDetails() {
+        legacyDb().use { db ->
+            db.execSQL("CREATE TABLE pages (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, calculates INTEGER NOT NULL)")
+            db.execSQL("INSERT INTO pages VALUES (1,'செலவு',1),(2,'குறிப்பு',0),(3,'empty note',0),(4,'Sasi',1)")
+            db.execSQL("CREATE TABLE sheet_rows (id INTEGER PRIMARY KEY AUTOINCREMENT, body TEXT NOT NULL, amount TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, page_id INTEGER NOT NULL DEFAULT 1)")
+            db.execSQL("INSERT INTO sheet_rows VALUES (1,'Milk','50',111,222,1),(2,'Remember','private details',333,444,2),(3,'Sasi','-20',555,666,4)")
+            db.version = 3
+        }
+        val db = open()
+        assertEquals(listOf(true, true, false, true), db.pages().map { it.showColumn })
+        assertEquals("private details", db.read(2).single().amount)
+        val before = db.read(4).single()
+        db.setPageOptions(4, false, false)
+        assertEquals(before, db.read(4).single())
+        assertFalse(db.pages().last().calculates); assertFalse(db.pages().last().showColumn)
+        db.setPageOptions(4, true, true)
+        assertEquals(before, db.read(4).single())
+        assertEquals("-20", Amounts.total(db.read(4)).value)
+        db.close(); store = null
+        assertEquals(before, open().read(4).single())
+    }
     @Test fun editPagesDirectlyKeepTheirDataAndTotalsSeparate() {
         val db = open()
         rule.setContent { MaterialTheme { SheetScreen(db) } }
@@ -67,9 +89,39 @@ class NotebookTest {
         rule.onNodeWithTag("total").assertDoesNotExist()
         val noteId = db.read(2).first().id
         rule.onNodeWithTag("note-$noteId").performTextInput("Remember 500")
+        rule.onNodeWithTag("amount-$noteId").assertDoesNotExist()
+        rule.onNodeWithTag("settings").performClick()
+        rule.onNodeWithTag("columnSwitch").assertIsOff().performClick()
+        rule.onNodeWithTag("closeSettings").performClick()
         rule.onNodeWithTag("amount-$noteId").performTextInput("Words and 200 are just notes")
+        rule.onNodeWithTag("settings").performClick()
+        rule.onNodeWithTag("columnSwitch").assertIsOn().performClick()
+        rule.onNodeWithTag("closeSettings").performClick()
+        rule.onNodeWithTag("amount-$noteId").assertDoesNotExist()
         rule.onNodeWithTag("total").assertDoesNotExist()
+        rule.onNodeWithTag("selectAll").performClick()
+        rule.onNodeWithTag("copyAll").performClick()
+        val copied = (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).primaryClip!!.getItemAt(0).coerceToText(context).toString()
+        assertTrue(copied.contains("Remember 500")); assertTrue(copied.contains("Words and 200 are just notes"))
+        assertTrue(copied.contains("(hidden)")); assertTrue(copied.contains("Created:")); assertFalse(copied.contains("Murukku"))
+        rule.onNodeWithTag("settings").performClick()
+        rule.onNodeWithTag("copySwitch").assertIsOn().performClick()
+        rule.onNodeWithTag("closeSettings").performClick()
+        rule.onNodeWithTag("selectAll").assertDoesNotExist()
+        assertFalse(context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE).getBoolean("bulk_copy", true))
         rule.onNodeWithTag("page-1").performClick()
+        rule.onNodeWithTag("total").assertTextEquals("30")
+        rule.onNodeWithTag("settings").performClick()
+        rule.onNodeWithTag("columnSwitch").performClick()
+        rule.onNodeWithTag("totalSwitch").assertIsOff().assertIsNotEnabled()
+        rule.onNodeWithTag("closeSettings").performClick()
+        rule.onNodeWithTag("total").assertDoesNotExist()
+        rule.onNodeWithTag("amount-1").assertDoesNotExist()
+        assertEquals("50", db.read(1).first().amount)
+        rule.onNodeWithTag("settings").performClick()
+        rule.onNodeWithTag("columnSwitch").performClick()
+        rule.onNodeWithTag("totalSwitch").performClick()
+        rule.onNodeWithTag("closeSettings").performClick()
         rule.onNodeWithTag("total").assertTextEquals("30")
         rule.onNodeWithTag("note-1").performTouchInput { longClick() }
         rule.onNodeWithTag("createdTime").assertExists(); rule.onNodeWithTag("updatedTime").assertExists()

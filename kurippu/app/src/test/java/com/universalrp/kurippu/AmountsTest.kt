@@ -19,4 +19,13 @@ class AmountsTest {
         assertEquals("-2.5", Amounts.display(Amounts.parse(" -2.50 ")!!))
         assertEquals("0", Amounts.display(Amounts.parse("-0.00")!!))
     }
+    @Test fun copyContainsTheFullCurrentPageIncludingHiddenValuesAndTimes() {
+        val rows = listOf(row(1, "Milk", "50"), row(2, "Private\nNote", "text"), row(3, "", ""))
+        val copied = formatPageForCopy(Page(7, "My page", false, false), rows) { "time-$it" }
+        assertTrue(copied.contains("My page")); assertTrue(copied.contains("Milk"))
+        assertTrue(copied.contains("Private\nNote")); assertTrue(copied.contains("Details (hidden): 50"))
+        assertTrue(copied.contains("Created: time-1")); assertFalse(copied.contains("Total:")); assertFalse(copied.contains("3. "))
+        val total = formatPageForCopy(Page(1, "Expense", true, true), listOf(row(1, "Milk", "50"), row(2, "Return", "-20"))) { "time-$it" }
+        assertTrue(total.contains("Total: 30"))
+    }
 }

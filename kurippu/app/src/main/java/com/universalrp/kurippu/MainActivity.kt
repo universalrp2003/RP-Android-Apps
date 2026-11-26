@@ -1,11 +1,16 @@
 package com.universalrp.kurippu
 
 import android.os.Bundle
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
@@ -20,7 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -55,19 +63,27 @@ fun SheetScreen(store: NotebookStore) {
     var deleting by remember { mutableStateOf<SheetRow?>(null) }
     var failed by remember { mutableStateOf(false) }
     var creating by rememberSaveable { mutableStateOf(false) }
+    var settingsOpen by remember { mutableStateOf(false) }
+    var selectedAll by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val preferences = remember { context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE) }
+    var allowCopy by remember { mutableStateOf(preferences.getBoolean("bulk_copy", true)) }
     var pageTitle by rememberSaveable { mutableStateOf("") }
     var calculateNew by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
     fun select(id: Long) {
-        try { val loaded = store.load(id); focus.clearFocus(); activeId = id; rows = loaded; creating = false }
+        try { val loaded = store.load(id); focus.clearFocus(); activeId = id; rows = loaded; creating = false; selectedAll = false }
         catch (_: Exception) { failed = true }
     }
     fun save(row: SheetRow, text: String, amount: String) {
-        try { rows = store.update(row, text, amount) } catch (_: Exception) { failed = true }
+        try { rows = store.update(row, text, amount); selectedAll = false } catch (_: Exception) { failed = true }
     }
-    val total = if (page.calculates) Amounts.total(rows) else null
+    val total = if (page.calculates && page.showColumn) Amounts.total(rows) else null
     Column(Modifier.fillMaxSize().background(Color(0xFFFFFDF7)).safeDrawingPadding()) {
-        Text("குறிப்பு", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("குறிப்பு", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).weight(1f))
+            TextButton(onClick = { focus.clearFocus(); settingsOpen = true }, modifier = Modifier.testTag("settings").semantics { contentDescription = "அமைப்புகள் / Settings" }) { Text("⚙", fontSize = 22.sp) }
+        }
         Row(Modifier.fillMaxWidth().background(Color(0xFFE6EDE7))) {
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
                 pages.forEach { option ->
@@ -78,6 +94,20 @@ fun SheetScreen(store: NotebookStore) {
                 }
             }
             TextButton(onClick = { focus.clearFocus(); creating = !creating }, modifier = Modifier.testTag("addPage")) { Text("+", fontSize = 22.sp) }
+        }
+        if (allowCopy) {
+            Row(Modifier.fillMaxWidth().background(Color(0xFFFFFDF7))) {
+                val hasEntries = rows.any { it.text.isNotBlank() || it.amount.isNotBlank() }
+                TextButton(enabled = hasEntries, onClick = { focus.clearFocus(); selectedAll = !selectedAll }, modifier = Modifier.testTag("selectAll")) {
+                    Text(if (selectedAll) "தேர்வு நீக்கு / Deselect" else "அனைத்தும் தேர்வு / Select all")
+                }
+                TextButton(enabled = selectedAll && hasEntries, onClick = {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("குறிப்பு", formatPageForCopy(page, rows, ::dateTime)))
+                    selectedAll = false
+                    Toast.makeText(context, "நகலெடுக்கப்பட்டது / Copied", Toast.LENGTH_SHORT).show()
+                }, modifier = Modifier.testTag("copyAll")) { Text("நகல் / Copy") }
+            }
         }
         if (creating) {
             Column(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -100,13 +130,13 @@ fun SheetScreen(store: NotebookStore) {
         }
         Row(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(vertical = 7.dp)) {
             Text("குறிப்பு / Note", color = ink, modifier = Modifier.weight(1f).padding(start = 16.dp))
-            Text(if (page.calculates) "தொகை / Amount" else "விவரம் / Details", color = ink, textAlign = TextAlign.End, modifier = Modifier.weight(.42f).padding(end = 16.dp))
+            if (page.showColumn) Text(if (page.calculates) "தொகை / Amount" else "விவரம் / Details", color = ink, textAlign = TextAlign.End, modifier = Modifier.weight(.42f).padding(end = 16.dp))
         }
         HorizontalDivider(color = line)
         key(page.id) {
             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("sheet")) {
                 items(rows, key = { it.id }) { row ->
-                    SheetLine(row, page.calculates, onText = { save(row, it, row.amount) }, onAmount = { save(row, row.text, it) }, onLongPress = { if (row.text.isNotEmpty() || row.amount.isNotEmpty()) details = row })
+                    SheetLine(row, page.calculates, page.showColumn, selectedAll && (row.text.isNotBlank() || row.amount.isNotBlank()), onText = { save(row, it, row.amount) }, onAmount = { save(row, row.text, it) }, onLongPress = { if (row.text.isNotEmpty() || row.amount.isNotEmpty()) details = row })
                 }
             }
         }
@@ -118,6 +148,32 @@ fun SheetScreen(store: NotebookStore) {
             }
         }
     }
+    if (settingsOpen) AlertDialog(onDismissRequest = { settingsOpen = false }, title = { Text("அமைப்புகள் / Settings") }, text = {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            Text(page.title, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("இரண்டாவது நிரல் / Second column", modifier = Modifier.weight(1f))
+                Switch(checked = page.showColumn, onCheckedChange = { show ->
+                    try { store.setPageOptions(page.id, show, if (show) page.calculates else false); pages = store.pages(); selectedAll = false } catch (_: Exception) { failed = true }
+                }, modifier = Modifier.testTag("columnSwitch"))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("மொத்தம் கணக்கிடு / Calculate total", modifier = Modifier.weight(1f))
+                Switch(checked = page.calculates, enabled = page.showColumn, onCheckedChange = { calculate ->
+                    try { store.setPageOptions(page.id, page.showColumn, calculate); pages = store.pages(); selectedAll = false } catch (_: Exception) { failed = true }
+                }, modifier = Modifier.testTag("totalSwitch"))
+            }
+            Text("நிரலை மறைத்தாலும் உள்ள விவரங்கள் அழியாது; மொத்தம் நிறுத்தப்படும். நகலில் மறைத்த விவரங்களும் சேரும். / Hidden values are kept and included in copies; hiding the column turns off its total.", style = MaterialTheme.typography.bodySmall)
+            HorizontalDivider(Modifier.padding(vertical = 10.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("அனைத்தும் தேர்வு / நகல் / Select all & copy", modifier = Modifier.weight(1f))
+                Switch(checked = allowCopy, onCheckedChange = { allow ->
+                    preferences.edit().putBoolean("bulk_copy", allow).apply(); allowCopy = allow; selectedAll = false
+                }, modifier = Modifier.testTag("copySwitch"))
+            }
+            Text("தற்போதைய பக்கம் மட்டும்; பதிவுகள், தொகை, தேதி மற்றும் நேரம் நகலாகும். / Copies the current page, including rows, values and timestamps.", style = MaterialTheme.typography.bodySmall)
+        }
+    }, confirmButton = { TextButton(onClick = { settingsOpen = false }, modifier = Modifier.testTag("closeSettings")) { Text("மூடு / Close") } })
     details?.let { row -> AlertDialog(onDismissRequest = { details = null }, title = { Text("பதிவு விவரம் / Entry details") }, text = {
         Column {
             Text("உருவாக்கியது / Created: ${dateTime(row.createdAt)}", modifier = Modifier.testTag("createdTime"))
@@ -125,7 +181,7 @@ fun SheetScreen(store: NotebookStore) {
         }
     }, confirmButton = { TextButton(onClick = { details = null }) { Text("மூடு / Close") } }, dismissButton = { TextButton(onClick = { details = null; deleting = row }, modifier = Modifier.testTag("deleteRow")) { Text("நீக்கு / Delete") } }) }
     deleting?.let { row -> AlertDialog(onDismissRequest = { deleting = null }, title = { Text("பதிவை நீக்கவா? / Delete row?") }, text = { Text(row.text.ifBlank { row.amount }) }, confirmButton = {
-        TextButton(modifier = Modifier.testTag("confirmDelete"), onClick = { try { rows = store.delete(row); deleting = null } catch (_: Exception) { failed = true } }) { Text("நீக்கு / Delete") }
+        TextButton(modifier = Modifier.testTag("confirmDelete"), onClick = { try { rows = store.delete(row); deleting = null; selectedAll = false } catch (_: Exception) { failed = true } }) { Text("நீக்கு / Delete") }
     }, dismissButton = { TextButton(onClick = { deleting = null }) { Text("ரத்து / Cancel") } }) }
     if (failed) AlertDialog(onDismissRequest = { failed = false }, title = { Text("சேமிக்க முடியவில்லை / Could not save") }, text = { Text("மாற்றம் சேமிக்கப்படவில்லை. மீண்டும் முயற்சிக்கவும். / The change was not saved. Please try again.") }, confirmButton = { TextButton(onClick = { failed = false }) { Text("சரி / OK") } })
 }
@@ -155,13 +211,15 @@ private fun Modifier.rowLongPress(id: Long, onLongPress: () -> Unit): Modifier =
 }
 
 @Composable
-private fun SheetLine(row: SheetRow, calculates: Boolean, onText: (String) -> Unit, onAmount: (String) -> Unit, onLongPress: () -> Unit) {
+private fun SheetLine(row: SheetRow, calculates: Boolean, showColumn: Boolean, selected: Boolean, onText: (String) -> Unit, onAmount: (String) -> Unit, onLongPress: () -> Unit) {
     val invalid = calculates && row.amount.isNotBlank() && Amounts.parse(row.amount) == null
-    Column(Modifier.fillMaxWidth().rowLongPress(row.id, onLongPress).testTag("row-${row.id}")) {
+    Column(Modifier.fillMaxWidth().background(if (selected) Color(0xFFE4EFE8) else Color.Transparent).rowLongPress(row.id, onLongPress).testTag("row-${row.id}")) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             BasicTextField(value = row.text, onValueChange = onText, textStyle = TextStyle(color = ink, fontSize = 18.sp), modifier = Modifier.weight(1f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("note-${row.id}"))
-            Box(Modifier.fillMaxHeight().width(1.dp).background(line))
-            BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) Color(0xFFB3261E) else ink, fontSize = 18.sp, textAlign = if (calculates) TextAlign.End else TextAlign.Start), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = calculates, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}"))
+            if (showColumn) {
+                Box(Modifier.fillMaxHeight().width(1.dp).background(line))
+                BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) Color(0xFFB3261E) else ink, fontSize = 18.sp, textAlign = if (calculates) TextAlign.End else TextAlign.Start), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = calculates, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}"))
+            }
         }
         HorizontalDivider(color = line)
     }

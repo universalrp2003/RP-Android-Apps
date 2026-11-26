@@ -6,11 +6,12 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
 /** Private on-device database. All old section and sheet rows survive the upgrade. */
-class NotebookStore(context: Context) : SQLiteOpenHelper(context.applicationContext, "kurippu.db", null, 3) {
+class NotebookStore(context: Context) : SQLiteOpenHelper(context.applicationContext, "kurippu.db", null, 4) {
     override fun onConfigure(db: SQLiteDatabase) { db.setForeignKeyConstraintsEnabled(true) }
     override fun onCreate(db: SQLiteDatabase) {
         createSheet(db)
         createPages(db)
+        addColumnPreference(db)
     }
     private fun createSheet(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE sheet_rows (id INTEGER PRIMARY KEY AUTOINCREMENT, body TEXT NOT NULL, amount TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)")
@@ -22,8 +23,13 @@ class NotebookStore(context: Context) : SQLiteOpenHelper(context.applicationCont
         db.execSQL("ALTER TABLE sheet_rows ADD COLUMN page_id INTEGER NOT NULL DEFAULT 1")
         db.execSQL("CREATE INDEX sheet_rows_by_page ON sheet_rows(page_id,id)")
     }
+    private fun addColumnPreference(db: SQLiteDatabase) {
+        db.execSQL("ALTER TABLE pages ADD COLUMN show_column INTEGER NOT NULL DEFAULT 1 CHECK(show_column IN (0,1))")
+        // Notes with existing right-column content stay visible; empty notes gain full width.
+        db.execSQL("UPDATE pages SET show_column=0 WHERE calculates=0 AND NOT EXISTS (SELECT 1 FROM sheet_rows WHERE page_id=pages.id AND length(amount)>0)")
+    }
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        check(oldVersion in 1..2 && newVersion == 3)
+        check(oldVersion in 1..3 && newVersion == 4)
         if (oldVersion == 1) {
             createSheet(db)
             // The old schema has no timestamp for section titles: zero means unavailable.
@@ -37,23 +43,30 @@ class NotebookStore(context: Context) : SQLiteOpenHelper(context.applicationCont
                 }
             }
         }
-        createPages(db)
+        if (oldVersion < 3) createPages(db)
+        addColumnPreference(db)
     }
     private fun values(text: String, amount: String, created: Long, updated: Long) = ContentValues().apply {
         put("body", text); put("amount", amount); put("created_at", created); put("updated_at", updated)
     }
     fun pages(): List<Page> {
         val pages = mutableListOf<Page>()
-        readableDatabase.rawQuery("SELECT id,title,calculates FROM pages ORDER BY id", null).use { c ->
-            while (c.moveToNext()) pages.add(Page(c.getLong(0), c.getString(1), c.getInt(2) == 1))
+        readableDatabase.rawQuery("SELECT id,title,calculates,show_column FROM pages ORDER BY id", null).use { c ->
+            while (c.moveToNext()) pages.add(Page(c.getLong(0), c.getString(1), c.getInt(2) == 1, c.getInt(3) == 1))
         }
         return pages
     }
     fun addPage(title: String, calculates: Boolean): Long {
         require(title.isNotBlank() && title.trim().length <= 100)
         return writableDatabase.insertOrThrow("pages", null, ContentValues().apply {
-            put("title", title.trim()); put("calculates", if (calculates) 1 else 0)
+            put("title", title.trim()); put("calculates", if (calculates) 1 else 0); put("show_column", if (calculates) 1 else 0)
         })
+    }
+    /** Hiding does not alter any cell; it turns off calculation to avoid an unseen total. */
+    fun setPageOptions(pageId: Long, showColumn: Boolean, calculates: Boolean) {
+        require(showColumn || !calculates)
+        val changes = ContentValues().apply { put("show_column", if (showColumn) 1 else 0); put("calculates", if (calculates) 1 else 0) }
+        check(writableDatabase.update("pages", changes, "id=?", arrayOf(pageId.toString())) == 1)
     }
     fun read(pageId: Long): List<SheetRow> {
         val rows = mutableListOf<SheetRow>()
