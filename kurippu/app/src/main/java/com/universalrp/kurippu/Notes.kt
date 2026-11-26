@@ -2,7 +2,7 @@ package com.universalrp.kurippu
 
 import java.math.BigDecimal
 
-/** Amounts are plain decimal strings, never floating point or inferred from note text. */
+/** A blank amount is a note; malformed amounts are explicitly reported, never guessed. */
 object Amounts {
     private val pattern = Regex("-?[0-9]{1,18}(\\.[0-9]{1,2})?")
     fun parse(input: String): BigDecimal? {
@@ -10,11 +10,17 @@ object Amounts {
         return if (pattern.matches(s)) BigDecimal(s) else null
     }
     fun display(value: BigDecimal): String = value.stripTrailingZeros().toPlainString()
-    fun total(entries: List<Entry>): String = display(entries.fold(BigDecimal.ZERO) { sum, e ->
-        sum + (e.amount?.let { requireNotNull(parse(it)) } ?: BigDecimal.ZERO)
-    })
+    fun total(rows: List<SheetRow>): Total {
+        var value = BigDecimal.ZERO
+        var invalid = false
+        rows.forEach { row ->
+            if (row.amount.isNotBlank()) {
+                val parsed = parse(row.amount)
+                if (parsed == null) invalid = true else value += parsed
+            }
+        }
+        return Total(display(value), invalid)
+    }
 }
-
-data class Section(val id: Long, val title: String, val calculates: Boolean)
-data class Entry(val id: Long, val sectionId: Long, val text: String, val amount: String?, val createdAt: Long, val updatedAt: Long)
-data class Notebook(val sections: List<Section>, val entries: List<Entry>)
+data class Total(val value: String, val hasInvalidAmounts: Boolean)
+data class SheetRow(val id: Long, val text: String, val amount: String, val createdAt: Long, val updatedAt: Long)
