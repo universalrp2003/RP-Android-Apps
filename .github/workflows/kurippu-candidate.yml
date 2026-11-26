@@ -34,16 +34,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/kurippu
-          cp kurippu/app/build/outputs/apk/release/*.apk /tmp/kurippu/Kurippu-v0.2.apk
+          cp kurippu/app/build/outputs/apk/release/*.apk /tmp/kurippu/Kurippu-v0.3.apk
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          "$tools/aapt" dump badging /tmp/kurippu/Kurippu-v0.2.apk > /tmp/kurippu/badging.txt
-          grep -q "package: name='com.universalrp.kurippu' versionCode='2' versionName='0.2'" /tmp/kurippu/badging.txt
+          "$tools/aapt" dump badging /tmp/kurippu/Kurippu-v0.3.apk > /tmp/kurippu/badging.txt
+          grep -q "package: name='com.universalrp.kurippu' versionCode='3' versionName='0.3'" /tmp/kurippu/badging.txt
           ! grep -q application-debuggable /tmp/kurippu/badging.txt
           ! grep -q "uses-permission: name='android.permission.INTERNET'" /tmp/kurippu/badging.txt
-          "$tools/apksigner" verify --print-certs /tmp/kurippu/Kurippu-v0.2.apk > /tmp/kurippu/signer.txt
+          "$tools/apksigner" verify --print-certs /tmp/kurippu/Kurippu-v0.3.apk > /tmp/kurippu/signer.txt
           grep -qi 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' /tmp/kurippu/signer.txt
-          (cd /tmp/kurippu && sha256sum Kurippu-v0.2.apk > Kurippu-v0.2.apk.sha256)
-          echo "::notice title=Candidate APK::$(cat /tmp/kurippu/Kurippu-v0.2.apk.sha256)"
+          (cd /tmp/kurippu && sha256sum Kurippu-v0.3.apk > Kurippu-v0.3.apk.sha256)
+          echo "::notice title=Candidate APK::$(cat /tmp/kurippu/Kurippu-v0.3.apk.sha256)"
       - run: sudo chmod a+rw /dev/kvm
       - name: Exercise notes, totals, timestamps and persistence on Android
         uses: reactivecircus/android-emulator-runner@v2
@@ -63,12 +63,12 @@ jobs:
           import xml.etree.ElementTree as ET
           roots = [ET.parse(p).getroot() for p in Path('kurippu/app/build/outputs/androidTest-results').rglob('*.xml')]
           tests = [c for root in roots for c in root.iter('testcase') if 'NotebookTest' in c.get('classname', '')]
-          assert len(tests) == 2 and all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in tests), 'Native tests missing or failed'
-          print('::notice title=Notebook native tests::Both tests passed')
+          assert len(tests) == 3 and all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in tests), 'Native tests missing or failed'
+          print('::notice title=Notebook native tests::All three tests passed')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: Kurippu-0.2-candidate
+          name: Kurippu-0.3-candidate
           path: /tmp/kurippu/
           retention-days: 30
           if-no-files-found: error

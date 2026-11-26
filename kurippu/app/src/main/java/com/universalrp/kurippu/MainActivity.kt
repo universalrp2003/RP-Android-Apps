@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
@@ -13,10 +15,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,30 +46,76 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SheetScreen(store: NotebookStore) {
-    var rows by remember { mutableStateOf(store.load()) }
+    var pages by remember { mutableStateOf(store.pages()) }
+    var activeId by rememberSaveable { mutableLongStateOf(1L) }
+    if (pages.none { it.id == activeId }) activeId = pages.first().id
+    val page = pages.first { it.id == activeId }
+    var rows by remember { mutableStateOf(store.load(activeId)) }
     var details by remember { mutableStateOf<SheetRow?>(null) }
     var deleting by remember { mutableStateOf<SheetRow?>(null) }
     var failed by remember { mutableStateOf(false) }
+    var creating by rememberSaveable { mutableStateOf(false) }
+    var pageTitle by rememberSaveable { mutableStateOf("") }
+    var calculateNew by rememberSaveable { mutableStateOf(false) }
+    val focus = LocalFocusManager.current
+    fun select(id: Long) {
+        try { val loaded = store.load(id); focus.clearFocus(); activeId = id; rows = loaded; creating = false }
+        catch (_: Exception) { failed = true }
+    }
     fun save(row: SheetRow, text: String, amount: String) {
         try { rows = store.update(row, text, amount) } catch (_: Exception) { failed = true }
     }
-    val total = Amounts.total(rows)
+    val total = if (page.calculates) Amounts.total(rows) else null
     Column(Modifier.fillMaxSize().background(Color(0xFFFFFDF7)).safeDrawingPadding()) {
         Text("குறிப்பு", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-        Row(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(vertical = 7.dp)) {
-            Text("குறிப்பு / Note", color = ink, modifier = Modifier.weight(1f).padding(start = 16.dp))
-            Text("தொகை / Amount", color = ink, textAlign = TextAlign.End, modifier = Modifier.weight(.42f).padding(end = 16.dp))
+        Row(Modifier.fillMaxWidth().background(Color(0xFFE6EDE7))) {
+            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
+                pages.forEach { option ->
+                    TextButton(onClick = { select(option.id) }, modifier = Modifier.testTag("page-${option.id}")) {
+                        Text(option.title, color = if (option.id == activeId) Color(0xFF174F3D) else ink,
+                            fontWeight = if (option.id == activeId) FontWeight.Bold else FontWeight.Normal)
+                    }
+                }
+            }
+            TextButton(onClick = { focus.clearFocus(); creating = !creating }, modifier = Modifier.testTag("addPage")) { Text("+", fontSize = 22.sp) }
         }
-        HorizontalDivider(color = line)
-        LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("sheet")) {
-            items(rows, key = { it.id }) { row ->
-                SheetLine(row, onText = { save(row, it, row.amount) }, onAmount = { save(row, row.text, it) }, onLongPress = { if (row.text.isNotEmpty() || row.amount.isNotEmpty()) details = row })
+        if (creating) {
+            Column(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(horizontal = 16.dp, vertical = 8.dp)) {
+                OutlinedTextField(value = pageTitle, onValueChange = { if (it.length <= 100) pageTitle = it }, label = { Text("பக்கத்தின் பெயர் / Page name") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("pageName"))
+                Row {
+                    FilterChip(selected = !calculateNew, onClick = { calculateNew = false }, label = { Text("குறிப்பு / Note") }, modifier = Modifier.testTag("typeNote"))
+                    Spacer(Modifier.width(8.dp))
+                    FilterChip(selected = calculateNew, onClick = { calculateNew = true }, label = { Text("மொத்தம் / Total") }, modifier = Modifier.testTag("typeTotal"))
+                }
+                Row {
+                    TextButton(enabled = pageTitle.isNotBlank(), onClick = {
+                        try {
+                            val id = store.addPage(pageTitle, calculateNew)
+                            pages = store.pages(); pageTitle = ""; calculateNew = false; select(id)
+                        } catch (_: Exception) { failed = true }
+                    }, modifier = Modifier.testTag("createPage")) { Text("சேர் / Add") }
+                    TextButton(onClick = { creating = false; focus.clearFocus() }) { Text("ரத்து / Cancel") }
+                }
             }
         }
+        Row(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(vertical = 7.dp)) {
+            Text("குறிப்பு / Note", color = ink, modifier = Modifier.weight(1f).padding(start = 16.dp))
+            Text(if (page.calculates) "தொகை / Amount" else "விவரம் / Details", color = ink, textAlign = TextAlign.End, modifier = Modifier.weight(.42f).padding(end = 16.dp))
+        }
         HorizontalDivider(color = line)
-        Row(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("மொத்தம் / Total", color = ink, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text(if (total.hasInvalidAmounts) "சரிபார் / Check amounts" else total.value, color = if (total.hasInvalidAmounts) Color(0xFFB3261E) else ink, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).testTag("total"))
+        key(page.id) {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("sheet")) {
+                items(rows, key = { it.id }) { row ->
+                    SheetLine(row, page.calculates, onText = { save(row, it, row.amount) }, onAmount = { save(row, row.text, it) }, onLongPress = { if (row.text.isNotEmpty() || row.amount.isNotEmpty()) details = row })
+                }
+            }
+        }
+        if (total != null) {
+            HorizontalDivider(color = line)
+            Row(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("மொத்தம் / Total", color = ink, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text(if (total.hasInvalidAmounts) "சரிபார் / Check amounts" else total.value, color = if (total.hasInvalidAmounts) Color(0xFFB3261E) else ink, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).testTag("total"))
+            }
         }
     }
     details?.let { row -> AlertDialog(onDismissRequest = { details = null }, title = { Text("பதிவு விவரம் / Entry details") }, text = {
@@ -105,13 +155,13 @@ private fun Modifier.rowLongPress(id: Long, onLongPress: () -> Unit): Modifier =
 }
 
 @Composable
-private fun SheetLine(row: SheetRow, onText: (String) -> Unit, onAmount: (String) -> Unit, onLongPress: () -> Unit) {
-    val invalid = row.amount.isNotBlank() && Amounts.parse(row.amount) == null
+private fun SheetLine(row: SheetRow, calculates: Boolean, onText: (String) -> Unit, onAmount: (String) -> Unit, onLongPress: () -> Unit) {
+    val invalid = calculates && row.amount.isNotBlank() && Amounts.parse(row.amount) == null
     Column(Modifier.fillMaxWidth().rowLongPress(row.id, onLongPress).testTag("row-${row.id}")) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             BasicTextField(value = row.text, onValueChange = onText, textStyle = TextStyle(color = ink, fontSize = 18.sp), modifier = Modifier.weight(1f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("note-${row.id}"))
             Box(Modifier.fillMaxHeight().width(1.dp).background(line))
-            BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) Color(0xFFB3261E) else ink, fontSize = 18.sp, textAlign = TextAlign.End), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = true, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}"))
+            BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) Color(0xFFB3261E) else ink, fontSize = 18.sp, textAlign = if (calculates) TextAlign.End else TextAlign.Start), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = calculates, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}"))
         }
         HorizontalDivider(color = line)
     }

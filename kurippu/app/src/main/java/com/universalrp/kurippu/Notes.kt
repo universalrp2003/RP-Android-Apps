@@ -23,4 +23,5 @@ object Amounts {
     }
 }
 data class Total(val value: String, val hasInvalidAmounts: Boolean)
-data class SheetRow(val id: Long, val text: String, val amount: String, val createdAt: Long, val updatedAt: Long)
+data class Page(val id: Long, val title: String, val calculates: Boolean)
+data class SheetRow(val id: Long, val text: String, val amount: String, val createdAt: Long, val updatedAt: Long, val pageId: Long = 1)
