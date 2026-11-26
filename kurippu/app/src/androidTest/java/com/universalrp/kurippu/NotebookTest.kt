@@ -147,9 +147,16 @@ class NotebookTest {
         val db = open()
         rule.setContent { MaterialTheme { SheetScreen(db) } }
         rule.onNodeWithTag("about").performClick()
-        rule.onNodeWithTag("aboutVersion").assertTextContains("1.0", substring = true)
+        rule.onNodeWithTag("aboutVersion").assertTextContains("1.2", substring = true)
         rule.onNodeWithTag("aboutBackupWarning").assertTextContains("No backup", substring = true)
         rule.onNodeWithText("எங்கள் செயலிகள் / Our applications").assertExists()
+        rule.onNodeWithTag("openGuide").performClick()
+        rule.onNodeWithTag("guideMove").performScrollTo().assertTextContains("drag", substring = true)
+        rule.onNodeWithTag("guideDelete").performScrollTo().assertTextContains("permanently", substring = true)
+        rule.onNodeWithTag("guideCalculator").performScrollTo().assertTextContains("six", substring = true)
+        rule.onNodeWithTag("guideBackup").performScrollTo().assertTextContains("No backup", substring = true)
+        rule.onNodeWithTag("closeGuide").performClick()
+        rule.onNodeWithTag("aboutVersion").assertTextContains("1.2", substring = true)
         rule.onNodeWithTag("closeAbout").performClick()
         assertEquals(19, OurApplications.names.size)
         assertEquals(19, OurApplications.names.distinct().size)
@@ -248,4 +255,27 @@ class NotebookTest {
         assertEquals("Keep note", db.read(2).first().text)
         rule.onNodeWithTag("page-2").assertExists()
     }
+    @Test fun calculatorHistoryAndButtonLayout() {
+        val db = open()
+        rule.setContent { MaterialTheme { SheetScreen(db) } }
+        val calculator = db.pages().single { it.isCalculator }.id
+        rule.onNodeWithTag("pageTabs").performTouchInput { swipeLeft() }
+        rule.onNodeWithTag("page-$calculator").performClick()
+        val multiply = rule.onNodeWithTag("calc-×").getUnclippedBoundsInRoot()
+        val equals = rule.onNodeWithTag("calc-=").getUnclippedBoundsInRoot()
+        val three = rule.onNodeWithTag("calc-3").getUnclippedBoundsInRoot()
+        assertTrue(multiply.top == three.top && multiply.left > three.left)
+        assertTrue(equals.top > multiply.top && (equals.right - equals.left) > (multiply.right - multiply.left) * 1.8f)
+        for (key in listOf("5", "×", "4", "=", "C", "5", "5", "+", "1", "=")) {
+            rule.onNodeWithTag("calc-$key").performClick()
+        }
+        rule.onNodeWithTag("calcHistory-0").performScrollTo().assertTextEquals("5 × 4 = 20")
+        rule.onNodeWithTag("calcHistory-1").performScrollTo().assertTextEquals("55 + 1 = 56")
+        rule.onNodeWithTag("pageTabs").performTouchInput { swipeRight() }
+        rule.onNodeWithTag("page-1").performClick()
+        rule.onNodeWithTag("pageTabs").performTouchInput { swipeLeft() }
+        rule.onNodeWithTag("page-$calculator").performClick()
+        rule.onNodeWithTag("calcHistory-1").performScrollTo().assertTextEquals("55 + 1 = 56")
+    }
+
 }
