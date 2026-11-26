@@ -36,11 +36,11 @@ def instrument(name):
 
 
 def uid():
-    output = subprocess.check_output(['adb', 'shell', 'dumpsys', 'package', PACKAGE], text=True)
-    match = re.search(r'\buserId=(\d+)', output)
-    if not match:
-        raise RuntimeError('Could not read Android package UID')
-    return match.group(1)
+    output = subprocess.check_output(['adb', 'shell', 'pm', 'list', 'packages', '-U', '--user', '0', PACKAGE], text=True)
+    matches = re.findall(r'^package:' + re.escape(PACKAGE) + r'\s+uid:(\d+)\s*$', output, flags=re.MULTILINE)
+    if len(matches) != 1:
+        raise RuntimeError('Could not read exact Android package UID: ' + output)
+    return matches[0]
 
 
 candidate = one('cleaner/build/outputs/apk/release/*.apk')
