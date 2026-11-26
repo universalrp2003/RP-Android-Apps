@@ -4,6 +4,7 @@ on:
     branches: ["arena/**"]
     paths:
       - "tamilanstore/**"
+      - "tools/verify_apps_localization.py"
       - ".github/workflows/store-018-candidate.yml"
   workflow_dispatch:
 permissions:
