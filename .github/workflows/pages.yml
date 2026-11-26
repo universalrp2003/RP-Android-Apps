@@ -50,7 +50,7 @@ jobs:
 
           RELEASES = [
               ("animal-sounds-v0.22", "Animal-Sounds-v0.22.apk", 52813729, "dcabd2d99a922b2634b76af5f4fa26db250a0122c527c68bb00716c985cdb708"),
-              ("weekly-money-v1.5", "Weekly-Money-v1.5.apk", 7499595, "b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6"),
+              ("weekly-money-v1.7", "Weekly-Money-v1.7.apk", 7499595, "0dac276f391fb4099fe13ac45d67adfade6fe245b644d634a87a6b6af1cbc81a"),
               # Retention rule: the current release of every app. Historical releases are
               # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
               # builds stay on their GitHub release page instead of being mirrored a second time.
@@ -111,8 +111,8 @@ jobs:
           test -s site/apks/System-App-Disabler-v0.5.0.zip
           test -s site/apks/Animal-Sounds-v0.22.apk
           test -s site/apks/Animal-Sounds-v0.22.zip
-          test -s site/apks/Weekly-Money-v1.5.apk
-          test -s site/apks/Weekly-Money-v1.5.zip
+          test -s site/apks/Weekly-Money-v1.7.apk
+          test -s site/apks/Weekly-Money-v1.7.zip
           test -s site/apks/Tamilan-Store-v0.17.apk
           test -s site/apks/Tamilan-Store-v0.17.zip
           test -s site/apks/Voice-Notes-v1.3.4.apk

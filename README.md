@@ -16,7 +16,7 @@ Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**
 
 ## Application 17: வார வசூல் / Weekly Money
 
-A Tamil-first, single-owner offline weekly collection notebook. [Version 1.5](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.5) updates in place with the same package and signer. Keep the master password and external encrypted backups safe; both are needed to restore on a fresh installation. [Guide](site/weekly-money-guide.html) · [Verification](weeklymoney/BUILD-STATUS.md).
+A Tamil-first, single-owner offline weekly collection notebook. [Version 1.7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.7) updates in place with the same package and signer. Keep the master password and external encrypted backups safe; both are needed to restore on a fresh installation. [Guide](site/weekly-money-guide.html) · [Verification](weeklymoney/BUILD-STATUS.md).
 
 ## 17 regular apps + separate optional Tamilan Store
 
@@ -34,7 +34,7 @@ DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion.
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
 | [**Animal Sounds (விலங்கு ஒலிகள்)**](animalvoice/README.md) · 8.0+ (API 26) | [0.22 / code 22](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22) | [`Animal-Sounds-v0.22.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.22/Animal-Sounds-v0.22.apk) |
-| [**வார வசூல் · Weekly Money**](weeklymoney/README.md) · 8.0+ (API 26) | [1.5 / code 17](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.5) | [`Weekly-Money-v1.5.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.5/Weekly-Money-v1.5.apk) |
+| [**வார வசூல் · Weekly Money**](weeklymoney/README.md) · 8.0+ (API 26) | [1.7 / code 19](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.7) | [`Weekly-Money-v1.7.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.7/Weekly-Money-v1.7.apk) |
 | [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.18 / code 24](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.18) | [`SMS-Guard-v1.1.18.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.18/SMS-Guard-v1.1.18.apk) |
 | [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [3.02 / code 107](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.02) | [`CleanSweep-v3.02.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.02/CleanSweep-v3.02.apk) |
 | [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.3.4 / code 8](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.4) | [`Voice-Notes-v1.3.4.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk) |
