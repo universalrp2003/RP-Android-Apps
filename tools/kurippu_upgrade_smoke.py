@@ -32,8 +32,8 @@ def tap(node):
     adb('shell','input','tap',str((nums[0]+nums[2])//2),str((nums[1]+nums[3])//2))
 def tap_text(value): tap(find(text(value))[0])
 def uid():
-    out=adb('shell','dumpsys','package',PACKAGE)
-    match=re.search(r'userId=(\d+)',out); assert match, out[-3000:]
+    out=adb('shell','cmd','package','list','packages','-U',PACKAGE)
+    match=re.search(r'uid:(\d+)',out); assert match, out
     return match.group(1)
 def main():
     assert digest(OLD)=='6eb3c2fde4ded6111d149c721ea84baa999f98e850d076265e7ee628d1c4886e'
@@ -48,10 +48,13 @@ def main():
     fields=find(lambda n:n.get('class')=='android.widget.EditText' and len(n.get('bounds',''))>0)
     assert len(fields)==2, [n.attrib for n in fields]
     tap(fields[0]); adb('shell','input','text','Milk')
+    adb('shell','input','keyevent','4')
+    fields=find(lambda n:n.get('class')=='android.widget.EditText')
+    assert len(fields)==2, [n.attrib for n in fields]
     tap(fields[1]); adb('shell','input','text','30')
     adb('shell','input','keyevent','4')
     tap_text('Save')
-    find(text('Milk')); find(text('30'))
+    find(text('Add entry')); find(text('Milk')); find(text('30'))
     before=uid()
     adb('install','-r',str(NEW))
     assert uid()==before
@@ -66,6 +69,6 @@ if __name__=='__main__':
         diagnostic = traceback.format_exc()
         try: diagnostic += "\nSCREEN: " + ET.tostring(tree(), encoding="unicode")[-7000:]
         except Exception: pass
-        print('::error title=Upgrade smoke failure::' + diagnostic[-10000:].replace('%','%25').replace('\n','%0A'), flush=True)
+        print('::error title=Upgrade smoke failure::' + diagnostic[:10000].replace('%','%25').replace('\n','%0A'), flush=True)
         raise
 
