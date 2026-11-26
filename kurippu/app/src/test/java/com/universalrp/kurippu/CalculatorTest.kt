@@ -22,4 +22,30 @@ class CalculatorTest {
         assertTrue(repeating.approximate); assertTrue(repeating.display.startsWith("0.33333"))
         assertEquals("0", repeating.press("C").display)
     }
+    @Test fun historyContainsFullCalculationsAndClearStartsANewOne() {
+        val state = calculate("5", "×", "4", "=", "C", "5", "5", "+", "1", "=")
+        assertEquals(listOf("5 × 4 = 20", "55 + 1 = 56"), state.history)
+        assertEquals("0", state.press("C").display)
+        assertEquals(state.history, state.press("C").history)
+        assertEquals("7", state.press("7").display) // digits after equals start fresh
+        assertEquals("5 + 3 × 4 = 32", calculate("5", "+", "3", "×", "4", "=").history.single())
+        assertEquals("2 × 3 = 6", calculate("2", "+", "×", "3", "=").history.single())
+    }
+    @Test fun historyIsLimitedToSixAndMarksErrorsAndApproximations() {
+        var state = CalculatorState()
+        for (n in 1..7) {
+            state = state.press("C").press(n.toString()).press("+").press("1").press("=")
+        }
+        assertEquals(6, state.history.size)
+        assertEquals("2 + 1 = 3", state.history.first())
+        assertEquals("7 + 1 = 8", state.history.last())
+        val error = state.press("C").press("5").press("÷").press("0").press("=")
+        assertTrue(error.error)
+        assertEquals("5 ÷ 0 = Error", error.history.last())
+        assertEquals(error.history, error.press("3").history)
+        val rounded = calculate("1", "÷", "3", "=", "×", "3", "=")
+        assertTrue(rounded.history[0].contains(" ≈ "))
+        assertTrue(rounded.history[1].contains(" ≈ "))
+    }
+
 }

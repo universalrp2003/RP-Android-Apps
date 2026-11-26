@@ -117,6 +117,7 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
     var pageTitle by rememberSaveable { mutableStateOf("") }
     var calculateNew by rememberSaveable { mutableStateOf(false) }
     var calculatorNew by rememberSaveable { mutableStateOf(false) }
+    var calculatorState by remember { mutableStateOf(CalculatorState()) }
     val focus = LocalFocusManager.current
     val tabScroll = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -215,7 +216,7 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
             }
         }
         if (page.isCalculator) {
-            CalculatorPage(Modifier.weight(1f))
+            CalculatorPage(calculatorState, { calculatorState = calculatorState.press(it) }, Modifier.weight(1f))
         } else {
         HorizontalDivider(color = line)
         key(page.id) {
