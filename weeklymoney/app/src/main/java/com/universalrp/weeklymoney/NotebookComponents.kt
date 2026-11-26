@@ -524,6 +524,7 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
         }
     }
 }
+    }
     // Do not allow a second edit against stale rows while the new snapshot is prepared.
     if (snapshot.source != state) {
         Box(Modifier.matchParentSize().background(paper.copy(alpha = .35f))
@@ -532,7 +533,6 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
             Text("புத்தகம் புதுப்பிக்கிறது / Updating book…")
         }
     }
-}
 }
 }
 /** The bound centre crease separates identity details and ten receipt columns. */
