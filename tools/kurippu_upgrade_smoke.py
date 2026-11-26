@@ -16,8 +16,15 @@ def run(*args): return subprocess.check_output(args, text=True).strip()
 def adb(*args): return run('adb', *args)
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 def tree():
-    adb('shell','uiautomator','dump','/sdcard/kurippu-window.xml')
-    return ET.fromstring(adb('exec-out','cat','/sdcard/kurippu-window.xml'))
+    for _ in range(5):
+        try:
+            output = adb('shell','uiautomator','dump','/sdcard/kurippu-window.xml')
+            if 'dumped to' in output:
+                return ET.fromstring(adb('exec-out','cat','/sdcard/kurippu-window.xml'))
+        except (ET.ParseError, subprocess.CalledProcessError):
+            pass
+        time.sleep(1)
+    raise RuntimeError('Could not read Android UI hierarchy')
 def find(predicate, timeout=25):
     deadline = time.monotonic()+timeout
     while time.monotonic()<deadline:
