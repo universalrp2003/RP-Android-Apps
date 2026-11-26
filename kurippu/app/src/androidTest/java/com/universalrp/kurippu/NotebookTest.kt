@@ -258,7 +258,7 @@ class NotebookTest {
         val equals = rule.onNodeWithTag("calc-=").getUnclippedBoundsInRoot()
         val three = rule.onNodeWithTag("calc-3").getUnclippedBoundsInRoot()
         assertTrue(multiply.top == three.top && multiply.left > three.left)
-        assertTrue(equals.top > multiply.top && equals.width > multiply.width * 1.8f)
+        assertTrue(equals.top > multiply.top && (equals.right - equals.left) > (multiply.right - multiply.left) * 1.8f)
         for (key in listOf("5", "×", "4", "=", "C", "5", "5", "+", "1", "=")) {
             rule.onNodeWithTag("calc-$key").performClick()
         }
