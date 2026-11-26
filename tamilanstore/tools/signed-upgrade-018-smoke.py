@@ -293,7 +293,7 @@ def run(out):
     # The bundled catalog lists the app under its plain name (the "· experimental" tag was
     # dropped from the Store entry name with Animal Sounds 0.22); scroll for exactly that.
     scroll_until_text('Animal Sounds')
-    scroll_until_text('Kurippu')
+    scroll_until_text('Kurippu · Note')
     snap(out, '03-store17-apps-listed')
     # Restart must preserve the two real UI preferences as well as the synthetic file.
     adb('shell', 'am', 'force-stop', PKG)
