@@ -30,7 +30,7 @@ def main():
     h.adb('shell','input','swipe','980','150','200','150','400')
     h.tap_text('Calculator')
     for label in ('5', '+', '4', '='):
-        h.tap(h.find(lambda n, label=label: n.get('text') == label)[0])
+        h.tap(h.find(lambda n, label=label: n.get('text') == label)[-1])
     h.adb('shell','input','swipe','500','1700','500','700','400')
     h.find(h.text('5 + 4 = 9'))
     h.adb('shell','am','force-stop',h.PACKAGE)
@@ -50,7 +50,7 @@ if __name__=='__main__':
     try: main()
     except Exception:
         diag=traceback.format_exc()
-        try: diag+='\nSCREEN: '+ET.tostring(h.tree(),encoding='unicode')[-7000:]
+        try: diag+='\nVISIBLE TEXT: '+repr([n.get('text') for n in h.tree().iter('node') if n.get('text')])
         except Exception: pass
         print('::error title=Notebook upgrade failed::'+diag[:10000].replace('%','%25').replace('\n','%0A'),flush=True)
         raise

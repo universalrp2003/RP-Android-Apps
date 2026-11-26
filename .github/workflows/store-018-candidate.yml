@@ -137,10 +137,10 @@ jobs:
           root=pathlib.Path(os.environ['RUNNER_TEMP'])
           if not (root/'store-upgrade-console.log').exists():
               print('::error title=Store upgrade checkpoint::Emulator step failed before producing harness console output; no upgrade pass is claimed.')
-          for p in [root/'store-upgrade-console.log',pathlib.Path('store-signed-upgrade-results/failure.txt')]:
+          for p in [root/'store-signed-build.log',root/'store-upgrade-console.log',pathlib.Path('store-signed-upgrade-results/failure.txt')]:
               if not p.exists(): continue
               lines=p.read_text(errors='replace').splitlines()
-              selected=[s for s in lines if any(t in s for t in ('e:', ' FAILED', 'Error:', 'Exception', 'AssertionError', 'FAILURE:'))] or lines[-12:]
+              selected=[s for s in lines if any(t in s for t in ('e:', ' FAILED', 'Error:', 'error:', 'Exception', 'AssertionError', 'FAILURE:', 'failed'))] or lines[-12:]
               for line in selected[-20:]:
                   print('::error title=Store signed upgrade::'+line[-700:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
       - name: Remove ephemeral private keystore
