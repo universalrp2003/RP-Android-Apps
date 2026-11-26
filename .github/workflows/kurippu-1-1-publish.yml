@@ -2,7 +2,7 @@ name: Publish verified Kurippu 1.1
 on:
   push:
     branches: ["arena/30198928-rp-android-apps"]
-    paths: ["docs/kurippu/approved-1.1.json"]
+    paths: ["docs/kurippu/approved-1.1.json", "tools/publish_kurippu_1_1.py"]
   workflow_dispatch:
 permissions:
   contents: write

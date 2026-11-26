@@ -39,4 +39,10 @@ def main():
     published = api('releases/tags/'+TAG)
     assert not published['draft'] and not published['prerelease']
     print('::notice title=Kurippu public release::'+json.dumps({'url':published['html_url'],'sha256':p['apk_sha256'],'bytes':p['bytes'],'asset_id':asset['id'],'published_at':published['published_at']}))
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception:
+        import traceback
+        print('::error title=Kurippu exact release verification::' + traceback.format_exc().replace('%', '%25').replace('\n', '%0A'))
+        raise
