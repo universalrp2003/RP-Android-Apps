@@ -12,6 +12,10 @@ class KurippuFeatureTest(unittest.TestCase):
         self.assertIn(approved['apk_sha256'], page)
         self.assertIn('owner supplied these 0.6 screenshots', page.lower())
         self.assertIn('No backup or sync', page)
+        self.assertIn("public release linked below is 1.0", page)
+        for name in ("owner-1.1-calculator.jpg", "owner-1.1-page-menu.jpg"):
+            self.assertIn("images/kurippu/" + name, page)
+            self.assertGreater((ROOT / "site/images/kurippu" / name).stat().st_size, 0)
         for index in range(1, 7):
             path = f'images/kurippu/owner-0.6-{index}.jpg'
             self.assertIn(path, page)
