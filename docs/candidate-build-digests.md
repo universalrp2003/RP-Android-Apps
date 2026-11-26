@@ -1,35 +1,35 @@
 # Candidate build digests
 
-- Workflow run: 45747253214
-- Source commit: 01ba7b65b6bea76c08756d402dd03ab6aedffeb1
+- Workflow run: 45763075354
+- Source commit: 14b8b08fd4e9b777c36548b0e5f5f180bf1fd594
 - Ref: refs/heads/arena/30198928-rp-android-apps
-- Built (UTC): 2026-11-26T03:23:53Z
+- Built (UTC): 2026-11-26T05:46:20Z
 - Note: candidate build output only. GitHub publication is not Play Protect approval.
 
 | File | Bytes | SHA-256 |
 | --- | --- | --- |
 | `cleaner/build/outputs/apk/debug/CleanSweep-v3.02-debug.apk` | 21560439 | `9fa13acbfef0f88174824e9219b3e43aedf9b7553ca81a950b4171dcf3e293f0` |
-| `cleaner/build/outputs/apk/release/CleanSweep-v3.02.apk` | 14808499 | `2a9f0af1cf0422461c726f370ee1ef37ebf26b1d9361e9c15549248eac493500` |
+| `cleaner/build/outputs/apk/release/CleanSweep-v3.02.apk` | 14808499 | `a3ecbb40377a08444850d1a4ef4747b4331791b823fac4e96c04c57901873f98` |
 | `dailyvault/build/outputs/apk/debug/dailyvault-debug.apk` | 17957783 | `6fd93bf810a64200b545f4ba0038934a4f072478798dcb77be9346661746ee09` |
 | `equalizer/build/outputs/apk/debug/PulseEQ-v1.11-debug.apk` | 17785396 | `3b0668c8c54878dd04dfcafd467787efd7a373fdd52f755f315123b3a9e35db3` |
-| `equalizer/build/outputs/apk/release/PulseEQ-v1.11.apk` | 12182177 | `7781f5fd53dc63389dc770392361d5f80a402a89bad8cab170a544f56a360ca0` |
+| `equalizer/build/outputs/apk/release/PulseEQ-v1.11.apk` | 12182177 | `fa98d1c39c9c01f2303cd3ff2b97f7ccd33a77d319cacd64a8c0910d0a6bfe21` |
 | `expensetracker/build/outputs/apk/debug/expensetracker-debug.apk` | 17743472 | `37fa636b67cf5910855ecebd05e3801adb009608b69d976e41280923a83a4cc9` |
-| `expensetracker/build/outputs/apk/release/Expense-Tracker-v1.2.apk` | 11580683 | `1c4541c32d7b3642ad3cb5b4dcc6c24227b04d90d8ebf10b7932688859ed2e72` |
+| `expensetracker/build/outputs/apk/release/Expense-Tracker-v1.2.apk` | 11580683 | `1d125f15f0acc8f04d1ed1462779eee0bf20b3e0a2473ac8e8b89d81d5ca375e` |
 | `launcher/build/outputs/apk/debug/launcher-debug.apk` | 17700994 | `ebeb76167677654c129999c9a0c4e99aef8697d5c80dcea0acb7680cdf243ed4` |
-| `launcher/build/outputs/apk/release/launcher-release.apk` | 11538139 | `73f1f670e1adecd5239844c1ea989b2c47c90b17aa187574fa0569a09f0bc00c` |
-| `oorarivippu/build/outputs/apk/debug/oorarivippu-debug.apk` | 18731121 | `db4145ce38f631ebca28aeed4d6369d85e1ba141c647900d07c535ecefe2b735` |
+| `launcher/build/outputs/apk/release/launcher-release.apk` | 11538139 | `a8bd8d4870380c9d5ef61feec002eb667d6f966c120ff409447840c8ec579a24` |
+| `oorarivippu/build/outputs/apk/debug/oorarivippu-debug.apk` | 18731121 | `758b0fa230bcb0a1a66249189f7b4e096740eb740ac855d5f7e85137adeab293` |
 | `podcast/build/outputs/apk/debug/podcast-debug.apk` | 18326917 | `7a820f8bac9eb0bd1602670ffe211c2bcda4a69ee4e87c397af5722bd089dfd2` |
-| `podcast/build/outputs/apk/release/podcast-release.apk` | 11983623 | `f01504e5e1790f5ee0a7a1ce82d176e16799031f279245f4bcfc6f48584e8a22` |
+| `podcast/build/outputs/apk/release/podcast-release.apk` | 11983623 | `cb6acea43fbdeeeadc2b91fe91f8c477e3a53412c1f8f709aeaf756046b50912` |
 | `radio/build/outputs/apk/debug/Ramesh-Radio-v1.31-debug.apk` | 21637926 | `3b96c03028d2f5ead98eb207b70324776a8586414b579b4c629320c3634d439a` |
-| `radio/build/outputs/apk/release/Ramesh-Radio-v1.31.apk` | 15192748 | `5f0a424d861055c9e74f2f8fc442b55d8c6f4d10229bb4a4e29b8685f71367c5` |
+| `radio/build/outputs/apk/release/Ramesh-Radio-v1.31.apk` | 15192748 | `35f86491051088a79d6c7e3f0db2a85c8e53a1053fc56af049610fc7cf1f3215` |
 | `smsguard/build/outputs/apk/debug/smsguard-debug.apk` | 18788445 | `6e69dc5000b79aedbec0afe4d6d48e609686c8e5c833c6bff506bb62d61c7a7d` |
-| `tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk` | 26958328 | `eba9eac354ec049017b7efd8a6f5c4284a5b6ffb28939b56390d4c91fd383b85` |
+| `tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk` | 26958328 | `d0ee5aedfd4b4b7934caf8b26c0490940bd8af91ac69fe8a96b514c5ea9ccc07` |
 | `vasanthi/build/outputs/apk/debug/vasanthi-debug.apk` | 49685246 | `e749a92ee171b9bd85aa768d0b04cc5ab0a263755050adcf6c090c19fcd32ae2` |
-| `vasanthi/build/outputs/apk/release/Vasanthi-AI-v1.1.6.apk` | 45794346 | `528ec327e23d8bbe637609faf36cd45443efdcae37b2589636abce5b447c5afe` |
+| `vasanthi/build/outputs/apk/release/Vasanthi-AI-v1.1.6.apk` | 45794346 | `4843b2d0331172f56f911a892f1626676dd3d6667b89819c5022757dbb0cdd40` |
 | `vocalremover/build/outputs/apk/debug/RP-Vocal-Remover-Studio-v0.1.16-debug.apk` | 83694293 | `957b51be80b515bc152d61b979be9ddf86ed768d80dbeb62b8639d6a09a9bdd4` |
-| `vocalremover/build/outputs/apk/release/RP-Vocal-Remover-Studio-v0.1.16.apk` | 65241305 | `445dd5d844fef299fab787a1f01fac038416b378fe8f65035d9fbc9e68b9a25e` |
+| `vocalremover/build/outputs/apk/release/RP-Vocal-Remover-Studio-v0.1.16.apk` | 65241305 | `bbfd47eeb6e2484e5c35a30887a17d3a63a38e4b8856f93beca282a00ef53fe8` |
 | `voicenotes/build/outputs/apk/debug/voicenotes-debug.apk` | 18915887 | `efae4a3d33fc59c0442153334bbb2e8afa8027c5fa4602c8ed1739ce9e513d18` |
-| `voicenotes/build/outputs/apk/release/Voice-Notes-v1.3.4.apk` | 13151579 | `6d3288e0ce3b83a12c22323ed9a43028ea278878f09c54142bad0f1f53579ad6` |
-| `cleaner/build/outputs/bundle/release/CleanSweep-v3.02.aab` | 14521312 | `c92e42aa10cc1160d502b192ac7d0794555d1a7ccf35be8aaea347c2aaf65a05` |
-| `equalizer/build/outputs/bundle/release/PulseEQ-v1.11.aab` | 11860794 | `7806874ffaeea0d974aa8ca85a9a4778b57802a8ebc635096cfd9150789dfb13` |
-| `radio/build/outputs/bundle/release/Ramesh-Radio-v1.31.aab` | 14761682 | `6c2a45711118c57048d835f228e38ed55c7d4037f51b57e1f833bd4e98347ef2` |
+| `voicenotes/build/outputs/apk/release/Voice-Notes-v1.3.4.apk` | 13151579 | `87f1042abafba81b46a21b63141c0cfeecd3cb682be29bf7799c244c454ac582` |
+| `cleaner/build/outputs/bundle/release/CleanSweep-v3.02.aab` | 14521313 | `0919ab4c4e0248b62e7afa2c584b20b1eef9cec85093cd777361c8bf39150b41` |
+| `equalizer/build/outputs/bundle/release/PulseEQ-v1.11.aab` | 11860798 | `b2a9ec24b53e60b3d255d5eda9fa095cdf7996343e08827fc7089e3f03bd891c` |
+| `radio/build/outputs/bundle/release/Ramesh-Radio-v1.31.aab` | 14761681 | `6f53991277ee725f5b33a6031dd48af3bb125b45e272d92cc71263cfe5fa2295` |
