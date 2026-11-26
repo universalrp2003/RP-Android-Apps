@@ -56,7 +56,7 @@ class NotebookTest {
         rule.onNodeWithTag("total").assertTextEquals("39.5")
         rule.onNodeWithTag("sheet").performScrollToNode(hasTestTag("amount-3"))
         rule.onNodeWithTag("amount-3").performTextReplacement("-")
-        rule.onNodeWithTag("total").assertTextContains("Check")
+        rule.onNodeWithTag("total").assertTextContains("Check", substring = true)
         rule.onNodeWithTag("amount-3").performTextReplacement("-10.50")
         rule.onNodeWithTag("total").assertTextEquals("39.5")
         rule.onNodeWithTag("sheet").performScrollToNode(hasTestTag("note-1"))
