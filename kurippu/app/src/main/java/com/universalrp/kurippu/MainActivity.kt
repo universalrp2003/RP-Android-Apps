@@ -19,7 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -145,26 +145,42 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
                     TextButton(onClick = { select(option.id) }, modifier = Modifier.testTag("page-${option.id}")
                         .onGloballyPositioned { positions[option.id] = it.boundsInRoot() }
                         .pointerInput(option.id) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { local -> dragging = option.id; dragDistance = 0f; dragX = (positions[option.id]?.left ?: 0f) + local.x; focus.clearFocus() },
-                                onDragEnd = {
-                                    if (dragDistance > viewConfiguration.touchSlop) {
+                            awaitEachGesture {
+                                val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                val held = awaitLongPressOrCancellation(down.id)
+                                if (held != null) {
+                                    held.consume()
+                                    dragging = option.id
+                                    dragDistance = 0f
+                                    dragX = (positions[option.id]?.left ?: 0f) + held.position.x
+                                    focus.clearFocus()
+                                    var cancelled = false
+                                    while (true) {
+                                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                                        val change = event.changes.firstOrNull { it.id == held.id }
+                                        if (change == null || change.isConsumed) { cancelled = true; break }
+                                        val delta = change.position - change.previousPosition
+                                        dragX += delta.x
+                                        dragDistance += kotlin.math.abs(delta.x) + kotlin.math.abs(delta.y)
+                                        change.consume()
+                                        if (!change.pressed) break
+                                        if (dragDistance > viewConfiguration.touchSlop) {
+                                            val target = pages.filter { positions.containsKey(it.id) }.minByOrNull { kotlin.math.abs((positions[it.id]?.center?.x ?: dragX) - dragX) }
+                                            val from = pages.indexOfFirst { it.id == option.id }; val to = pages.indexOfFirst { it.id == target?.id }
+                                            if (from >= 0 && to >= 0 && from != to) pages = pages.toMutableList().apply { add(to, removeAt(from)) }
+                                            if (dragX < tabArea.left + 60f) scope.launch { tabScroll.scrollBy(-24f) }
+                                            if (dragX > tabArea.right - 60f) scope.launch { tabScroll.scrollBy(24f) }
+                                        }
+                                    }
+                                    if (cancelled) pages = store.pages()
+                                    else if (dragDistance > viewConfiguration.touchSlop) {
                                         try { store.reorder(pages.map { it.id }); pages = store.pages() } catch (_: Exception) { pages = store.pages(); failed = true }
                                     } else {
                                         pages = store.pages(); pageMenu = pages.firstOrNull { it.id == option.id }
                                     }
                                     dragging = null
-                                },
-                                onDragCancel = { pages = store.pages(); dragging = null },
-                                onDrag = { change, delta ->
-                                    change.consume(); dragX += delta.x; dragDistance += kotlin.math.abs(delta.x) + kotlin.math.abs(delta.y)
-                                    val target = pages.filter { positions.containsKey(it.id) }.minByOrNull { kotlin.math.abs((positions[it.id]?.center?.x ?: dragX) - dragX) }
-                                    val from = pages.indexOfFirst { it.id == option.id }; val to = pages.indexOfFirst { it.id == target?.id }
-                                    if (dragDistance > viewConfiguration.touchSlop && from >= 0 && to >= 0 && from != to) pages = pages.toMutableList().apply { add(to, removeAt(from)) }
-                                    if (dragDistance > viewConfiguration.touchSlop && dragX < tabArea.left + 60f) scope.launch { tabScroll.scrollBy(-24f) }
-                                    if (dragDistance > viewConfiguration.touchSlop && dragX > tabArea.right - 60f) scope.launch { tabScroll.scrollBy(24f) }
                                 }
-                            )
+                            }
                         }) {
                         Text(option.title, color = if (option.id == activeId) MaterialTheme.colorScheme.primary else ink,
                             fontWeight = if (option.id == activeId || option.id == dragging) FontWeight.Bold else FontWeight.Normal)
