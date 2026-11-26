@@ -89,7 +89,7 @@ jobs:
               p = Path(filename)
               if p.exists():
                   lines = p.read_text(errors='replace').splitlines()
-                  found = [s for s in lines if 'error:' in s.lower() or 'failed' in s.lower() or 'Exception' in s]
+                  found = [s for s in lines if 'error:' in s.lower() or s.lstrip().startswith('e:') or 'failed' in s.lower() or 'Exception' in s]
                   print('::error title='+filename+'::'+'%0A'.join(found[-30:])[-8000:].replace('%','%25').replace('%250A','%0A'))
           for p in Path('kurippu/app/build/outputs/androidTest-results').rglob('*.xml'):
               for case in ET.parse(p).getroot().iter('testcase'):
