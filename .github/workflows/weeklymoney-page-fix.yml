@@ -1,0 +1,114 @@
+name: Weekly Money summary and page retention candidate (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths:
+      - "weeklymoney/**"
+      - ".github/workflows/weeklymoney-page-fix.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: weeklymoney-page-fix-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - name: Source checks and signed build
+        run: |
+          set -o pipefail
+          python3 -m unittest discover -s weeklymoney/checks -v
+          gradle :weeklymoney:testDebugUnitTest :weeklymoney:lintDebug :weeklymoney:assembleDebug :weeklymoney:assembleDebugAndroidTest :weeklymoney:assembleRelease :weeklymoney:lintRelease --no-daemon --stacktrace 2>&1 | tee /tmp/weeklymoney-build.log
+      - name: Check release package, version, signer and digest
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/weeklymoney-handover
+          cp weeklymoney/app/build/outputs/apk/release/*.apk /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" dump badging /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk > /tmp/weeklymoney-handover/badging.txt
+          grep -q "package: name='com.universalrp.weeklymoney.preview.notebook' versionCode='19' versionName='1.7'" /tmp/weeklymoney-handover/badging.txt
+          ! grep -q application-debuggable /tmp/weeklymoney-handover/badging.txt
+          "$tools/apksigner" verify --print-certs /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk > /tmp/weeklymoney-handover/signer.txt
+          grep -qi 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' /tmp/weeklymoney-handover/signer.txt
+          (cd /tmp/weeklymoney-handover && sha256sum Weekly-Money-v1.7.apk > Weekly-Money-v1.7.apk.sha256)
+          echo "::notice title=Signed candidate::$(cat /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk.sha256)"
+      - name: Download the prior phone-tried 1.6 candidate
+        uses: actions/download-artifact@v4
+        with:
+          name: WeeklyMoney-1.6-page-fix-candidate
+          path: /tmp/weeklymoney-prior
+          run-id: 45764403033
+          github-token: ${{ github.token }}
+      - name: Check prior candidate digest
+        run: echo '329dab3a48e73728062d4644c49f822e599173b60bdce80d6035c8ffb4c0a4f8  /tmp/weeklymoney-prior/Weekly-Money-v1.6.apk' | sha256sum -c -
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Exercise page retention and encrypted in-place upgrade
+        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 25
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -memory 1536 -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            bash -o pipefail -c 'gradle :weeklymoney:connectedDebugAndroidTest --no-daemon --stacktrace --max-workers=2 -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.weeklymoney.LedgerPageRetentionTest,com.universalrp.weeklymoney.BookAndScreenshotTest,com.universalrp.weeklymoney.LedgerSearchPerformanceTest 2>&1 | tee /tmp/weeklymoney-native.log && python3 weeklymoney/tools/page-fix-upgrade-smoke.py 2>&1 | tee /tmp/weeklymoney-upgrade.log && BASELINE_APK=/tmp/weeklymoney-prior/Weekly-Money-v1.6.apk python3 weeklymoney/tools/page-fix-upgrade-smoke.py 2>&1 | tee -a /tmp/weeklymoney-upgrade.log'
+      - name: Verify all targeted native tests ran
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          files=list(Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'))
+          roots=[ET.parse(p).getroot() for p in files]
+          for name in ('LedgerPageRetentionTest','BookAndScreenshotTest','LedgerSearchPerformanceTest'):
+              cases=[c for root in roots for c in root.iter('testcase') if name in c.get('classname','')]
+              assert cases and all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in cases), name
+              print('::notice title=Native regression::'+name+' passed '+str(len(cases))+' test(s)')
+          PY
+          cp weeklymoney/app/build/release-upgrade-receipt-public15.json weeklymoney/app/build/release-upgrade-receipt-candidate16.json /tmp/weeklymoney-handover/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WeeklyMoney-1.7-summary-fix-candidate
+          path: /tmp/weeklymoney-handover/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Surface failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('/tmp/weeklymoney-build.log','/tmp/weeklymoney-native.log','/tmp/weeklymoney-upgrade.log'):
+              p=Path(name)
+              if p.exists():
+                  lines=p.read_text(errors='replace').splitlines()
+                  errors=[x for x in lines if x.startswith('e: ') or ' FAILED' in x or 'What went wrong' in x or 'Error:' in x]
+                  print('::error title='+p.name+'::'+('\n'.join((errors or lines)[-40:])[-7000:]).replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          import xml.etree.ElementTree as ET
+          for p in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
+              root=ET.parse(p).getroot()
+              for case in root.iter('testcase'):
+                  for kind in ('failure','error'):
+                      failure=case.find(kind)
+                      if failure is not None:
+                          detail=(failure.get('message','')+'\n'+(failure.text or ''))[:7000]
+                          print('::error title='+case.get('classname','')+'.'+case.get('name','')+'::'+detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          PY
+
+# Verification only; never publishes a release.

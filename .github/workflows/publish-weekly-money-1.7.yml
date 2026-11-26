@@ -1,0 +1,26 @@
+name: Publish owner-approved Weekly Money 1.7 exact candidate
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["tools/publish_weekly_money_1_7.py"]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/30198928-rp-android-apps'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Publish exact verified candidate without rebuilding
+        run: python3 tools/publish_weekly_money_1_7.py
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          retention-days: 30
+          name: weeklymoney-1.7-publication-receipt
+          path: ${{ runner.temp }}/weeklymoney17-receipt.json

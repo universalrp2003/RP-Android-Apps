@@ -270,6 +270,7 @@ private val paper = Color(0xfffff8df)
         }) { Text("சேமி / Save") } }, dismissButton = { TextButton(enabled = !busy, modifier = Modifier.testTag("receiptClose"), onClick = dismiss) { Text("மூடு / Close") } })
 }
 private data class LedgerBookView(
+    val source: NotebookState,
     val pages: List<NotebookPage>, val rows: Map<NotebookPage, List<NotebookLine>>,
     val targets: Map<Int, List<NotebookPage>>, val settlements: Map<String, Int?>,
     val labels: Map<String, String>, val payments: Map<Pair<String, Int>, Payment>, val ledger: Ledger
@@ -279,7 +280,7 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
     val pages = state.pagesForCollection(book.id, reference)
     val loans = state.effectiveLoans()
     val ledger = state.readLedger()
-    return LedgerBookView(pages, pages.associateWith { state.pageLines(book.id, it, reference) },
+    return LedgerBookView(state, pages, pages.associateWith { state.pageLines(book.id, it, reference) },
         state.weekButtonTargets(book, today), loans.associate { it.id to state.settlementWeek(it) },
         loans.associate { it.id to state.customerLabel(it) }, ledger.latest().associateBy { it.loanId to it.week }, ledger)
 }
@@ -309,7 +310,9 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
     // Build the audited book projection off the UI thread once per immutable snapshot.
     // Search uses those cached rows, never replays the ledger for every keystroke.
     val today = LocalDate.now()
-    val view = remember(state, book.id, today) { mutableStateOf<LedgerBookView?>(null) }
+    // Keep the composed pager (and its scroll positions) while a saved snapshot is rebuilt.
+    // A different book still starts with a fresh projection and navigation state.
+    val view = remember(book.id, today) { mutableStateOf<LedgerBookView?>(null) }
     LaunchedEffect(state, book.id, today) {
         view.value = withContext(Dispatchers.Default) { buildLedgerBookView(state, book, today) }
     }
@@ -333,16 +336,39 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
     LaunchedEffect(activeWeek) {
         if (activeWeek != null) pageButtonList.animateScrollToItem(activeWeek - 1)
     }
-    LaunchedEffect(search, pages, requestedPageDate) {
-        val requestedIndex = if (search.isBlank()) pages.indexOfFirst { it.date == requestedPageDate } else -1
-        if (requestedIndex >= 0) { pager.scrollToPage(requestedIndex); return@LaunchedEffect }
-        if (search.isBlank() && pages.isNotEmpty()) pager.scrollToPage(pages.lastIndex)
-        if (search.isNotBlank()) {
-            val index = pages.indexOfFirst { page -> snapshot.rows[page].orEmpty().any { it.loan.id in filteredIds.orEmpty() } }
-            if (index >= 0) pager.scrollToPage(index)
+    var selectedPage by remember(book.id) { mutableStateOf<NotebookPage?>(null) }
+    var previousPages by remember(book.id) { mutableStateOf<List<NotebookPage>>(emptyList()) }
+    var previousSearch by remember(book.id) { mutableStateOf<String?>(null) }
+    var previousRequest by remember(book.id) { mutableStateOf<LocalDate?>(null) }
+    LaunchedEffect(search, snapshot, requestedPageDate) {
+        val matching = if (search.isBlank()) emptyList() else pages.filter { page ->
+            snapshot.rows[page].orEmpty().any { it.loan.id in filteredIds.orEmpty() }
         }
+        val searchChanged = previousSearch != search
+        val requestChanged = previousSearch == null || previousRequest != requestedPageDate
+        val requested = if (search.isBlank() && requestChanged) pages.firstOrNull { it.date == requestedPageDate } else null
+        val selected = when {
+            requested != null -> requested
+            previousSearch == null || (searchChanged && search.isBlank()) -> pages.lastOrNull()
+            searchChanged && search.isNotBlank() -> matching.firstOrNull() ?: selectedPage
+            search.isNotBlank() && selectedPage !in matching && matching.isNotEmpty() -> matching.first()
+            selectedPage in pages -> selectedPage
+            pages.isNotEmpty() -> pages[previousPages.indexOf(selectedPage).coerceIn(0, pages.lastIndex)]
+            else -> null
+        }
+        selectedPage = selected
+        previousPages = pages
+        previousSearch = search
+        previousRequest = requestedPageDate
+        val index = pages.indexOf(selected)
+        if (index >= 0 && index != pager.currentPage) pager.scrollToPage(index)
     }
-    Column(modifier.then(pinch).background(paper).border(1.dp, redInk).testTag("ledgerBook")) {
+    fun selectPage(page: NotebookPage) {
+        val index = pages.indexOf(page)
+        if (index >= 0) { selectedPage = page; scope.launch { pager.scrollToPage(index) } }
+    }
+    Box(modifier) {
+    Column(Modifier.fillMaxSize().then(pinch).background(paper).border(1.dp, redInk).testTag("ledgerBook")) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("${(zoom * 100).toInt()}%", modifier = Modifier.testTag("bookZoom"))
             TextButton(onClick = { zoom = (zoom - .15f).coerceAtLeast(.4f) }) { Text("−") }
@@ -361,7 +387,7 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
                         .background(if (selected) blueInk else Color.White.copy(alpha = .65f), RoundedCornerShape(8.dp))
                         .border(1.dp, if (options.isEmpty()) Color.Gray else blueInk, RoundedCornerShape(8.dp))
                         .selectable(selected = selected, enabled = options.isNotEmpty(), role = Role.Tab, onClick = {
-                            if (options.size == 1) scope.launch { val i = pages.indexOf(options.single()); if (i >= 0) pager.scrollToPage(i) }
+                            if (options.size == 1) selectPage(options.single())
                             else choosingWeek = week
                         })
                         .semantics { contentDescription = "வசூல் வாரம் $week / Collection week $week" }
@@ -377,21 +403,21 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
             AlertDialog(onDismissRequest = { choosingWeek = null }, title = { Text("வாரம் $week · பக்கத்தைத் தேர்வு செய்யவும்") },
                 text = { Column(Modifier.verticalScroll(rememberScrollState())) {
                     targets[week].orEmpty().forEach { page ->
-                        TextButton(onClick = { choosingWeek = null; scope.launch { val i = pages.indexOf(page); if (i >= 0) pager.scrollToPage(i) } }) {
+                        TextButton(onClick = { choosingWeek = null; selectPage(page) }) {
                             Text("${page.date.format(dateFormat)} · பக்கம் / Page")
                         }
                     }
                 } }, confirmButton = { TextButton(onClick = { choosingWeek = null }) { Text("மூடு / Close") } })
         }
         Row(Modifier.fillMaxWidth()) {
-            TextButton(enabled = pager.currentPage > 0, onClick = { scope.launch { pager.scrollToPage(pager.currentPage - 1) } }) { Text("‹ முந்தைய / Previous") }
+            TextButton(enabled = pager.currentPage > 0, onClick = { pages.getOrNull(pager.currentPage - 1)?.let(::selectPage) }) { Text("‹ முந்தைய / Previous") }
             Text("${pager.currentPage + 1}/${pages.size.coerceAtLeast(1)}", Modifier.padding(top = 14.dp).testTag("ledgerPageCount"))
-            TextButton(enabled = pager.currentPage < pages.lastIndex, modifier = Modifier.testTag("nextLedgerPage"), onClick = { scope.launch { pager.scrollToPage(pager.currentPage + 1) } }) { Text("அடுத்த / Next ›") }
+            TextButton(enabled = pager.currentPage < pages.lastIndex, modifier = Modifier.testTag("nextLedgerPage"), onClick = { pages.getOrNull(pager.currentPage + 1)?.let(::selectPage) }) { Text("அடுத்த / Next ›") }
         }
         if (search.isNotBlank() && filteredIds != null && pages.none { page -> snapshot.rows[page].orEmpty().any { it.loan.id in filteredIds } })
             Text("பொருந்தும் பதிவு இல்லை / No matching records", Modifier.testTag("noSearchResults"))
         if (pages.isEmpty()) Text("புதிய கடன் சேர்க்கவும் / Add a loan to start the ledger", Modifier.padding(12.dp))
-        else HorizontalPager(state = pager, userScrollEnabled = false, modifier = Modifier.fillMaxWidth().weight(1f)) { index ->
+        else HorizontalPager(state = pager, userScrollEnabled = false, key = { pages[it].date.toString() }, modifier = Modifier.fillMaxWidth().weight(1f)) { index ->
             val page = pages[index]
             val rows = remember(snapshot, page, filteredIds) {
                 snapshot.rows[page].orEmpty().filter { filteredIds == null || it.loan.id in filteredIds }
@@ -423,7 +449,7 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
                 }.distinctBy { it.first to it.second }.forEach { (previous, date, loan) ->
                     val previousIndex = pages.indexOf(previous)
                     TextButton(modifier = Modifier.testTag("previousDate-${date}"), onClick = {
-                        if (previousIndex >= 0) scope.launch { pager.scrollToPage(previousIndex) }
+                        if (previousIndex >= 0) selectPage(previous)
                         else onArchivePage(loan, previous)
                     }) { Text(date.format(dateFormat), color = redInk, style = MaterialTheme.typography.labelSmall) }
                 }
@@ -498,6 +524,15 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
         }
     }
 }
+    }
+    // Do not allow a second edit against stale rows while the new snapshot is prepared.
+    if (snapshot.source != state) {
+        Box(Modifier.matchParentSize().background(paper.copy(alpha = .35f))
+            .clickable(interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }, indication = null) { }
+            .testTag("ledgerRefreshing"), contentAlignment = Alignment.Center) {
+            Text("புத்தகம் புதுப்பிக்கிறது / Updating book…")
+        }
+    }
 }
 }
 /** The bound centre crease separates identity details and ten receipt columns. */

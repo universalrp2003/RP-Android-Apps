@@ -12,8 +12,8 @@ class IdentityChecks(unittest.TestCase):
     def test_seventeenth_stable_update_identity(self):
         identity = json.loads((ROOT / 'weeklymoney/app-identity.json').read_text())
         self.assertEqual(identity['portfolioNumber'], 17)
-        self.assertEqual(identity['publishedVersion'], '1.5')
-        self.assertEqual(identity['releaseUrl'], 'https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.5')
+        self.assertEqual(identity['publishedVersion'], '1.7')
+        self.assertEqual(identity['releaseUrl'], 'https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.7')
         self.assertEqual(identity['updatePackage'], 'com.universalrp.weeklymoney.preview.notebook')
         self.assertEqual(identity['plannedProductionPackage'], identity['updatePackage'])
         self.assertEqual(identity['signerSha256'], '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d')
