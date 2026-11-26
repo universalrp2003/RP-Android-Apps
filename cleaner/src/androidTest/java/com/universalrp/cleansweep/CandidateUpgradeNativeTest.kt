@@ -24,7 +24,8 @@ class CandidateUpgradeSeedNativeTest {
         val info = app.packageManager.getPackageInfo(app.packageName, 0)
         @Suppress("DEPRECATION")
         val code = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
-        assertEquals(105L, code)
+        val expected = InstrumentationRegistry.getArguments().getString("expectedBaselineCode")?.toLong() ?: 105L
+        assertEquals(expected, code)
         val settings = SettingsRepo(app)
         settings.setLang(AppLang.TA)
         settings.setSoundsEnabled(false)
@@ -59,7 +60,8 @@ class CandidateUpgradeVerifyNativeTest : ExactCandidateNativeTest() {
         val info = app.packageManager.getPackageInfo(app.packageName, 0)
         @Suppress("DEPRECATION")
         val code = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
-        assertEquals(106L, code)
+        val expected = InstrumentationRegistry.getArguments().getString("expectedCandidateCode")?.toLong() ?: 106L
+        assertEquals(expected, code)
         val settings = SettingsRepo(app)
         assertEquals("ta", settings.lang.first())
         assertFalse(settings.soundsEnabled.first())
