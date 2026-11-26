@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.ClipboardManager
 import android.database.sqlite.SQLiteDatabase
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -53,7 +54,7 @@ class NotebookTest {
         assertEquals(listOf(111L,333L,555L), rows.map { it.createdAt })
         assertEquals(listOf(222L,444L,666L), rows.map { it.updatedAt })
         assertEquals("30", Amounts.total(rows).value)
-        assertEquals(listOf("செலவு", "குறிப்பு"), db.pages().map { it.title })
+        assertEquals(listOf("செலவு", "குறிப்பு", "கணிப்பான் / Calculator"), db.pages().map { it.title })
         assertTrue(db.load(2).all { it.text.isEmpty() && it.amount.isEmpty() })
     }
     @Test fun migrateV3KeepsAllPagesAndDoesNotHidePopulatedDetails() {
@@ -65,12 +66,12 @@ class NotebookTest {
             db.version = 3
         }
         val db = open()
-        assertEquals(listOf(true, true, false, true), db.pages().map { it.showColumn })
+        assertEquals(listOf(true, true, false, true, false), db.pages().map { it.showColumn })
         assertEquals("private details", db.read(2).single().amount)
         val before = db.read(4).single()
         db.setPageOptions(4, false, false)
         assertEquals(before, db.read(4).single())
-        assertFalse(db.pages().last().calculates); assertFalse(db.pages().last().showColumn)
+        assertFalse(db.pages().first { it.id == 4L }.calculates); assertFalse(db.pages().first { it.id == 4L }.showColumn)
         db.setPageOptions(4, true, true)
         assertEquals(before, db.read(4).single())
         assertEquals("-20", Amounts.total(db.read(4)).value)
@@ -105,7 +106,7 @@ class NotebookTest {
         assertTrue(copied.contains("Remember 500")); assertTrue(copied.contains("Words and 200 are just notes"))
         assertTrue(copied.contains("(hidden)")); assertTrue(copied.contains("Created:")); assertFalse(copied.contains("Murukku"))
         rule.onNodeWithTag("settings").performClick()
-        rule.onNodeWithTag("copySwitch").assertIsOn().performClick()
+        rule.onNodeWithTag("copySwitch").performScrollTo().assertIsOn().performClick()
         rule.onNodeWithTag("closeSettings").performClick()
         rule.onNodeWithTag("selectAll").assertDoesNotExist()
         assertFalse(context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE).getBoolean("bulk_copy", true))
@@ -145,11 +146,53 @@ class NotebookTest {
         val db = open()
         rule.setContent { MaterialTheme { SheetScreen(db) } }
         rule.onNodeWithTag("about").performClick()
-        rule.onNodeWithTag("aboutVersion").assertTextContains("1.0", substring = true)
+        rule.onNodeWithTag("aboutVersion").assertTextContains("0.5", substring = true)
         rule.onNodeWithTag("aboutBackupWarning").assertTextContains("No backup", substring = true)
         rule.onNodeWithText("எங்கள் செயலிகள் / Our applications").assertExists()
         rule.onNodeWithTag("closeAbout").performClick()
         assertEquals(19, OurApplications.names.size)
         assertEquals(19, OurApplications.names.distinct().size)
+    }
+    @Test fun migrateV4RetainsPagesAndRowsAndPersistsNewPageOrder() {
+        legacyDb().use { db ->
+            db.execSQL("CREATE TABLE pages (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, calculates INTEGER NOT NULL, show_column INTEGER NOT NULL)")
+            db.execSQL("INSERT INTO pages VALUES (1,'செலவு',1,1),(2,'குறிப்பு',0,0),(3,'Sasi',1,1)")
+            db.execSQL("CREATE TABLE sheet_rows (id INTEGER PRIMARY KEY AUTOINCREMENT, body TEXT NOT NULL, amount TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, page_id INTEGER NOT NULL DEFAULT 1)")
+            db.execSQL("INSERT INTO sheet_rows VALUES (1,'Milk','50',111,222,1),(2,'Private note','',333,444,2),(3,'Debt','-20',555,666,3)")
+            db.version = 4
+        }
+        val db = open(); val original = (1L..3L).map { db.read(it).single() }
+        val ids = db.pages().map { it.id }; assertEquals(4, ids.size); assertTrue(db.pages().last().isCalculator)
+        db.reorder(listOf(ids[2], ids[0], ids[3], ids[1]))
+        assertEquals(listOf(ids[2], ids[0], ids[3], ids[1]), db.pages().map { it.id })
+        try { db.reorder(listOf(ids[0], ids[0])) ; fail("Reject invalid permutation") } catch (_: IllegalArgumentException) {}
+        assertEquals(original, (1L..3L).map { db.read(it).single() })
+        db.close(); store = null
+        assertEquals(listOf(ids[2], ids[0], ids[3], ids[1]), open().pages().map { it.id })
+        assertEquals(original, (1L..3L).map { store!!.read(it).single() })
+    }
+    @Test fun longDragMovesPageDarkModePersistsAndCalculatorDoesNotAlterNotes() {
+        val db = open(); val first = db.load(1).first(); db.update(first, "Milk", "50")
+        rule.setContent { MaterialTheme { SheetScreen(db) } }
+        val calculator = db.pages().single { it.isCalculator }.id
+        rule.onNodeWithTag("page-2").performTouchInput {
+            down(center); advanceEventTime(700); moveBy(Offset(-300f, 0f)); advanceEventTime(100); up()
+        }
+        rule.waitForIdle()
+        assertEquals(listOf(2L, 1L, calculator), db.pages().map { it.id })
+        rule.onNodeWithTag("settings").performClick()
+        rule.onNodeWithTag("darkSwitch").performScrollTo().assertIsOff().performClick()
+        rule.onNodeWithTag("closeSettings").performClick()
+        assertTrue(context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE).getBoolean("dark_mode", false))
+        rule.onNodeWithTag("pageTabs").performTouchInput { swipeLeft() }
+        rule.onNodeWithTag("page-$calculator").performClick()
+        rule.onNodeWithTag("calc-5").performClick(); rule.onNodeWithTag("calc-÷").performClick()
+        rule.onNodeWithTag("calc-2").performClick(); rule.onNodeWithTag("calc-=").performClick()
+        rule.onNodeWithTag("calcDisplay").assertTextEquals("2.5")
+        assertEquals("50", db.read(1).first().amount)
+        rule.onNodeWithTag("settings").performClick()
+        rule.onNodeWithTag("darkSwitch").performScrollTo().assertIsOn().performClick()
+        rule.onNodeWithTag("closeSettings").performClick()
+        assertFalse(context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE).getBoolean("dark_mode", true))
     }
 }

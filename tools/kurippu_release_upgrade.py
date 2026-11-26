@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""In-place update from the owner-tested 0.4 APK to release candidate; synthetic data only."""
+"""In-place update from the owner-tested 0.4 APK to 0.5 candidate; synthetic data only."""
 import json, os, traceback
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -15,7 +15,8 @@ def note_tab():
 def main():
     assert h.digest(h.OLD)=='7fc6b3736da8ea0af51f335e87cd02379a19b24166357b1236395572b0021ed8'
     # Disposable CI emulator only; remove instrumentation's synthetic installation before the fixture.
-    h.run('adb','uninstall',h.PACKAGE)
+    if h.PACKAGE in h.adb('shell','pm','list','packages',h.PACKAGE):
+        h.run('adb','uninstall',h.PACKAGE)
     h.adb('install',str(h.OLD)); h.adb('shell','am','start','-n',h.PACKAGE+'/.MainActivity')
     enter(0,'Milk'); enter(1,'50'); enter(2,'Bread'); enter(3,'45'); h.find(h.text('95'))
     note_tab(); enter(0,'Reminder'); h.find(h.text('Reminder'))
@@ -23,8 +24,8 @@ def main():
     h.adb('shell','am','force-stop',h.PACKAGE); h.adb('shell','am','start','-n',h.PACKAGE+'/.MainActivity')
     h.find(h.text('Milk')); h.find(h.text('Bread')); h.find(h.text('95'))
     note_tab(); h.find(h.text('Reminder'))
-    h.tap_text('About'); h.find(h.text('Version 1.0')); h.find(h.text('No backup'))
-    receipt={'from_version':'0.4','to_version':'1.0','package':h.PACKAGE,'same_uid':True,'expense_entries_and_total_preserved':True,'note_preserved':True,'about_version_and_warning':True,'physical_phone':False,'apk_sha256':h.digest(h.NEW),'bytes':h.NEW.stat().st_size,'source':os.environ['GITHUB_SHA']}
+    h.tap_text('About'); h.find(h.text('Version 0.5')); h.find(h.text('No backup'))
+    receipt={'from_version':'0.4','to_version':'0.5','package':h.PACKAGE,'same_uid':True,'expense_entries_and_total_preserved':True,'note_preserved':True,'about_version_and_warning':True,'physical_phone':False,'apk_sha256':h.digest(h.NEW),'bytes':h.NEW.stat().st_size,'source':os.environ['GITHUB_SHA']}
     Path('/tmp/kurippu/verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('::notice title=Signed in-place notebook upgrade::'+json.dumps(receipt),flush=True)
 if __name__=='__main__':

@@ -1,6 +1,10 @@
 package com.universalrp.kurippu
 
 import android.os.Bundle
+import android.os.Build
+import android.app.Activity
+import android.view.WindowInsetsController
+import android.view.View
 import android.content.Intent
 import android.net.Uri
 import android.content.ClipData
@@ -15,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +31,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -40,9 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.launch
 
-private val ink = Color(0xFF282C2A)
-private val line = Color(0xFFBFC7C2)
+private val light = lightColorScheme(primary = Color(0xFF275D50), background = Color(0xFFFFFDF7), surface = Color(0xFFF0F2EA), surfaceVariant = Color(0xFFE6EDE7), onBackground = Color(0xFF282C2A), outlineVariant = Color(0xFFBFC7C2))
+private val dark = darkColorScheme(primary = Color(0xFFA8D8C3), background = Color(0xFF141A18), surface = Color(0xFF202A26), surfaceVariant = Color(0xFF2A3831), onBackground = Color(0xFFE0E9E3), outlineVariant = Color(0xFF52645B))
 
 class MainActivity : ComponentActivity() {
     private lateinit var store: NotebookStore
@@ -56,11 +66,40 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SheetScreen(store: NotebookStore) {
+    val context = LocalContext.current
+    val preferences = remember { context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE) }
+    var darkMode by remember { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
+    SideEffect {
+        (context as? Activity)?.window?.let { window ->
+            if (Build.VERSION.SDK_INT < 35) {
+                @Suppress("DEPRECATION")
+                window.statusBarColor = if (darkMode) android.graphics.Color.rgb(20,26,24) else android.graphics.Color.rgb(255,253,247)
+                @Suppress("DEPRECATION")
+                window.navigationBarColor = if (darkMode) android.graphics.Color.rgb(20,26,24) else android.graphics.Color.rgb(255,253,247)
+            }
+            if (Build.VERSION.SDK_INT >= 30) {
+                val flags = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+                window.insetsController?.setSystemBarsAppearance(if (darkMode) 0 else flags, flags)
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = if (darkMode) 0 else View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+            }
+        }
+    }
+    MaterialTheme(colorScheme = if (darkMode) dark else light) {
+        SheetScreenContent(store, darkMode) { value -> preferences.edit().putBoolean("dark_mode", value).apply(); darkMode = value }
+    }
+}
+
+@Composable
+private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkMode: (Boolean) -> Unit) {
+    val ink = MaterialTheme.colorScheme.onBackground
+    val line = MaterialTheme.colorScheme.outlineVariant
     var pages by remember { mutableStateOf(store.pages()) }
     var activeId by rememberSaveable { mutableLongStateOf(1L) }
     if (pages.none { it.id == activeId }) activeId = pages.first().id
     val page = pages.first { it.id == activeId }
-    var rows by remember { mutableStateOf(store.load(activeId)) }
+    var rows by remember { mutableStateOf(if (page.isCalculator) emptyList() else store.load(activeId)) }
     var details by remember { mutableStateOf<SheetRow?>(null) }
     var deleting by remember { mutableStateOf<SheetRow?>(null) }
     var failed by remember { mutableStateOf(false) }
@@ -74,33 +113,58 @@ fun SheetScreen(store: NotebookStore) {
     var pageTitle by rememberSaveable { mutableStateOf("") }
     var calculateNew by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
+    val tabScroll = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    val positions = remember { mutableMapOf<Long, Rect>() }
+    var tabArea by remember { mutableStateOf(Rect.Zero) }
+    var dragging by remember { mutableStateOf<Long?>(null) }
+    var dragX by remember { mutableFloatStateOf(0f) }
     fun select(id: Long) {
-        try { val loaded = store.load(id); focus.clearFocus(); activeId = id; rows = loaded; creating = false; selectedAll = false }
+        try { val loaded = if (pages.first { it.id == id }.isCalculator) emptyList() else store.load(id); focus.clearFocus(); activeId = id; rows = loaded; creating = false; selectedAll = false }
         catch (_: Exception) { failed = true }
     }
     fun save(row: SheetRow, text: String, amount: String) {
         try { rows = store.update(row, text, amount); selectedAll = false } catch (_: Exception) { failed = true }
     }
     val total = if (page.calculates && page.showColumn) Amounts.total(rows) else null
-    Column(Modifier.fillMaxSize().background(Color(0xFFFFFDF7)).safeDrawingPadding()) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).safeDrawingPadding().testTag("screenRoot")) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("குறிப்பு", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).weight(1f))
             TextButton(onClick = { focus.clearFocus(); aboutOpen = true }, modifier = Modifier.testTag("about")) { Text("பற்றி / About") }
             TextButton(onClick = { focus.clearFocus(); settingsOpen = true }, modifier = Modifier.testTag("settings").semantics { contentDescription = "அமைப்புகள் / Settings" }) { Text("⚙", fontSize = 22.sp) }
         }
-        Row(Modifier.fillMaxWidth().background(Color(0xFFE6EDE7))) {
-            Row(Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
-                pages.forEach { option ->
-                    TextButton(onClick = { select(option.id) }, modifier = Modifier.testTag("page-${option.id}")) {
-                        Text(option.title, color = if (option.id == activeId) Color(0xFF174F3D) else ink,
-                            fontWeight = if (option.id == activeId) FontWeight.Bold else FontWeight.Normal)
+        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant)) {
+            Row(Modifier.weight(1f).testTag("pageTabs").onGloballyPositioned { tabArea = it.boundsInRoot() }.horizontalScroll(tabScroll)) {
+                pages.forEach { option -> key(option.id) {
+                    TextButton(onClick = { select(option.id) }, modifier = Modifier.testTag("page-${option.id}")
+                        .onGloballyPositioned { positions[option.id] = it.boundsInRoot() }
+                        .pointerInput(option.id) {
+                            detectDragGesturesAfterLongPress(
+                                onDragStart = { local -> dragging = option.id; dragX = (positions[option.id]?.left ?: 0f) + local.x; focus.clearFocus() },
+                                onDragEnd = {
+                                    try { store.reorder(pages.map { it.id }); pages = store.pages() } catch (_: Exception) { pages = store.pages(); failed = true }
+                                    dragging = null
+                                },
+                                onDragCancel = { pages = store.pages(); dragging = null },
+                                onDrag = { change, delta ->
+                                    change.consume(); dragX += delta.x
+                                    val target = pages.filter { positions.containsKey(it.id) }.minByOrNull { kotlin.math.abs((positions[it.id]?.center?.x ?: dragX) - dragX) }
+                                    val from = pages.indexOfFirst { it.id == option.id }; val to = pages.indexOfFirst { it.id == target?.id }
+                                    if (from >= 0 && to >= 0 && from != to) pages = pages.toMutableList().apply { add(to, removeAt(from)) }
+                                    if (dragX < tabArea.left + 60f) scope.launch { tabScroll.scrollBy(-24f) }
+                                    if (dragX > tabArea.right - 60f) scope.launch { tabScroll.scrollBy(24f) }
+                                }
+                            )
+                        }) {
+                        Text(option.title, color = if (option.id == activeId) MaterialTheme.colorScheme.primary else ink,
+                            fontWeight = if (option.id == activeId || option.id == dragging) FontWeight.Bold else FontWeight.Normal)
                     }
-                }
+                } }
             }
             TextButton(onClick = { focus.clearFocus(); creating = !creating }, modifier = Modifier.testTag("addPage")) { Text("+", fontSize = 22.sp) }
         }
-        if (allowCopy) {
-            Row(Modifier.fillMaxWidth().background(Color(0xFFFFFDF7))) {
+        if (allowCopy && !page.isCalculator) {
+            Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)) {
                 val hasEntries = rows.any { it.text.isNotBlank() || it.amount.isNotBlank() }
                 TextButton(enabled = hasEntries, onClick = { focus.clearFocus(); selectedAll = !selectedAll }, modifier = Modifier.testTag("selectAll")) {
                     Text(if (selectedAll) "தேர்வு நீக்கு / Deselect" else "அனைத்தும் தேர்வு / Select all")
@@ -114,7 +178,7 @@ fun SheetScreen(store: NotebookStore) {
             }
         }
         if (creating) {
-            Column(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp, vertical = 8.dp)) {
                 OutlinedTextField(value = pageTitle, onValueChange = { if (it.length <= 100) pageTitle = it }, label = { Text("பக்கத்தின் பெயர் / Page name") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("pageName"))
                 Row {
                     FilterChip(selected = !calculateNew, onClick = { calculateNew = false }, label = { Text("குறிப்பு / Note") }, modifier = Modifier.testTag("typeNote"))
@@ -132,7 +196,10 @@ fun SheetScreen(store: NotebookStore) {
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(vertical = 7.dp)) {
+        if (page.isCalculator) {
+            CalculatorPage(Modifier.weight(1f))
+        } else {
+        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(vertical = 7.dp)) {
             Text("குறிப்பு / Note", color = ink, modifier = Modifier.weight(1f).padding(start = 16.dp))
             if (page.showColumn) Text(if (page.calculates) "தொகை / Amount" else "விவரம் / Details", color = ink, textAlign = TextAlign.End, modifier = Modifier.weight(.42f).padding(end = 16.dp))
         }
@@ -146,10 +213,11 @@ fun SheetScreen(store: NotebookStore) {
         }
         if (total != null) {
             HorizontalDivider(color = line)
-            Row(Modifier.fillMaxWidth().background(Color(0xFFF0F2EA)).padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("மொத்தம் / Total", color = ink, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Text(if (total.hasInvalidAmounts) "சரிபார் / Check amounts" else total.value, color = if (total.hasInvalidAmounts) Color(0xFFB3261E) else ink, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).testTag("total"))
+                Text(if (total.hasInvalidAmounts) "சரிபார் / Check amounts" else total.value, color = if (total.hasInvalidAmounts) MaterialTheme.colorScheme.error else ink, textAlign = TextAlign.End, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).testTag("total"))
             }
+        }
         }
     }
     if (aboutOpen) AlertDialog(onDismissRequest = { aboutOpen = false }, title = { Text("குறிப்பு · Note") }, text = {
@@ -168,6 +236,17 @@ fun SheetScreen(store: NotebookStore) {
     if (settingsOpen) AlertDialog(onDismissRequest = { settingsOpen = false }, title = { Text("அமைப்புகள் / Settings") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(page.title, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth()) {
+                val index = pages.indexOfFirst { it.id == page.id }
+                TextButton(enabled = index > 0, onClick = {
+                    try { val next = pages.toMutableList(); java.util.Collections.swap(next, index, index - 1); store.reorder(next.map { it.id }); pages = store.pages() } catch (_: Exception) { failed = true }
+                }, modifier = Modifier.testTag("movePageLeft")) { Text("←") }
+                TextButton(enabled = index >= 0 && index < pages.lastIndex, onClick = {
+                    try { val next = pages.toMutableList(); java.util.Collections.swap(next, index, index + 1); store.reorder(next.map { it.id }); pages = store.pages() } catch (_: Exception) { failed = true }
+                }, modifier = Modifier.testTag("movePageRight")) { Text("→") }
+                Text("பக்க வரிசை / Page order", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 12.dp))
+            }
+            if (!page.isCalculator) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("இரண்டாவது நிரல் / Second column", modifier = Modifier.weight(1f))
                 Switch(checked = page.showColumn, onCheckedChange = { show ->
@@ -181,6 +260,7 @@ fun SheetScreen(store: NotebookStore) {
                 }, modifier = Modifier.testTag("totalSwitch"))
             }
             Text("நிரலை மறைத்தாலும் உள்ள விவரங்கள் அழியாது; மொத்தம் நிறுத்தப்படும். நகலில் மறைத்த விவரங்களும் சேரும். / Hidden values are kept and included in copies; hiding the column turns off its total.", style = MaterialTheme.typography.bodySmall)
+            }
             HorizontalDivider(Modifier.padding(vertical = 10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("அனைத்தும் தேர்வு / நகல் / Select all & copy", modifier = Modifier.weight(1f))
@@ -189,6 +269,11 @@ fun SheetScreen(store: NotebookStore) {
                 }, modifier = Modifier.testTag("copySwitch"))
             }
             Text("தற்போதைய பக்கம் மட்டும்; பதிவுகள், தொகை, தேதி மற்றும் நேரம் நகலாகும். / Copies the current page, including rows, values and timestamps.", style = MaterialTheme.typography.bodySmall)
+            HorizontalDivider(Modifier.padding(vertical = 10.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("இருண்ட தோற்றம் / Dark mode", modifier = Modifier.weight(1f))
+                Switch(checked = darkMode, onCheckedChange = setDarkMode, modifier = Modifier.testTag("darkSwitch"))
+            }
         }
     }, confirmButton = { TextButton(onClick = { settingsOpen = false }, modifier = Modifier.testTag("closeSettings")) { Text("மூடு / Close") } })
     details?.let { row -> AlertDialog(onDismissRequest = { details = null }, title = { Text("பதிவு விவரம் / Entry details") }, text = {
@@ -229,13 +314,15 @@ private fun Modifier.rowLongPress(id: Long, onLongPress: () -> Unit): Modifier =
 
 @Composable
 private fun SheetLine(row: SheetRow, calculates: Boolean, showColumn: Boolean, selected: Boolean, onText: (String) -> Unit, onAmount: (String) -> Unit, onLongPress: () -> Unit) {
+    val ink = MaterialTheme.colorScheme.onBackground
+    val line = MaterialTheme.colorScheme.outlineVariant
     val invalid = calculates && row.amount.isNotBlank() && Amounts.parse(row.amount) == null
-    Column(Modifier.fillMaxWidth().background(if (selected) Color(0xFFE4EFE8) else Color.Transparent).rowLongPress(row.id, onLongPress).testTag("row-${row.id}")) {
+    Column(Modifier.fillMaxWidth().background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent).rowLongPress(row.id, onLongPress).testTag("row-${row.id}")) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             BasicTextField(value = row.text, onValueChange = onText, textStyle = TextStyle(color = ink, fontSize = 18.sp), modifier = Modifier.weight(1f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("note-${row.id}"))
             if (showColumn) {
                 Box(Modifier.fillMaxHeight().width(1.dp).background(line))
-                BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) Color(0xFFB3261E) else ink, fontSize = 18.sp, textAlign = if (calculates) TextAlign.End else TextAlign.Start), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = calculates, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}"))
+                BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) MaterialTheme.colorScheme.error else ink, fontSize = 18.sp, textAlign = if (calculates) TextAlign.End else TextAlign.Start), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = calculates, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}"))
             }
         }
         HorizontalDivider(color = line)
