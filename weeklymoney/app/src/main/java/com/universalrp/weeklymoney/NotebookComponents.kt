@@ -417,7 +417,7 @@ private fun buildLedgerBookView(state: NotebookState, book: Book, today: LocalDa
         if (search.isNotBlank() && filteredIds != null && pages.none { page -> snapshot.rows[page].orEmpty().any { it.loan.id in filteredIds } })
             Text("பொருந்தும் பதிவு இல்லை / No matching records", Modifier.testTag("noSearchResults"))
         if (pages.isEmpty()) Text("புதிய கடன் சேர்க்கவும் / Add a loan to start the ledger", Modifier.padding(12.dp))
-        else HorizontalPager(state = pager, userScrollEnabled = false, key = { pages[it] }, modifier = Modifier.fillMaxWidth().weight(1f)) { index ->
+        else HorizontalPager(state = pager, userScrollEnabled = false, key = { pages[it].date.toString() }, modifier = Modifier.fillMaxWidth().weight(1f)) { index ->
             val page = pages[index]
             val rows = remember(snapshot, page, filteredIds) {
                 snapshot.rows[page].orEmpty().filter { filteredIds == null || it.loan.id in filteredIds }
