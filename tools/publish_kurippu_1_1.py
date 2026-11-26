@@ -27,7 +27,9 @@ def main():
     releases = json.loads(cmd('gh','api','--paginate','--slurp',f'repos/{REPO}/releases?per_page=100'))
     matches = [r for page in releases for r in page if r['tag_name'] == TAG]
     if not matches:
-        subprocess.run(['gh','release','create',TAG,str(apk),str(root/(NAME+'.sha256')),'--repo',REPO,'--target',p['source'],'--title','குறிப்பு · Note 1.1','--notes-file','docs/kurippu/release-1.1-notes.md','--draft'],check=True)
+        created = subprocess.run(['gh','release','create',TAG,str(apk),str(root/(NAME+'.sha256')),'--repo',REPO,'--target',p['source'],'--title','குறிப்பு · Note 1.1','--notes-file','docs/kurippu/release-1.1-notes.md','--draft'], capture_output=True, text=True)
+        if created.returncode:
+            raise RuntimeError('GitHub release creation failed: ' + (created.stderr or created.stdout)[-1500:])
         releases = json.loads(cmd('gh','api','--paginate','--slurp',f'repos/{REPO}/releases?per_page=100'))
         matches = [r for page in releases for r in page if r['tag_name'] == TAG]
     release, = matches
