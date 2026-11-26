@@ -91,6 +91,13 @@ jobs:
                   lines=p.read_text(errors='replace').splitlines()
                   errors=[x for x in lines if x.startswith('e: ') or ' FAILED' in x or 'What went wrong' in x or 'Error:' in x]
                   print('::error title='+p.name+'::'+('\n'.join((errors or lines)[-40:])[-7000:]).replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          import xml.etree.ElementTree as ET
           for p in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
-              print('::error title='+p.name+'::'+p.read_text(errors='replace')[-7000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+              root=ET.parse(p).getroot()
+              for case in root.iter('testcase'):
+                  for kind in ('failure','error'):
+                      failure=case.find(kind)
+                      if failure is not None:
+                          detail=(failure.get('message','')+'\n'+(failure.text or ''))[:7000]
+                          print('::error title='+case.get('classname','')+'.'+case.get('name','')+'::'+detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
           PY
