@@ -101,3 +101,5 @@ jobs:
                           detail=(failure.get('message','')+'\n'+(failure.text or ''))[:7000]
                           print('::error title='+case.get('classname','')+'.'+case.get('name','')+'::'+detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
           PY
+
+# Verification only; never publishes a release.
