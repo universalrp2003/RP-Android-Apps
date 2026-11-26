@@ -1,6 +1,8 @@
 package com.universalrp.kurippu
 
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -64,6 +66,7 @@ fun SheetScreen(store: NotebookStore) {
     var failed by remember { mutableStateOf(false) }
     var creating by rememberSaveable { mutableStateOf(false) }
     var settingsOpen by remember { mutableStateOf(false) }
+    var aboutOpen by remember { mutableStateOf(false) }
     var selectedAll by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE) }
@@ -82,6 +85,7 @@ fun SheetScreen(store: NotebookStore) {
     Column(Modifier.fillMaxSize().background(Color(0xFFFFFDF7)).safeDrawingPadding()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("குறிப்பு", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).weight(1f))
+            TextButton(onClick = { focus.clearFocus(); aboutOpen = true }, modifier = Modifier.testTag("about")) { Text("பற்றி / About") }
             TextButton(onClick = { focus.clearFocus(); settingsOpen = true }, modifier = Modifier.testTag("settings").semantics { contentDescription = "அமைப்புகள் / Settings" }) { Text("⚙", fontSize = 22.sp) }
         }
         Row(Modifier.fillMaxWidth().background(Color(0xFFE6EDE7))) {
@@ -148,6 +152,19 @@ fun SheetScreen(store: NotebookStore) {
             }
         }
     }
+    if (aboutOpen) AlertDialog(onDismissRequest = { aboutOpen = false }, title = { Text("குறிப்பு · Note") }, text = {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            Text("RP Ideas · Rameshprathap R (@universalrp2003)\nVersion ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", modifier = Modifier.testTag("aboutVersion"))
+            Spacer(Modifier.height(10.dp))
+            Text("தனிப்பட்ட குறிப்புகள் இந்தக் கைபேசியில் மட்டும் உள்ளன. Backup அல்லது sync இல்லை. செயலியை நீக்கினாலோ தரவை அழித்தாலோ கைபேசி பழுதானாலோ பதிவுகள் அழியும். / Notes stay on this device. No backup or sync: uninstalling, clearing data, or losing the phone loses them.", modifier = Modifier.testTag("aboutBackupWarning"))
+            Spacer(Modifier.height(10.dp))
+            Text("எங்கள் செயலிகள் / Our applications", style = MaterialTheme.typography.titleSmall)
+            OurApplications.names.forEachIndexed { index, name -> Text("${index + 1}. $name") }
+            listOf("அதிகாரப்பூர்வ இணையதளம் / Official website" to "https://universalrp2003.github.io/RP-Android-Apps/", "GitHub · Source / Issues" to "https://github.com/universalrp2003/RP-Android-Apps", "செயலி வெளியீடுகள் / Releases" to "https://github.com/universalrp2003/RP-Android-Apps/releases?q=kurippu").forEach { (label, url) ->
+                TextButton(onClick = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } }, modifier = Modifier.testTag("aboutLink-$label")) { Text(label) }
+            }
+        }
+    }, confirmButton = { TextButton(onClick = { aboutOpen = false }, modifier = Modifier.testTag("closeAbout")) { Text("மூடு / Close") } })
     if (settingsOpen) AlertDialog(onDismissRequest = { settingsOpen = false }, title = { Text("அமைப்புகள் / Settings") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(page.title, fontWeight = FontWeight.Bold)

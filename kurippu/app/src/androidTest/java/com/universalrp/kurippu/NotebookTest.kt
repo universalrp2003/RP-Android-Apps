@@ -141,4 +141,15 @@ class NotebookTest {
         assertEquals("30", Amounts.total(open().read(1)).value)
         assertEquals("Remember 500", store!!.read(2).first().text)
     }
+    @Test fun aboutShowsVersionBackupWarningAndApplicationDirectory() {
+        val db = open()
+        rule.setContent { MaterialTheme { SheetScreen(db) } }
+        rule.onNodeWithTag("about").performClick()
+        rule.onNodeWithTag("aboutVersion").assertTextContains("1.0", substring = true)
+        rule.onNodeWithTag("aboutBackupWarning").assertTextContains("No backup", substring = true)
+        rule.onNodeWithText("எங்கள் செயலிகள் / Our applications").assertExists()
+        rule.onNodeWithTag("closeAbout").performClick()
+        assertEquals(19, OurApplications.names.size)
+        assertEquals(19, OurApplications.names.distinct().size)
+    }
 }
