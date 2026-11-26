@@ -1,6 +1,6 @@
-# தமிழன் / Tamilan Store — 0.11
+# தமிழன் / Tamilan Store — 0.18
 
-**Current stable:0.11/code13.** [Download the exact verified APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.11/Tamilan-Store-v0.11.apk). [Verification and limits](../docs/tamilan-store-0.11-catalog-recovery.md).
+**Current stable: 0.18/code20.** [Download the exact verified APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.18/Tamilan-Store-v0.18.apk). [Verification and limits](../docs/tamilan-store-0.18-publication-receipt.json). It adds குறிப்பு and two owner-supplied 1.1 test screenshots. Tested on an Android emulator, not yet on the owner’s phone.
 
 Use **Refresh catalog** to retry official metadata with a fresh, cache-safe request. Checking, success, unavailable and rejected responses are distinct; the last good list survives a failure. Refresh never starts an APK download or installation. Package/URL, no-rollback, same-version immutability, hash, signer and explicit Android approval safeguards remain mandatory.
 
