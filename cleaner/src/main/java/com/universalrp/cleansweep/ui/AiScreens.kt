@@ -407,8 +407,8 @@ fun AiSettingsScreen(state: UiState, vm: MainViewModel) {
 
                         Spacer(Modifier.height(14.dp))
                         SwitchRow(
-                            label = "Send installed app names",
-                            detail = "Gives specific advice (\"this one is bloatware\"). Off = totals only.",
+                            label = tr("Send installed app names"),
+                            detail = tr("Allows app-specific review. A name or missing usage record does not prove an app is unsafe or unneeded. Off = totals only."),
                             checked = state.aiConfig.includeAppNames,
                             onChange = { vm.setAiIncludeAppNames(it) },
                         )
@@ -1160,7 +1160,7 @@ private fun SmallAction(
 private fun copyToClipboard(context: Context, text: String) {
     try {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("CleanSweep AI report", text))
+        clipboard.setPrimaryClip(ClipData.newPlainText(tr("Live Guard AI report"), text))
     } catch (e: Exception) {
         // Nothing sensible to do if the clipboard is unavailable.
     }
@@ -1171,7 +1171,7 @@ private fun share(context: Context, text: String) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
-            putExtra(Intent.EXTRA_SUBJECT, "CleanSweep phone health report")
+            putExtra(Intent.EXTRA_SUBJECT, tr("Live Guard phone health report"))
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(

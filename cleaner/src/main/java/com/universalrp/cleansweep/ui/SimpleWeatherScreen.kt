@@ -8,6 +8,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -54,9 +58,9 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
     }
     fun refresh() { revision++; WeatherWatchWorker.syncSchedule(context); vm.checkWeatherNow() }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            TextButton(onClick = { vm.goBack() }) { Text(watchWords("Back", "பின்செல்")) }
-            Text(watchWords("Rain & safety", "மழை & பாதுகாப்பு"), Modifier.padding(12.dp), style = MaterialTheme.typography.titleLarge)
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { vm.goBack() }) { Icon(Icons.Outlined.ArrowBack, contentDescription = watchWords("Back", "பின்செல்")) }
+            Text(watchWords("Rain & safety", "மழை & பாதுகாப்பு"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             HomePlaceActions(home, onSave = { vm.selectWeatherPlace(it); revision++ },
@@ -208,7 +212,7 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
                         }
                         TextButton(onClick = { showDetails = !showDetails }) {
                             Text(if (showDetails) watchWords("Hide rain details", "மழை விவரங்களை மறை")
-                                else watchWords("View rain details", "மழை விவரங்களைப் பார்"))
+                                else watchWords("View forecast", "முன்னறிவிப்பைப் பார்"))
                         }
                         if (showDetails) RainForecastDetailPanel(snapshot, System.currentTimeMillis(), id)
                         // A model's zero precipitation is not zero probability. No invented chance labels.

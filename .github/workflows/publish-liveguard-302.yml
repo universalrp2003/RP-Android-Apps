@@ -1,0 +1,26 @@
+name: Publish owner-authorized Live Guard 3.02 exact verified bytes
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["tools/publish_liveguard_302.py"]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/30198928-rp-android-apps'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Promote exact verified candidate without rebuild
+        run: python3 tools/publish_liveguard_302.py
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          retention-days: 30
+          name: liveguard-3.02-publication-receipt
+          path: ${{ runner.temp }}/liveguard302-receipt.json

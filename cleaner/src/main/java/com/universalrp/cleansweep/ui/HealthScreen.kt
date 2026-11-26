@@ -184,12 +184,11 @@ private fun StatusBarPillCard(state: UiState, vm: MainViewModel) {
                     state.statusPill && state.statusPillAllowed ->
                         tr("Charger connected: watts only. Unplugged: data and D/U lights return with background monitoring. — W means the phone did not report power.")
                     state.statusPill ->
-                        "Switched on, but Android still needs “Display over other apps” before " +
-                            "anything can be drawn there."
+                        watchWords("Switched on, but Android still needs Display over other apps before the overlay can appear.",
+                            "இயக்கப்பட்டுள்ளது; மிதக்கும் காட்சி தெரிய Android-ல் பிற செயலிகளுக்கு மேல் காட்டும் அனுமதி தேவை.")
                     else ->
-                        "Android does not let normal apps add items to the system status bar. " +
-                            "CleanSweep draws its own tiny reading instead — watts while charging, " +
-                            "in the empty space next to the clock."
+                        watchWords("Android does not let normal apps add items to the system status bar. Live Guard can draw a small overlay beside the clock showing charging watts when reported.",
+                            "Android சாதாரண செயலிகளை நிலைப் பட்டியில் உருப்படி சேர்க்க அனுமதிக்காது. கிடைக்கும் மின்னேற்ற வாட்ஸை Live Guard கடிகாரம் அருகே சிறிய மிதக்கும் காட்சியாகக் காட்டலாம்.")
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
@@ -336,8 +335,8 @@ private fun BatteryCard(battery: BatteryReading, screenOn: Boolean) {
                     Modifier.weight(1f),
                 )
                 StatBox(
-                    if (battery.charging) "Charging power" else "Power draw",
-                    ChargingHonestyPolicy.wattsText(battery.powerW) ?: tr("Not reported"),
+                    tr("Charging power"),
+                    if (!battery.charging) tr("Not charging") else ChargingHonestyPolicy.wattsText(battery.powerW) ?: tr("Not reported"),
                     AccentCyan,
                     Modifier.weight(1f),
                 )

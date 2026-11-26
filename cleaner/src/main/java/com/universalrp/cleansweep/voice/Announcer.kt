@@ -260,6 +260,7 @@ object Announcer {
         // Resolved once per announcement so RANDOM advances the voice exactly one step, even if
         // an HD attempt fails and the same sentence is retried on the HD voice.
         @Volatile var studioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null
+        var newsRotationMode: VoiceGenderMode? = null
     }
     private val pending = ArrayDeque<Request>() // Only touched on main.
     // Bumped when a manual read/Stop invalidates delayed retries from an older queue era.
@@ -518,6 +519,8 @@ object Announcer {
     }
 
     fun lastBrief(context: Context): String = prefs(context).getString(KEY_LAST_BRIEF, "").orEmpty()
+
+    fun lastBriefAt(context: Context): Long = prefs(context).getLong("last_brief_at_ms", 0L)
 
     /**
      * Stores the brief. @param markDay is false for a run the user asked for by hand: the
@@ -926,6 +929,11 @@ object Announcer {
 
     private fun resolveStudioProfile(context: Context, request: Request): com.universalrp.voice.CuratedNeuralVoiceProfile {
         request.overrideStudioProfile?.let { return it }
+        if (request.event == Event.NEWS_HEADLINES) {
+            val mode = voiceGenderMode(context)
+            request.newsRotationMode = mode
+            return NewsVoiceRotation.selected(prefs(context), mode)
+        }
         // Simple owner-facing choice: random male/female, male only, or female only.
         // RANDOM rotates a different Ultra-HD voice each announcement (male/female/male…, next voice
         // each time); the fixed male/female modes keep one stable voice so unchanged alerts hit the
@@ -996,7 +1004,7 @@ object Announcer {
                 prefsContext?.let {com.universalrp.cleansweep.data.NewsPreferences.fingerprint(it)})
 
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
-        val profile = request.resolveProfile(context)
+        var profile = request.resolveProfile(context)
         val useTamil = request.language == AppLang.TA
         val requestId = request.id
         request.worker = neuralExecutor.submit<Unit> {
@@ -1008,7 +1016,17 @@ object Announcer {
                     main.post {
                         if (active?.id == requestId) record(context, request, VoiceDeliveryPolicy.Stage.INITIALIZING)
                     }
-                    if (!prepareAllNewsParts(context, request, profile, useTamil)) {
+                    val deadline = System.nanoTime() + NewsVoicePreparationPolicy.PREPARE_TIMEOUT_MS * 1_000_000L
+                    // If a provider voice is unavailable, try another eligible profile, but
+                    // prepare the *whole* bulletin again: never mix voices between parts.
+                    val candidates = request.newsRotationMode?.let { NewsVoiceRotation.orderedFrom(NewsVoiceRotation.pool(it), profile.id) }
+                        ?: listOf(profile)
+                    val chosen = candidates.firstOrNull { candidate ->
+                        active?.id == requestId && !Thread.currentThread().isInterrupted && !newsExpired(request) &&
+                            NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime()) > 0 &&
+                            prepareAllNewsParts(context, request, candidate, useTamil, deadline)
+                    }
+                    if (chosen == null) {
                         main.post {
                             if (active?.id != requestId) return@post
                             speakingState.value = false
@@ -1026,6 +1044,8 @@ object Announcer {
                         }
                         return@submit
                     }
+                    profile = chosen
+                    request.studioProfile = chosen
                 }
                 if (active?.id != requestId) return@submit
                 if (newsExpired(request)) {
@@ -1085,6 +1105,12 @@ object Announcer {
                         volumeScalar = voiceVolume(context),
                         audioAttributes = attrs,
                         onStarted = {
+                            // Runs on the playback worker immediately after MediaPlayer starts.
+                            // A failed preparation or failed start never consumes a voice.
+                            if (request.event == Event.NEWS_HEADLINES && request.partIndex == 0 && request.overrideStudioProfile == null) {
+                                val mode = request.newsRotationMode
+                                if (mode != null) NewsVoiceRotation.recordStarted(prefs(context), mode, profile, useTamil)
+                            }
                             main.post {
                                 if (active?.id == requestId) {
                                     tamilVoice = true
@@ -1202,9 +1228,9 @@ object Announcer {
         request: Request,
         profile: com.universalrp.voice.CuratedNeuralVoiceProfile,
         useTamil: Boolean,
+        deadline: Long,
     ): Boolean {
         val engine = com.universalrp.voice.SharedNeuralVoiceEngine
-        val deadline = System.nanoTime() + NewsVoicePreparationPolicy.PREPARE_TIMEOUT_MS * 1_000_000L
         val files = ArrayList<java.io.File>(request.parts.size)
         for (part in request.parts) {
             var file: java.io.File? = null
@@ -1213,7 +1239,7 @@ object Announcer {
                 if (active?.id != request.id || Thread.currentThread().isInterrupted || newsExpired(request)) return false
                 val remaining = NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime())
                 if (!NewsVoicePreparationPolicy.canAttempt(attempts, remaining)) return false
-                file = engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil)
+                file = engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil, allowVoiceFallback = false)
                 if (file == null && !awaitNewsInternet(context, request, deadline)) return false
                 attempts++
                 val budget = NewsVoicePreparationPolicy.partBudget(NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime()))
@@ -1227,9 +1253,10 @@ object Announcer {
                         ratePercent = 98,
                         timeoutMs = budget,
                         attemptTimeoutMs = NewsVoicePreparationPolicy.VOICE_ATTEMPT_TIMEOUT_MS,
+                        allowVoiceFallback = false,
                     )
                 } else {
-                    engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil)
+                    engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil, allowVoiceFallback = false)
                 }
                 if (file == null) {
                     val left = NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime())

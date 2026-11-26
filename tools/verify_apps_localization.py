@@ -678,6 +678,7 @@ def verify_release_notes_honesty() -> int:
     # A note that was really installed on a phone is just as required to say so.
     phrases = (
         "not installed on a phone",
+        "not been tested on a physical phone",
         "no physical-device test",
         "no device test",
         "not phone-installed",
@@ -717,7 +718,7 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.18"',
-            'tagPrefix = "live-guard"', 'publishedVersion = "3.01"',
+            'tagPrefix = "live-guard"', 'publishedVersion = "3.02"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',

@@ -237,8 +237,7 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                         color = AccentCyan,
                     )
                     Text(
-                        tr("App name") + ": " + Lang.appName() +
-                            if (Lang.isTamil) "  (CleanSweep)" else "  (சுத்தம் செய்பவர்)",
+                        tr("App name") + ": " + Lang.appName(),
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                     )
@@ -286,8 +285,8 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                             "thumbnail caches, duplicate files, leftover APK installers, empty folders, " +
                             "old downloads and large files — then removes only what you confirm.\n\n" +
                             "New in 2.0: live battery, temperature, voltage, charging current and watt " +
-                            "readings; an installed-app list that flags bloatware, unused and sideloaded " +
-                            "apps; a security review of permissions and system settings; a Wi-Fi scanner " +
+                            "readings; an installed-app list with usage records, package and permission details" +
+                            "; a security review of permissions and system settings; a Wi-Fi scanner " +
                             "that shows how many devices share your network; and optional AI analysis " +
                             "with your own key (or a free keyless option). The Accessibility service " +
                             "stays gone, and nothing is uploaded unless you tap Analyse.",
@@ -309,19 +308,14 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "• Offline by default — scanning, cleaning, health, security and the " +
-                            "assistant all run on this phone. The internet is used for exactly two " +
-                            "things you tap yourself: the AI analysis and the speed test.\n" +
-                            "• No Accessibility service: dropped in v1.3, so CleanSweep cannot read " +
-                            "your screen or tap inside other apps.\n" +
-                            "• Nothing is uploaded to us — there is no CleanSweep server. An AI " +
-                            "request goes straight from your phone to the provider whose key you " +
-                            "pasted, and “See exactly what was sent” shows the whole request.\n" +
-                            "• Location is asked for only on the Wi-Fi and Mobile screens (Android " +
-                            "hides network and tower details without it); Phone access is used only " +
-                            "on the Mobile screen.\n" +
-                            "• No ads, no analytics, no accounts.\n" +
-                            "• Files are only deleted after you select them and confirm.",
+                        watchWords(
+                            "• Local scans and cleanup run on your phone. News, weather, HD speech, updates, speed tests and optional AI can use the internet; enabled background watches can also check automatically.\n\n" +
+                                "• Weather providers receive coordinates for enabled places. AI providers receive the information you choose to send. HD speech sends announcement text to its voice provider; generated clips may be cached locally.\n\n" +
+                                "• Android permissions control access. Live Guard has no Accessibility service and does not silently tap inside other apps. Files are removed only after selection and confirmation.",
+                            "• உள்ளூர் ஆய்வும் சுத்தமும் உங்கள் கைபேசியில் நடக்கும். செய்திகள், வானிலை, HD குரல், புதுப்பிப்பு, வேகச் சோதனை மற்றும் விருப்ப AI இணையத்தைப் பயன்படுத்தலாம்; இயக்கப்பட்ட பின்னணி கண்காணிப்பும் தானாகச் சரிபார்க்கலாம்.\n\n" +
+                                "• இயக்கப்பட்ட இடங்களின் ஆயத்தொலைவு வானிலை வழங்குநருக்கு அனுப்பப்படும். நீங்கள் தேர்ந்தெடுக்கும் தகவல்கள் AI வழங்குநருக்குச் செல்லும். HD குரலுக்கு அறிவிப்பு உரை குரல் வழங்குநருக்கு அனுப்பப்படும்; உருவாக்கப்பட்ட ஒலி கைபேசியில் சேமிக்கப்படலாம்.\n\n" +
+                                "• அணுகலை Android அனுமதிகள் கட்டுப்படுத்தும். Live Guard-ல் Accessibility சேவை இல்லை; பிற செயலிகளில் தானாகத் தொடாது. கோப்புகளைத் தேர்ந்தெடுத்து உறுதிசெய்த பின்னரே நீக்கும்."
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                     )
@@ -330,18 +324,17 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
 
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(tr("Works on every Android phone"),
+                    Text(watchWords("Android support", "Android ஆதரவு"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = AccentViolet,
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Redmi and other Xiaomi phones (HyperOS / MIUI), Samsung, Oppo, Vivo, Realme, " +
-                            "OnePlus, Motorola, Nokia, Tecno and stock Android — one app, the same features. " +
-                            "CleanSweep never touches your personal files unless you select them, and the only " +
-                            "thing that ever uses the internet is the AI analysis and Tamil info feeds you start yourself. " +
-                            "WhatsApp media (Settings → Storage) is usually the biggest single space saver.",
+                        watchWords(
+                            "Designed for Android 8 and later. Features and background behavior can vary by phone, Android version, permissions and battery restrictions. Review selected files before confirming deletion.",
+                            "Android 8 மற்றும் அதற்குப் பிந்தைய பதிப்புகளுக்காக வடிவமைக்கப்பட்டது. கைபேசி, Android பதிப்பு, அனுமதிகள், பேட்டரி கட்டுப்பாடுகளுக்கு ஏற்ப வசதிகளும் பின்னணி செயல்பாடும் மாறலாம். நீக்குவதை உறுதிசெய்யும் முன் தேர்ந்தெடுத்த கோப்புகளைச் சரிபார்க்கவும்."
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                     )
@@ -356,17 +349,12 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "• CleanSweep works on any Android 8+ phone (Redmi/MIUI/HyperOS, " +
-                            "Samsung One UI, Pixel, OnePlus, Realme, Vivo…), not just Redmi.\n\n" +
-                            "• This APK is installed outside Google Play, so Play Protect may show a " +
-                            "warning — Android's standard caution for sideloaded apps. CleanSweep " +
-                            "never uploads anything by itself. It has internet access for one reason " +
-                            "only: the optional AI analysis you start yourself with your own key. It " +
-                            "contains no ads, no trackers and no Accessibility service. You can safely " +
-                            "tap “Install anyway”.\n\n" +
-                            "• Builds are signed with one fixed key, so newer APKs install as an " +
-                            "update. If an install ever says “app not installed”, uninstall the " +
-                            "older copy first (needed once when moving from v1.1 or older).",
+                        watchWords(
+                            "• Download updates from a source you trust. Play Protect may show a warning; read it and decide for yourself. A warning or its absence is not a safety guarantee.\n\n" +
+                                "• Compatible updates normally retain app data. If Android rejects an update, check the package and signing identity. Do not uninstall or clear data as a first step: uninstalling can remove your saved choices and data.",
+                            "• நம்பகமான மூலத்திலிருந்து புதுப்பிப்புகளைப் பதிவிறக்கவும். Play Protect எச்சரிக்கை காட்டினால் படித்து நீங்களே முடிவெடுக்கவும். எச்சரிக்கை இருப்பதோ இல்லாததோ பாதுகாப்புக்கான உத்தரவாதம் அல்ல.\n\n" +
+                                "• இணக்கமான புதுப்பிப்புகள் பொதுவாகச் செயலித் தரவைப் பாதுகாக்கும். Android புதுப்பிப்பை மறுத்தால் தொகுப்பையும் கையொப்ப அடையாளத்தையும் சரிபார்க்கவும். முதலில் செயலியை நீக்கவோ தரவை அழிக்கவோ வேண்டாம்: நீக்கினால் சேமித்த தேர்வுகளும் தரவும் அழியலாம்."
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                     )
@@ -381,15 +369,10 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                     )
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "Modern Android is built to protect you:\n\n" +
-                            "• Other apps' caches can't be wiped silently — no app can do that without " +
-                            "root, and CleanSweep refuses to fake it with Accessibility. Instead it " +
-                            "opens each app's storage page and you tap “Clear cache” (two taps per app, " +
-                            "with a “Next app” button so you never lose your place).\n\n" +
-                            "• The Android/data and Android/obb folders are locked by the system, even " +
-                            "for cleaners. Redmi's built-in Security app can reach some of them.\n\n" +
-                            "• Nothing is ever “RAM boosted” or “cooled down” — apps that claim that are " +
-                            "fake. CleanSweep only frees real disk space.",
+                        watchWords(
+                            "Android protects other apps' data. To clear another app's cache, Live Guard opens its storage page and you choose Clear cache. Android also restricts Android/data and Android/obb. Cleanup reports space from actual file operations; it does not promise to boost RAM or cool the phone.",
+                            "Android பிற செயலிகளின் தரவைப் பாதுகாக்கிறது. மற்றொரு செயலியின் தற்காலிகச் சேமிப்பை அழிக்க Live Guard அதன் சேமிப்பு பக்கத்தைத் திறக்கும்; நீங்கள் Clear cache தேர்வு செய்ய வேண்டும். Android/data மற்றும் Android/obb-க்கும் Android கட்டுப்பாடுகள் உள்ளன. உண்மையான கோப்பு நடவடிக்கைகளின் இடமே சுத்த அறிக்கையில் காட்டப்படும்; RAM அதிகரிப்பையோ குளிர்விப்பையோ உறுதியளிக்காது."
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary,
                     )
@@ -429,7 +412,7 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                         Spacer(Modifier.height(6.dp))
                         Text(
                             tr(
-                                "The last time CleanSweep stopped by itself. Nothing is sent " +
+                                "The last time Live Guard stopped by itself. Nothing is sent " +
                                     "anywhere — this is here so you can read it out or screenshot it."
                             ),
                             style = MaterialTheme.typography.labelSmall,

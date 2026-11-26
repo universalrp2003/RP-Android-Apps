@@ -54,7 +54,7 @@ jobs:
               # Retention rule: the current release of every app. Historical releases are
               # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
               # builds stay on their GitHub release page instead of being mirrored a second time.
-              ("live-guard-v3.01", "CleanSweep-v3.01.apk", 14781231, "b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f"),
+              ("live-guard-v3.02", "CleanSweep-v3.02.apk", 14808499, "1422d1efca59f78f2a541d127d406695931b62fc7a65894010be071f2849854f"),
               ("tamilan-store-v0.17", "Tamilan-Store-v0.17.apk", 20713347, "c38bed526fc53e0276f64c853665b60f29ad9cc687b623b3e1c7bf6013be66c7"),
               ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
@@ -103,8 +103,8 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
-          test -s site/apks/CleanSweep-v3.01.apk
-          test -s site/apks/CleanSweep-v3.01.zip
+          test -s site/apks/CleanSweep-v3.02.apk
+          test -s site/apks/CleanSweep-v3.02.zip
           test -s site/apks/Android-TV-Guard-v1.5.3.apk
           test -s site/apks/Android-TV-Guard-v1.5.3.zip
           test -s site/apks/System-App-Disabler-v0.5.0.apk

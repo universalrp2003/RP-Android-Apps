@@ -1,0 +1,103 @@
+name: Live Guard exact candidate upgrade check (no publication)
+on:
+  workflow_dispatch:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths:
+      - ".github/workflows/liveguard-candidate-upgrade-check.yml"
+      - "cleaner/src/androidTest/java/com/universalrp/cleansweep/CandidateUpgradeNativeTest.kt"
+      - "tools/run_liveguard_candidate_upgrade.py"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: liveguard-candidate-upgrade-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Check candidate provenance and unchanged application inputs
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          repo = os.environ['GH_REPO']
+          def api(path): return json.loads(subprocess.check_output(['gh', 'api', path]))
+          run = api(f'repos/{repo}/actions/runs/45654422718')
+          artifact = api(f'repos/{repo}/actions/artifacts/15043100587')
+          assert (run['status'], run['conclusion'], run['head_sha']) == ('completed', 'success', '55ca2fdb5c6eaeb8d44925d682fbe6b782d992ee')
+          assert artifact['name'] == 'cleansweep-apk' and not artifact['expired']
+          assert artifact['workflow_run']['id'] == 45654422718
+          changed = subprocess.check_output(['git', 'diff', '--name-only', run['head_sha'], 'HEAD'], text=True).splitlines()
+          protected = [p for p in changed if (p.startswith(('cleaner/src/main/', 'shared/', 'gradle/', 'ci-keystore/')) or p in ('cleaner/build.gradle.kts', 'build.gradle.kts', 'settings.gradle.kts', 'gradle.properties'))]
+          assert not protected, 'Application inputs changed after pinned candidate: ' + repr(protected)
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: cleansweep-apk
+          path: /tmp/liveguard-candidate
+          run-id: 45654422718
+          github-token: ${{ github.token }}
+      - name: Download and pin published 3.00 baseline
+        run: |
+          mkdir -p /tmp/liveguard-baseline
+          gh release download live-guard-v3.00 --pattern CleanSweep-v3.00.apk --dir /tmp/liveguard-baseline
+          echo '286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940  /tmp/liveguard-baseline/CleanSweep-v3.00.apk' | sha256sum -c -
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - name: Build test APK and use the exact previously archived candidate
+        run: |
+          set -euo pipefail
+          gradle :cleaner:assembleRelease :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee /tmp/candidate-upgrade-build.log
+          python3 - <<'PY' 2>&1 | tee /tmp/candidate-upgrade-artifact.log
+          import hashlib
+          from pathlib import Path
+          candidates = list(Path('/tmp/liveguard-candidate').glob('**/release/*.apk'))
+          targets = list(Path('cleaner/build/outputs/apk/release').glob('*.apk'))
+          assert len(candidates) == len(targets) == 1, (candidates, targets)
+          apk = candidates[0].read_bytes()
+          assert hashlib.sha256(apk).hexdigest() == '728aa70bcb207b136181af8ecc844faae62a46fa5cbb31172736c1a61bad29d5'
+          targets[0].write_bytes(apk)
+          PY
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Verify exact candidate update and native behavior on a disposable emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash -o pipefail -c 'python3 tools/run_liveguard_candidate_upgrade.py 2>&1 | tee /tmp/candidate-upgrade-emulator.log'
+      - name: Surface build and candidate errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text = []
+          for name in ['/tmp/candidate-upgrade-build.log', '/tmp/candidate-upgrade-artifact.log', '/tmp/candidate-upgrade-emulator.log']:
+              path = Path(name)
+              if path.exists():
+                  lines = path.read_text(errors='replace').splitlines()
+                  if name.endswith('emulator.log'):
+                      text.extend(lines[-55:])
+                  else:
+                      relevant = [line for line in lines if line.startswith('e: ') or 'Error:' in line or ' FAILED' in line or 'What went wrong' in line or 'AssertionError' in line or 'Traceback' in line]
+                      if relevant: text.extend(relevant[-35:])
+          if text: print('::error title=Candidate upgrade build::' + '\n'.join(text)[-7000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY

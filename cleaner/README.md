@@ -1,12 +1,12 @@
 # Live Guard (CleanSweep)
 
-Current public APK: **3.01 / code 106**, package `com.universalrp.cleansweep`, Android 8.0/API 26+.
+Current public APK: **3.02 / code 107**, package `com.universalrp.cleansweep`, Android 8.0/API 26+.
 
-[Download CleanSweep-v3.01.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.01/CleanSweep-v3.01.apk) · [release notes](../releases/live-guard-v3.01.md) · [guide and screenshots](https://universalrp2003.github.io/RP-Android-Apps/live-guard-guide.html) · [verification](../docs/live-guard-3.01-publication-receipt.json).
+[Download CleanSweep-v3.02.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.02/CleanSweep-v3.02.apk) · [release notes](../releases/live-guard-v3.02.md) · [guide and screenshots](https://universalrp2003.github.io/RP-Android-Apps/live-guard-guide.html) · [verification](../docs/live-guard-3.02-publication-receipt.json).
 
-## This update — 3.01
+## This update — 3.02
 
-Fixes the Android 15/16 radio-monitor foreground timeout identified in the owner’s 3.00 crash report. Unit/lint, Android 15/16 emulator tests and in-place upgrade from 3.00 with synthetic data passed; 3.01 is not yet phone-tested. Update without uninstalling or clearing data.
+Improves news voice, weather, security and usage review. The owner reported the preceding candidate worked on their phone; exact 3.02 bytes passed CI and emulator upgrade checks but have not been phone-tested. Update without uninstalling or clearing data.
 
 ## Previous update — 3.00 (12 November 2026)
 

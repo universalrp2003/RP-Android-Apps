@@ -187,6 +187,7 @@ data class NetworkReport(
     val scannedAtMs: Long,
     val probedHosts: Int,
     val note: String,
+    val scanAttempted: Boolean = false,
 )
 
 /**
@@ -567,7 +568,8 @@ object NetworkScanner {
                 devices = emptyList(),
                 scannedAtMs = System.currentTimeMillis(),
                 probedHosts = 0,
-                note = "CleanSweep could only see a mobile-data or public address, so there is no " +
+                scanAttempted = true,
+                note = "Live Guard could only see a mobile-data or public address, so there is no " +
                     "home network to walk. Connect to your Wi-Fi and scan again.",
             )
         }
@@ -603,6 +605,7 @@ object NetworkScanner {
             devices = sorted,
             scannedAtMs = System.currentTimeMillis(),
             probedHosts = hosts.size,
+            scanAttempted = true,
             note = "Devices that are asleep, that block pings, or that your router keeps isolated " +
                 "will not appear. Phones in deep sleep are the usual reason a device you know about " +
                 "is missing. Types are guessed from open ports, the device name and the MAC vendor — " +

@@ -86,7 +86,7 @@ private fun NewsScheduleStatus() {
     if (status.lastCheck > 0) Text(tr("Last news check") + ": " + time(status.lastCheck) + " — " + result,
         style = MaterialTheme.typography.bodySmall)
     else Text(result, style = MaterialTheme.typography.bodySmall)
-    Text(tr("Completed stories today") + ": " + status.completedStories, style = MaterialTheme.typography.bodySmall)
+    Text(tr("Completed stories today (since this update)") + ": " + status.completedStories, style = MaterialTheme.typography.bodySmall)
     if (status.lastCompleted > 0) Text(tr("Last fully completed bulletin") + ": " + time(status.lastCompleted), style = MaterialTheme.typography.bodySmall)
     if (status.lastAudible > 0) Text(tr("Last audio activity") + ": " + time(status.lastAudible), style = MaterialTheme.typography.bodySmall)
     Text(tr("Full bulletins use the completion time. Interrupted audio also waits your selected interval before automatic retry. Only fully completed stories are remembered; silent preparation failures may retry sooner."),

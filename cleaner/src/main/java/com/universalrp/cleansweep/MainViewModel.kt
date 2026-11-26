@@ -2008,15 +2008,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun appFilters(): List<Pair<String, String>> = listOf(
         AppFilter.ALL to "All",
-        AppFilter.BLOAT to "Bloatware",
-        AppFilter.UNUSED to "Unused",
+        AppFilter.BLOAT to "Listed packages",
+        AppFilter.UNUSED to "Last recorded use 30+ days ago",
         AppFilter.PREINSTALLED to "Preinstalled",
-        AppFilter.SIDELOADED to "Not from a store",
+        AppFilter.SIDELOADED to "Installer needs review",
         AppFilter.RISKY to "Sensitive permissions",
     )
 
-    fun filteredApps(): List<AppRow> {
-        val s = _state.value
+    fun filteredApps(s: UiState = _state.value): List<AppRow> {
         val report = s.appInventory ?: return emptyList()
         val query = s.appQuery.trim().lowercase()
         return report.rows.filter { row ->
@@ -2024,20 +2023,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 row.label.lowercase().contains(query) ||
                 row.pkg.lowercase().contains(query)
             val matchesFilter = when (s.appFilter) {
-                AppFilter.BLOAT -> row.isKnownBloatStub || (row.isPreinstalled && row.labelsBloat())
-                AppFilter.UNUSED -> row.isUnused && !row.isSystem
+                AppFilter.BLOAT -> row.isListedReviewPackage
+                AppFilter.UNUSED -> row.hasOldUsageRecord && !row.isSystem
                 AppFilter.PREINSTALLED -> row.isPreinstalled
-                AppFilter.SIDELOADED -> row.isSideloaded
+                AppFilter.SIDELOADED -> row.installerNeedsReview
                 AppFilter.RISKY -> row.riskyPermissions.isNotEmpty()
                 else -> true
             }
             matchesQuery && matchesFilter
         }
     }
-
-    /** A preinstalled app counts as bloatware when it is unused *and* sizable. */
-    private fun AppRow.labelsBloat(): Boolean =
-        isUnused && (riskyPermissions.isNotEmpty() || totalBytes > 20L * 1024 * 1024)
 
     fun openAppInfo(pkg: String) {
         try {
@@ -2304,7 +2299,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     devices = emptyList(),
                     scannedAtMs = System.currentTimeMillis(),
                     probedHosts = 0,
-                    note = "Tap “Scan my network” to look for the phones, computers and smart " +
+                    note = "Tap “Scan my network with AI” to look for the phones, computers and smart " +
                         "devices sharing your Wi-Fi.",
                 )
                 else -> current.copy(wifi = details)

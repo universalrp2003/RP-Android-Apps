@@ -13,7 +13,7 @@ class LiveGuardGuidePage(unittest.TestCase):
     def setUp(self):
         self.guide = GUIDE.read_text()
         self.site = (ROOT / 'site/index.html').read_text()
-        self.receipt = json.loads((ROOT / 'docs/live-guard-3.01-publication-receipt.json').read_text())
+        self.receipt = json.loads((ROOT / 'docs/live-guard-3.02-publication-receipt.json').read_text())
 
     def test_guide_exists_and_is_linked_from_the_live_guard_card(self):
         self.assertIn('href="live-guard-guide.html"', self.site)
@@ -22,7 +22,7 @@ class LiveGuardGuidePage(unittest.TestCase):
 
     def test_guide_downloads_the_published_bytes(self):
         self.assertEqual(self.receipt['apk_sha256'],
-                         'b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f')
+                         '1422d1efca59f78f2a541d127d406695931b62fc7a65894010be071f2849854f')
         self.assertIn(self.receipt['apk_sha256'], self.guide)
         self.assertIn(f"{self.receipt['bytes']:,} bytes", self.guide)
         self.assertIn(self.receipt['url'], self.guide)

@@ -154,7 +154,7 @@ fun LiveGuardMenu(vm: MainViewModel, current: Screen?, onClose: () -> Unit) {
             MenuRow(Icons.Outlined.Thunderstorm, tr("Rain & cyclone alert"), tr("30-min rain & storm voice watch"), current == Screen.WEATHER) {
                 vm.refreshWeatherUiState(); vm.navigate(Screen.WEATHER); onClose()
             }
-            MenuRow(Icons.Outlined.Apps, tr("Installed apps"), tr("Bloatware, unused apps"), current == Screen.APPS) {
+            MenuRow(Icons.Outlined.Apps, tr("Installed apps"), tr("Installed apps and usage records"), current == Screen.APPS) {
                 vm.loadAppInventory(); onClose()
             }
             MenuRow(Icons.Outlined.Insights, tr("History & budget"), tr("What changed over time"), current == Screen.INSIGHTS) {

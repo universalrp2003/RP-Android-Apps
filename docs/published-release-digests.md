@@ -9,6 +9,11 @@
 
 Publisher run 45547302204 rechecked signed tested candidates and their draft and public bytes without rebuilding. The owner reported earlier candidates worked with their TV and remote; the corrected published APKs were not retested on the physical TV. No physical installed-hash, real disable/recovery or settings-link verification is claimed. No new permissions versus previous public versions. Earlier public release assets were preserved.
 
+## Live Guard 3.02 — review fixes
+
+- [CleanSweep-v3.02.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.02/CleanSweep-v3.02.apk): 14,808,499 bytes; SHA-256 `1422d1efca59f78f2a541d127d406695931b62fc7a65894010be071f2849854f`.
+- Exact signed APK passed 1,011 JVM tests, lint, and both 3.01 in-place emulator upgrade paths in run 45745935102; published without rebuild in run 45746975012. Owner reported that a preceding 3.01 candidate worked on their phone; installed hash was not verified. These exact 3.02 bytes have not been physically phone-tested. [Receipt](live-guard-3.02-publication-receipt.json).
+
 ## Live Guard 3.01 — radio timeout fix
 
 - [CleanSweep-v3.01.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.01/CleanSweep-v3.01.apk): 14,781,231 bytes; SHA-256 `b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f`.

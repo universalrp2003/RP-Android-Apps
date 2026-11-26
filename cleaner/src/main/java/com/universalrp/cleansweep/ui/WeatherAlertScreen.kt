@@ -107,7 +107,13 @@ fun HomeWeatherAlertCard(state: UiState, vm: MainViewModel) {
         w.locationMode == LocationResolutionMode.NEEDS_SAVED_PLACE -> WarnAmber
         else -> GoodGreen
     }
-    val summary = homeWeatherSummary(w)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val id = if (w.savedPlaceName.isNotBlank()) com.universalrp.cleansweep.data.SimpleWeatherStore.HOME else com.universalrp.cleansweep.data.SimpleWeatherStore.GPS
+    val result = com.universalrp.cleansweep.data.SimpleWeatherStore.read(context, id)
+    val precise = com.universalrp.cleansweep.data.WeatherPresentationPolicy.preciseWatchAvailable(result?.snapshot, w.lastCheckedAtMs, System.currentTimeMillis())
+    val weatherVoiceEnabled = com.universalrp.cleansweep.voice.Announcer.allows(context, com.universalrp.cleansweep.voice.Announcer.Event.WEATHER_ALERT)
+    val matchingSnapshot = com.universalrp.cleansweep.data.WeatherPresentationPolicy.matchesSnapshot(result?.snapshot, w.lastCheckedAtMs)
+    val summary = homeWeatherSummary(w, precise, state.voiceOn, weatherVoiceEnabled, matchingSnapshot)
 
     PanelCard(
         modifier = Modifier
@@ -175,22 +181,26 @@ fun HomeWeatherAlertCard(state: UiState, vm: MainViewModel) {
     }
 }
 
-private fun homeWeatherSummary(w: WeatherUiSnapshot): String {
-    if (!w.enabled) {
-        return watchWords("Rain & severe-weather watch — off", "மழை / கடும் வானிலை கண்காணிப்பு — அணைப்பு")
-    }
-    if (w.locationMode == LocationResolutionMode.NEEDS_SAVED_PLACE) {
+private fun homeWeatherSummary(w: WeatherUiSnapshot, precise: Boolean, voiceOn: Boolean, weatherVoiceEnabled: Boolean, matchingSnapshot: Boolean): String {
+    if (!w.enabled) return watchWords("Rain & severe-weather watch — off", "மழை / கடும் வானிலை கண்காணிப்பு — அணைப்பு")
+    if (w.locationMode == LocationResolutionMode.NEEDS_SAVED_PLACE && w.activePlaceName.isBlank())
         return watchWords("Choose your default town / PIN code", "வழக்கமான ஊர் / அஞ்சல் குறியீட்டைத் தேர்ந்தெடுக்கவும்")
-    }
     val where = w.activePlaceName.ifBlank { w.savedPlaceName }.ifBlank { tr("GPS automatic") }
-    if (w.source != WeatherSourceKind.TOMORROW_IO_1M || System.currentTimeMillis() - w.lastCheckedAtMs !in 0..com.universalrp.cleansweep.data.SimpleWeatherPolicy.FRESH_MS)
-        return where + " · " + watchWords("Precise rain alerts paused · open outlook", "துல்லிய மழை அறிவிப்புகள் நிறுத்தம் · முன்னறிவிப்பைப் பார்")
-    return when (w.severity) {
-        WeatherSeverity.CYCLONE_SEVERE -> where + " · " + tr("Urgent cyclone / extreme storm warning!")
-        WeatherSeverity.VERY_HEAVY_RAIN -> where + " · " + tr("Very heavy rain warning active")
-        WeatherSeverity.RAIN_SOON -> where + " · " + watchWords("Rain indicated within the selected watch window", "தேர்ந்தெடுத்த காலவரம்பில் மழை வாய்ப்பு")
-        WeatherSeverity.CLEAR_OR_NORMAL -> where + " · " + tr("Silent watch — speaks only before rain or storm")
+    val fresh = matchingSnapshot && System.currentTimeMillis() - w.lastCheckedAtMs in 0..com.universalrp.cleansweep.data.SimpleWeatherPolicy.FRESH_MS
+    val forecast = when (w.severity) {
+        WeatherSeverity.CYCLONE_SEVERE -> watchWords("Severe storm report", "கடுமையான புயல் தகவல்")
+        WeatherSeverity.VERY_HEAVY_RAIN -> watchWords("Heavy rain indicated in forecast", "முன்னறிவிப்பில் கனமழை காட்டப்படுகிறது")
+        WeatherSeverity.RAIN_SOON -> watchWords("Rain indicated in forecast", "முன்னறிவிப்பில் மழை காட்டப்படுகிறது")
+        WeatherSeverity.CLEAR_OR_NORMAL -> ""
     }
+    val voiceStatus = when {
+        !voiceOn -> watchWords("Voice announcements off", "குரல் அறிவிப்புகள் அணைக்கப்பட்டுள்ளன")
+        !weatherVoiceEnabled -> watchWords("Weather voice off", "வானிலை குரல் அணைக்கப்பட்டுள்ளது")
+        !precise -> watchWords("Precise rain alerts paused · view forecast", "துல்லிய மழை அறிவிப்புகள் நிறுத்தம் · முன்னறிவிப்பைப் பார்")
+        else -> watchWords("Precise rain watch ready · delivery may be delayed", "துல்லிய மழை கண்காணிப்பு தயார் · அறிவிப்பு தாமதமாகலாம்")
+    }
+    val ageNote = if (forecast.isNotBlank() && !fresh) watchWords("Older report — check details", "பழைய தகவல் — விவரங்களைச் சரிபார்க்கவும்") else ""
+    return listOf(where, forecast, ageNote, voiceStatus).filter { it.isNotBlank() }.joinToString(" · ")
 }
 
 /** Full configuration & live status screen for 30-Minute Rain + Severe Cyclone Voice Alerts. */

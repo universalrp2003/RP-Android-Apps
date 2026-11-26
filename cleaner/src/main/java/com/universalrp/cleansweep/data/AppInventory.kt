@@ -57,35 +57,41 @@ data class AppRow(
     val permissionsObserved: Boolean = true,
     val unavailablePermissionChecks: Set<String> = emptySet(),
     val identity: PackageIdentity? = null,
+    /** Whether the Android usage query succeeded, not whether its history is complete. */
+    val usageHistoryAvailable: Boolean = false,
+    /** Android-reported code size, null when full storage statistics were unavailable. */
+    val storageCodeBytes: Long? = null,
 ) {
-    val totalBytes: Long get() = if (dataBytes > 0L) dataBytes + cacheBytes else apkBytes + cacheBytes
-    val isUnused: Boolean get() = lastUsedMs == null || lastUsedMs < System.currentTimeMillis() - 30L * 24 * 3600 * 1000
+    val storageStatsAvailable: Boolean get() = storageCodeBytes?.let { AppStorageSizePolicy.valid(it, dataBytes, cacheBytes) } == true
+    /** A partial APK-only estimate when Android did not return full storage statistics. */
+    val sizeBytes: Long? get() = AppStorageSizePolicy.size(storageCodeBytes, dataBytes, cacheBytes, apkBytes)
+    val totalBytes: Long get() = sizeBytes ?: 0L
+    val hasOldUsageRecord: Boolean get() = AppUsageHistoryPolicy.hasOldRecord(usageHistoryAvailable, lastUsedMs, System.currentTimeMillis())
     val isPreinstalled: Boolean get() = isSystem && !isUpdatedSystem
-    val isSideloaded: Boolean get() = !isSystem && installer == null
-    val isKnownBloatStub: Boolean get() = pkg in BloatRules.KNOWN_STUB_PACKAGES
+    val installerNeedsReview: Boolean get() = BloatRules.installerReviewTag(isSystem, installer) != null
+    val isListedReviewPackage: Boolean get() = pkg in BloatRules.REVIEW_PACKAGES
 }
 
 data class AppInventoryReport(
     val rows: List<AppRow>,
     val usageAccessGranted: Boolean,
     val scannedAtMs: Long,
+    val usageHistoryAvailable: Boolean = false,
 ) {
     val totalBytes: Long get() = rows.sumOf { it.totalBytes }
+    val hasIncompleteSizes: Boolean get() = rows.any { !it.storageStatsAvailable }
+    val hasKnownSizes: Boolean get() = rows.any { it.sizeBytes != null }
     val preinstalledCount: Int get() = rows.count { it.isPreinstalled }
-    val unusedCount: Int get() = rows.count { it.isUnused && !it.isSystem }
-    val sideloadedCount: Int get() = rows.count { it.isSideloaded }
+    val oldUsageRecordCount: Int get() = if (usageHistoryAvailable) rows.count { it.hasOldUsageRecord && !it.isSystem } else 0
+    val installerReviewCount: Int get() = rows.count { it.installerNeedsReview }
     val riskyCount: Int get() = rows.count { it.riskyPermissions.isNotEmpty() }
-    val stubCount: Int get() = rows.count { it.isKnownBloatStub }
+    val listedPackageCount: Int get() = rows.count { it.isListedReviewPackage }
 }
 
 object BloatRules {
 
-    /**
-     * Facebook's stub apps are bundled by several vendors and cannot be removed
-     * without disabling them first. This is a fact about those packages, not a
-     * guess about your phone.
-     */
-    val KNOWN_STUB_PACKAGES = setOf(
+    /** Package-name matches for optional manual review, not proof of origin or risk. */
+    val REVIEW_PACKAGES = setOf(
         "com.facebook.appmanager",
         "com.facebook.services",
         "com.facebook.system",
@@ -134,6 +140,14 @@ object BloatRules {
     fun riskyLabels(permissions: List<String>): List<String> =
         permissions.mapNotNull { RISKY_PERMISSIONS[it] }.distinct()
 
+    /** A reported identifier is not authenticated provenance, and a missing one proves nothing. */
+    fun installerReviewTag(isSystem: Boolean, installer: String?): String? = when {
+        isSystem -> null
+        installer.isNullOrBlank() -> "Installer not reported"
+        !isTrustedInstaller(installer) -> "Installer ID not recognized"
+        else -> null
+    }
+
     fun isTrustedInstaller(installer: String?): Boolean {
         if (installer == null) return false
         return installer in RECOGNISED_INSTALLERS
@@ -163,7 +177,9 @@ object AppInventoryLoader {
     ): AppInventoryReport = withContext(Dispatchers.IO) {
         val pm = context.packageManager
         val usageAccess = AppCacheRepo.hasUsageAccess(context)
-        val stats = if (usageAccess) usageStats(context) else emptyMap()
+        val stats = if (usageAccess) usageStats(context) else null
+        val historyAvailable = stats != null
+        val nowMs = System.currentTimeMillis()
         val storageStats = context.getSystemService(Context.STORAGE_STATS_SERVICE)
             as? StorageStatsManager
 
@@ -203,6 +219,7 @@ object AppInventoryLoader {
 
             var dataBytes = 0L
             var cacheBytes = 0L
+            var storageCodeBytes: Long? = null
             if (storageStats != null) {
                 try {
                     val s = storageStats.queryStatsForPackage(
@@ -210,10 +227,13 @@ object AppInventoryLoader {
                         ai.packageName,
                         Process.myUserHandle(),
                     )
-                    dataBytes = s.dataBytes + s.appBytes
-                    cacheBytes = s.cacheBytes
+                    if (AppStorageSizePolicy.valid(s.appBytes, s.dataBytes, s.cacheBytes)) {
+                        storageCodeBytes = s.appBytes
+                        dataBytes = s.dataBytes
+                        cacheBytes = s.cacheBytes
+                    }
                 } catch (e: Exception) {
-                    // Some system packages cannot be measured; leave 0.
+                    // Unknown storage is not a measured zero; APK size is only a partial fallback.
                 }
             }
             var apkBytes = 0L
@@ -229,7 +249,7 @@ object AppInventoryLoader {
             } }
 
             val installer = installerOf(pm, ai.packageName)
-            val lastUsed = stats[ai.packageName]
+            val lastUsed = AppUsageHistoryPolicy.recordedTime(historyAvailable, stats?.get(ai.packageName), nowMs)
             val risky = BloatRules.riskyLabels(liveGranted)
             val revokedRisky = BloatRules.riskyLabels(liveRevoked)
             val launcher = hasLauncherActivity(pm, ai.packageName)
@@ -238,11 +258,11 @@ object AppInventoryLoader {
             if (!permissionsObserved) tags.add("Permission state unavailable")
             if (isSystem && !updatedSystem) tags.add("Preinstalled")
             if (updatedSystem) tags.add("Bundled (updated)")
-            if (ai.packageName in BloatRules.KNOWN_STUB_PACKAGES) tags.add("Bloatware stub")
-            if (!isSystem && (lastUsed == null || lastUsed < System.currentTimeMillis() - 30L * 24 * 3600 * 1000)) {
-                tags.add("Unused 30+ days")
+            if (ai.packageName in BloatRules.REVIEW_PACKAGES) tags.add("Listed package (review manually)")
+            if (!isSystem && AppUsageHistoryPolicy.hasOldRecord(historyAvailable, lastUsed, nowMs)) {
+                tags.add(AppUsageHistoryPolicy.OLD_RECORD_TAG)
             }
-            if (!isSystem && !BloatRules.isTrustedInstaller(installer)) tags.add("Sideloaded")
+            BloatRules.installerReviewTag(isSystem, installer)?.let { tags.add(it) }
             if (!launcher && !isSystem) tags.add("No launcher icon")
             if (risky.isNotEmpty()) tags.add("Sensitive permissions")
             if (revokedRisky.isNotEmpty()) tags.add("Permissions removed")
@@ -272,44 +292,46 @@ object AppInventoryLoader {
                     permissionsObserved = permissionsObserved,
                     unavailablePermissionChecks = permissionReading.unavailableChecks,
                     identity = signingIdentity(info),
+                    usageHistoryAvailable = historyAvailable,
+                    storageCodeBytes = storageCodeBytes,
                 )
             )
         }
 
         AppInventoryReport(
             rows = rows.sortedWith(
-                compareByDescending<AppRow> { it.isKnownBloatStub }
+                compareByDescending<AppRow> { it.isListedReviewPackage }
                     .thenByDescending { it.riskyPermissions.size }
                     .thenByDescending { it.totalBytes }
                     .thenBy { it.label.lowercase() }
             ),
             usageAccessGranted = usageAccess,
             scannedAtMs = System.currentTimeMillis(),
+            usageHistoryAvailable = historyAvailable,
         )
     }
 
-    private fun usageStats(context: Context): Map<String, Long> {
+    private fun usageStats(context: Context): Map<String, Long>? {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
-            ?: return emptyMap()
+            ?: return null
         val end = System.currentTimeMillis()
         val begin = end - 30L * 24 * 3600 * 1000
         return try {
-            usm.queryUsageStats(UsageStatsManager.INTERVAL_MONTHLY, begin, end)
-                .orEmpty()
+            (usm.queryUsageStats(UsageStatsManager.INTERVAL_MONTHLY, begin, end) ?: return null)
                 .groupBy { it.packageName }
                 .mapValues { entry -> entry.value.maxOf { it.lastTimeUsed } }
         } catch (e: Exception) {
-            emptyMap()
+            null
         }
     }
 
     private fun installerOf(pm: PackageManager, pkg: String): String? = try {
-        if (Build.VERSION.SDK_INT >= 30) {
+        (if (Build.VERSION.SDK_INT >= 30) {
             pm.getInstallSourceInfo(pkg).installingPackageName
         } else {
             @Suppress("DEPRECATION")
             pm.getInstallerPackageName(pkg)
-        }
+        })?.takeIf { it.isNotBlank() }
     } catch (e: Exception) {
         null
     }

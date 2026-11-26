@@ -31,7 +31,8 @@ object AiReport {
            are not third-party apps. Do not recommend removing system, biometric, banking,
            keyboard or home-control apps merely because they seem unused.
         7. Uninstall only user-selected third-party apps the user confirms they no longer need.
-           No usage record means unknown, not proof of 30 days of inactivity.
+           No usage record means unknown, not proof of 30 days of inactivity. Missing or
+           unrecognized installer IDs do not prove sideloading, origin, or safety.
         8. Raw thermal zones are uncalibrated and sensor-specific. Never declare a hotspot safe,
            overheating or under light load from its value alone. Use Android thermal status
            and battery readings, and state uncertainty. Uptime is not the phone's age.
@@ -105,8 +106,8 @@ object AiReport {
         if (config.includeAppNames && apps != null) {
             out.appendLine("== Installed apps (${apps.rows.size} entries) ==")
             out.appendLine(
-                "Totals: ${apps.preinstalledCount} preinstalled, ${apps.unusedCount} unused third-party " +
-                    "(30+ days), ${apps.sideloadedCount} not from a store, ${apps.riskyCount} with sensitive permissions"
+                "Totals: ${apps.preinstalledCount} preinstalled, ${usageSummary(apps)}, " +
+                    "${apps.installerReviewCount} with installer ID missing or unrecognized (not proof of sideloading or safety), ${apps.riskyCount} with sensitive permissions"
             )
             out.appendLine(
                 "Format: name | package | size | last used | tags | permissions of note"
@@ -117,8 +118,8 @@ object AiReport {
             out.appendLine("== Installed apps ==")
             out.appendLine(
                 "The user chose not to share app names. Totals only: ${apps.rows.size} apps, " +
-                    "${apps.preinstalledCount} preinstalled, ${apps.unusedCount} unused third-party, " +
-                    "${apps.sideloadedCount} not from a store, ${apps.riskyCount} with sensitive permissions."
+                    "${apps.preinstalledCount} preinstalled, ${usageSummary(apps)}, " +
+                    "${apps.installerReviewCount} with installer ID missing or unrecognized (not proof of sideloading or safety), ${apps.riskyCount} with sensitive permissions."
             )
             out.appendLine()
         }
@@ -208,11 +209,11 @@ object AiReport {
     private fun appLines(apps: AppInventoryReport): List<String> {
         val interesting = apps.rows
             .filter { row ->
-                row.isKnownBloatStub || row.isPreinstalled || row.isUnused ||
-                    row.isSideloaded || row.riskyPermissions.isNotEmpty()
+                row.isListedReviewPackage || row.isPreinstalled || row.hasOldUsageRecord ||
+                    row.installerNeedsReview || row.riskyPermissions.isNotEmpty()
             }
             .sortedWith(
-                compareByDescending<com.universalrp.cleansweep.data.AppRow> { it.isKnownBloatStub }
+                compareByDescending<com.universalrp.cleansweep.data.AppRow> { it.isListedReviewPackage }
                     .thenByDescending { it.totalBytes }
             )
             .take(60)
@@ -221,9 +222,13 @@ object AiReport {
             buildString {
                 append(row.label.take(40))
                 append(" | ").append(row.pkg)
-                append(" | ").append(gb(row.totalBytes))
-                append(" | ").append(lastUsedLabel(row.lastUsedMs))
-                append(if (row.isPreinstalled) " | SYSTEM/PREINSTALLED: do not recommend removal" else " | USER-INSTALLED: removal only if user confirms not needed")
+                append(" | ").append(when {
+                    row.storageStatsAvailable -> gb(row.totalBytes) + " app code and data (cache included in data)"
+                    row.sizeBytes != null -> gb(row.totalBytes) + " APK file only; app data and other code not measured"
+                    else -> "size unavailable"
+                })
+                append(" | ").append(lastUsedLabel(if (row.usageHistoryAvailable) row.lastUsedMs else null))
+                append(if (row.isPreinstalled) " | SYSTEM/PREINSTALLED: do not recommend removal" else " | NON-SYSTEM: removal only if user confirms not needed")
                 if (row.tags.isNotEmpty()) append(" | ").append(row.tags.joinToString(", "))
                 if (row.riskyPermissions.isNotEmpty()) {
                     append(" | ").append(row.riskyPermissions.take(4).joinToString("; "))
@@ -233,19 +238,23 @@ object AiReport {
 
         val remaining = apps.rows.size - interesting.size
         if (remaining > 0) {
-            lines.add("(+$remaining more apps with nothing unusual about them)")
+            lines.add("(+$remaining other apps omitted; omission is not a safety assessment)")
         }
         return lines
     }
 
+    private fun usageSummary(apps: AppInventoryReport): String =
+        if (apps.usageHistoryAvailable) "${apps.oldUsageRecordCount} third-party apps with last recorded use 30+ days ago (partial Android history; not proof of inactivity)"
+        else "usage history unavailable; inactivity count unknown"
+
     private fun lastUsedLabel(ms: Long?): String {
-        if (ms == null || ms <= 0) return "no usage record available (not proof of inactivity)"
+        if (ms == null || ms <= 0 || ms > System.currentTimeMillis()) return "no usage record available (not proof of inactivity)"
         val days = ((System.currentTimeMillis() - ms) / (24L * 3600 * 1000)).coerceAtLeast(0)
         return when {
             days <= 0 -> "used today"
             days == 1L -> "used yesterday"
             days < 30 -> "used ${days}d ago"
-            else -> "unused ${days}d"
+            else -> "last recorded use ${days}d ago (not proof of inactivity)"
         }
     }
 

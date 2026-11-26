@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -133,7 +134,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
         }
 
         val report = state.appInventory
-        val rows = vm.filteredApps()
+        val rows = vm.filteredApps(state)
 
         LazyColumn(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
@@ -169,7 +170,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                 ) {
                     vm.appFilters().forEach { (id, label) ->
                         Chip(
-                            label = label,
+                            label = tr(label),
                             selected = state.appFilter == id,
                             onClick = { vm.setAppFilter(id) },
                         )
@@ -182,31 +183,42 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
                     PanelCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
                             Text(
-                                "${loaded.rows.size} apps • ${loaded.totalBytes.formatBytes()}",
+                                if (loaded.hasKnownSizes) tr("%s apps • sum of known sizes %s", loaded.rows.size, loaded.totalBytes.formatBytes())
+                                else tr("%s apps • size unavailable", loaded.rows.size),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                             )
+                            Text(
+                                if (loaded.hasIncompleteSizes) tr("Some sizes are APK-only or unavailable. Listed sizes may overlap shared app code.")
+                                else tr("Listed sizes may overlap shared app code."),
+                                style = MaterialTheme.typography.labelSmall, color = TextSecondary,
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "${loaded.stubCount} known preinstall stubs • ${loaded.unusedCount} unused " +
-                                    "30+ days • ${loaded.sideloadedCount} not from a store • " +
-                                    "${loaded.riskyCount} with sensitive permissions",
+                                tr("%s listed packages • %s installer IDs missing or unrecognized • %s with sensitive permissions",
+                                    loaded.listedPackageCount, loaded.installerReviewCount, loaded.riskyCount),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                             )
+                            Text(
+                                if (loaded.usageHistoryAvailable) tr("%s third-party apps have a last recorded use 30+ days ago", loaded.oldUsageRecordCount)
+                                else tr("Usage history unavailable; inactivity is unknown."),
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary,
+                            )
+                            Text(tr("Installer IDs can be missing or misleading; they do not establish an app's origin or safety."),
+                                style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Spacer(Modifier.height(4.dp))
-                            Text(tr("Permission/settings review only — not proof that the phone is safe."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Text(tr("Permission/settings review only — not proof that the phone is safe."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Text(
                                 tr("Last checked %s", checkedAt(loaded.scannedAtMs)),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
                             )
-                            if (!loaded.usageAccessGranted) {
+                            if (!loaded.usageHistoryAvailable) {
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    "Grant \"Usage access\" (the App cache screen does it) to see sizes " +
-                                        "and last-used dates — without it Android hides them.",
+                                    if (!loaded.usageAccessGranted) tr("Allow Usage access in the App cache screen, then reload. Android may still provide incomplete records.")
+                                    else tr("Android did not return usage history. Try reloading; a missing record does not mean an app was unused."),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = WarnAmber,
                                 )
@@ -239,10 +251,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
 
             item {
                 Text(
-                    "Tags are facts from Android, not opinions: \"Preinstalled\" means the phone shipped " +
-                        "with it, \"Unused 30+ days\" comes from Android's own usage records, " +
-                        "\"Sideloaded\" means no app store installed it. Use \"Analyse my phone\" on the " +
-                        "Phone health screen for advice on what is safe to remove.",
+                    tr("Usage records can be incomplete. A missing record or an old last recorded use does not prove inactivity or that an app is safe to remove. Review apps before making changes."),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                 )
@@ -255,6 +264,7 @@ fun AppsScreen(state: UiState, vm: MainViewModel) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
     PanelCard(Modifier.fillMaxWidth()) {
@@ -282,9 +292,9 @@ private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
                 )
                 if (row.tags.isNotEmpty()) {
                     Spacer(Modifier.height(6.dp))
-                    Row(
-                        Modifier.horizontalScroll(rememberScrollState()),
+                    androidx.compose.foundation.layout.FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         row.tags.forEach { tag -> TagPill(tag) }
                     }
@@ -292,7 +302,12 @@ private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
             }
             Spacer(Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End) {
-                ByteChip(row.totalBytes)
+                if (row.sizeBytes != null) {
+                    ByteChip(row.totalBytes)
+                    if (!row.storageStatsAvailable) Text(tr("APK only"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                } else {
+                    Text(tr("Size unavailable"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                }
                 Spacer(Modifier.height(6.dp))
                 Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TextSecondary)
             }
@@ -303,14 +318,14 @@ private fun AppRowCard(row: AppRow, onClick: () -> Unit) {
 @Composable
 private fun TagPill(text: String) {
     val colour = when {
-        text.contains("Bloat") -> DangerRed
-        text.contains("Sideloaded") -> WarnAmber
+        text == "Listed package (review manually)" -> AccentViolet
+        text == "Installer not reported" || text == "Installer ID not recognized" -> WarnAmber
         text.contains("Sensitive") -> WarnAmber
-        text.contains("Unused") -> AccentViolet
+        text == "Last recorded use 30+ days ago" -> AccentViolet
         else -> AccentCyan
     }
     Text(
-        text,
+        tr(text),
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(SurfaceHigh)
@@ -328,18 +343,25 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
         onDismissRequest = onClose,
         title = { Text(row.label, fontWeight = FontWeight.Bold) },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 InfoRow("Package", row.pkg)
-                InfoRow("Size", row.totalBytes.formatBytes() +
-                    " (data ${row.dataBytes.formatBytes()}, cache ${row.cacheBytes.formatBytes()})")
+                InfoRow(tr("Size"), when {
+                    row.storageStatsAvailable -> tr("%s total • app %s • data %s (includes cache %s)",
+                        row.totalBytes.formatBytes(), row.storageCodeBytes!!.formatBytes(), row.dataBytes.formatBytes(), row.cacheBytes.formatBytes())
+                    row.sizeBytes != null -> tr("APK file only: %s; other code and app data not measured", row.totalBytes.formatBytes())
+                    else -> tr("Size unavailable")
+                })
                 InfoRow("Installed", dateFormat.format(Date(row.firstInstallMs)))
                 InfoRow("Updated", if (row.updatedMs > 0) dateFormat.format(Date(row.updatedMs)) else "never")
                 InfoRow(
-                    "Last used",
-                    row.lastUsedMs?.let { dateFormat.format(Date(it)) } ?: "no record in 30 days",
+                    tr("Last recorded use"),
+                    if (!row.usageHistoryAvailable) tr("Usage history unavailable")
+                    else row.lastUsedMs?.let { dateFormat.format(Date(it)) } ?: tr("No usage record returned; activity unknown"),
                 )
-                InfoRow("Installer", row.installer ?: "not from a store / unknown")
-                InfoRow("Type", if (row.isSystem) "System app (preinstalled)" else "Installed by you")
+                Text(tr("Android usage history may be incomplete; this is not proof of inactivity."),
+                    style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                InfoRow(tr("Installer"), row.installer?.takeIf { it.isNotBlank() } ?: tr("Installer not reported"))
+                InfoRow(tr("Type"), if (row.isSystem) tr("System app") else tr("Non-system app"))
                 // v2.7: granted vs revoked. The old dialog listed everything the app ever asked
                 // for, so a revoked permission kept showing as held. Now \"has\" means Android
                 // grants it right now, and taken-away permissions are listed as removed.
@@ -364,11 +386,10 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                         Text("• $permission", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                     }
                 }
-                if (row.isKnownBloatStub) {
+                if (row.isListedReviewPackage) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "This is one of the well-known Facebook preinstall stubs that vendors bundle. " +
-                            "Disabling it stops it running without breaking your phone.",
+                        tr("This package matches a review list. The name alone does not prove it was preinstalled, is unsafe, or can be disabled without affecting other apps. Review it before making changes."),
                         style = MaterialTheme.typography.bodySmall,
                         color = DangerRed,
                     )
@@ -393,8 +414,7 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "CleanSweep never force-stops or uninstalls anything by itself — Android asks " +
-                        "you to confirm on the next screen.",
+                    tr("Live Guard opens Android app settings; Android asks you to confirm any stop or uninstall."),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                 )
@@ -411,7 +431,7 @@ private fun AppDetailDialog(row: AppRow, vm: MainViewModel, onClose: () -> Unit)
                     contentColor = Color(0xFF03202B),
                 ),
             ) {
-                Text(if (row.isSystem) "App settings" else "Uninstall", fontWeight = FontWeight.Bold)
+                Text(tr("App settings"), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -556,7 +576,7 @@ fun SecurityScreen(state: UiState, vm: MainViewModel) {
                                 // so it stays out of the count.
                                 run {
                                     val n = loaded.findings.count { it.severity != Severity.INFO }
-                                    tr("%s findings across %s apps · %s high, %s medium", n, loaded.appsChecked, loaded.highCount, loaded.mediumCount)
+                                    tr("%s findings across %s apps · %s high, %s medium, %s low", n, loaded.appsChecked, loaded.highCount, loaded.mediumCount, loaded.findings.count { it.severity == Severity.LOW })
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
@@ -641,7 +661,7 @@ private fun FindingCard(finding: Finding) {
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
-                    finding.title,
+                    tr(finding.title),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f),
@@ -650,7 +670,7 @@ private fun FindingCard(finding: Finding) {
                     color = severityColor(finding.severity), fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(6.dp))
-            Text(finding.detail, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Text(tr(finding.detail), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             if (apps.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 val shown = if (expanded) apps else apps.take(6)
@@ -694,7 +714,7 @@ private fun FindingCard(finding: Finding) {
             finding.fixHint?.let { hint ->
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(hint, style = MaterialTheme.typography.labelMedium, color = AccentCyan,
+                    Text(tr(hint), style = MaterialTheme.typography.labelMedium, color = AccentCyan,
                         fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(8.dp))
                     Button(
@@ -1060,12 +1080,16 @@ fun NetworkScreen(state: UiState, vm: MainViewModel) {
                                 Spacer(Modifier.width(10.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(
-                                        "${loaded.devices.size} devices answered",
+                                        when {
+                                            !loaded.scanAttempted -> tr("Not scanned yet")
+                                            loaded.probedHosts == 0 -> tr("Scan unavailable — no addresses probed")
+                                            else -> tr("%s devices answered", loaded.devices.size)
+                                        },
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                     )
                                     Text(
-                                        "Probed ${loaded.probedHosts} addresses on your network",
+                                        if (loaded.scanAttempted) tr("Probed %s addresses on your network", loaded.probedHosts) else tr("Tap below to scan your Wi-Fi."),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = TextSecondary,
                                     )
@@ -1090,7 +1114,9 @@ fun NetworkScreen(state: UiState, vm: MainViewModel) {
                             }
                             Spacer(Modifier.height(8.dp))
                             Text(
-                                loaded.note,
+                                if (!loaded.scanAttempted) tr("Tap below to scan your Wi-Fi.")
+                                else if (loaded.probedHosts == 0) tr("Connect to Wi-Fi and try scanning again.")
+                                else loaded.note,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
                             )
@@ -1139,9 +1165,7 @@ private fun NetworkPermissionCard(
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "Android hides your Wi-Fi name, the router address and the access point unless the " +
-                    "app has Location or Nearby-devices permission. CleanSweep uses it only while this " +
-                    "screen is open — nothing about your network is stored or sent anywhere.",
+                tr("Android may require Location or Nearby devices permission to show Wi-Fi details. Verified device choices and names can be saved. Optional AI analysis sends displayed device facts only when you request it and allow network sharing."),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
             )
