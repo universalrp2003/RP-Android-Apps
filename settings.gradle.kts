@@ -48,3 +48,7 @@ project(":weeklymoney").projectDir = file("weeklymoney/app")
 // Isolated, experimental offline bioacoustics prototype; not a public sister-app release.
 include(":animalvoice")
 project(":animalvoice").projectDir = file("animalvoice/app")
+
+// குறிப்பு: a separate, offline notebook candidate; not a published portfolio app.
+include(":kurippu")
+project(":kurippu").projectDir = file("kurippu/app")
