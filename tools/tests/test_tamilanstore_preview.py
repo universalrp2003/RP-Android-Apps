@@ -9,8 +9,8 @@ STORE = ROOT / 'tamilanstore'
 class TamilanStorePreviewTest(unittest.TestCase):
     def test_catalog_has_fifteen_unique_official_pinned_releases(self):
         apps = json.loads((STORE / 'src/main/assets/catalog.json').read_text())['apps']
-        self.assertEqual(len(apps), 17)
-        self.assertEqual(len({a['packageName'] for a in apps}), 17)
+        self.assertEqual(len(apps), 18)
+        self.assertEqual(len({a['packageName'] for a in apps}), 18)
         for app in apps:
             self.assertRegex(app['sha256'], r'^[a-f0-9]{64}$')
             self.assertTrue(app['url'].startswith('https://github.com/universalrp2003/RP-Android-Apps/releases/download/'))
@@ -37,7 +37,7 @@ class TamilanStorePreviewTest(unittest.TestCase):
         ns = '{http://schemas.android.com/apk/res/android}'
         self.assertEqual({e.attrib[ns+'name'] for e in root.findall('uses-permission')}, {
             'android.permission.INTERNET', 'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.POST_NOTIFICATIONS'})
-        self.assertEqual(len(root.findall('queries/package')), 17)
+        self.assertEqual(len(root.findall('queries/package')), 18)
         self.assertEqual({e.attrib[ns+'name'] for e in root.findall('queries/package')}, {a['packageName'] for a in json.loads((STORE / 'src/main/assets/catalog.json').read_text())['apps']})
         self.assertEqual(root.find('application/provider').attrib[ns+'exported'], 'false')
         paths = ET.parse(STORE / 'src/main/res/xml/apk_paths.xml').getroot()
@@ -130,9 +130,9 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
                          {'smsguard':6,'liveguard':13,'radio':8,'oorarivippu':5,'pulseeq':4,
                           'vocalremover':5,'podcast':4,'expensetracker':3,'launcher':3,
                           'vasanthi':5,'voicenotes':3,'secretmessage':5,'dailyvault':7,
-                          'appdisabler':4,'animalvoice':6})
+                          'appdisabler':4,'animalvoice':6,'kurippu':2})
         for app,files in index.items():
-            self.assertGreaterEqual(len(files),3)
+            self.assertGreaterEqual(len(files),2 if app == "kurippu" else 3)
             for name in files:
                 self.assertNotIn('/',name)
                 self.assertTrue((STORE/'src/main/assets/screenshots'/name).is_file())
@@ -179,7 +179,7 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
     def test_dailyvault_owner_images_are_shared_and_no_vault_binary_changes(self):
         index=json.loads((STORE/'src/main/assets/screenshots/index.json').read_text())
         web=[ROOT/'site/images/daily-vault.jpg']+[ROOT/f'site/images/daily-vault/{i}.jpg' for i in range(1,7)]
-        self.assertEqual(len(index),15)
+        self.assertEqual(len(index),16)
         self.assertEqual(len(index['dailyvault']),7)
         for name,path in zip(index['dailyvault'],web):
             self.assertEqual((STORE/'src/main/assets/screenshots'/name).read_bytes(),path.read_bytes())

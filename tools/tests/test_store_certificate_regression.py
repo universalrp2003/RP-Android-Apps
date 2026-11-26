@@ -15,7 +15,7 @@ class StoreCertificateRegression(unittest.TestCase):
 
     def test_bundled_fallback_uses_verified_current_release_receipts(self):
         bundled = json.loads((ROOT/"tamilanstore/src/main/assets/catalog.json").read_text())
-        published = json.loads((ROOT/"site/catalog-v4.json").read_text())
+        published = json.loads((ROOT/"site/catalog-v5.json").read_text())
         # The bundled fallback now carries the promoted public releases too: an offline Store
         # install must offer the same archives the website pins, not a silent older build.
         old = {a['id']: a for a in bundled['apps']}

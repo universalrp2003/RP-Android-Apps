@@ -31,13 +31,17 @@ def main():
     h.tap_text('Calculator')
     for label in ('5', '+', '4', '='):
         h.tap(h.find(lambda n, label=label: n.get('text') == label)[0])
+    h.adb('shell','input','swipe','500','1700','500','700','400')
     h.find(h.text('5 + 4 = 9'))
     h.adb('shell','am','force-stop',h.PACKAGE)
     h.adb('shell','am','start','-n',h.PACKAGE+'/.MainActivity')
     h.adb('shell','input','swipe','980','150','200','150','400')
     h.tap_text('Calculator')
+    h.adb('shell','input','swipe','500','1700','500','700','400')
     h.find(h.text('5 + 4 = 9'))
+    h.adb('shell','input','swipe','500','700','500','1700','400')
     h.tap(h.find(lambda n:n.get('text') == 'C')[0])
+    h.adb('shell','input','swipe','500','1700','500','700','400')
     h.find(h.text('5 + 4 = 9'))
     receipt={'from_version':'1.2','to_version':'1.3','package':h.PACKAGE,'same_uid':True,'expense_entries_and_total_preserved':True,'note_preserved':True,'about_version_and_warning':True,'history_survives_force_stop_and_clear':True,'physical_phone':False,'apk_sha256':h.digest(h.NEW),'bytes':h.NEW.stat().st_size,'source':os.environ['GITHUB_SHA']}
     Path('/tmp/kurippu/verification.json').write_text(json.dumps(receipt,indent=2)+'\n')

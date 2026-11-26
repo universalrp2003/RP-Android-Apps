@@ -1,10 +1,5 @@
 name: Tamilan Store 0.17 release-key candidate (no publication)
 on:
-  push:
-    branches: ["arena/**"]
-    paths:
-      - "tamilanstore/**"
-      - ".github/workflows/store-017-candidate.yml"
   workflow_dispatch:
 permissions:
   contents: read

@@ -188,6 +188,17 @@
       "size": 52813729,
       "sha256": "dcabd2d99a922b2634b76af5f4fa26db250a0122c527c68bb00716c985cdb708",
       "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22"
+    },
+    {
+      "id": "kurippu",
+      "name": "Kurippu · Note",
+      "tamilName": "குறிப்பு",
+      "packageName": "com.universalrp.kurippu",
+      "version": "1.0",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/kurippu-v1.0/Kurippu-v1.0.apk",
+      "size": 7286087,
+      "sha256": "50ba69a57cf6884f9fa9f7cbeefe98cb6c3c7b13e8be9cbc68b5bdef57dd5860",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/kurippu-v1.0"
     }
   ]
 }

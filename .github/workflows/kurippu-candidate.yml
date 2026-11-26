@@ -2,7 +2,7 @@ name: Kurippu offline note candidate (no publication)
 on:
   push:
     branches: ["arena/30198928-rp-android-apps"]
-    paths: ["kurippu/**", "settings.gradle.kts", ".github/workflows/kurippu-candidate.yml"]
+    paths: ["kurippu/**", "settings.gradle.kts", "tools/kurippu_release_upgrade.py", ".github/workflows/kurippu-candidate.yml"]
   workflow_dispatch:
 permissions:
   contents: read
