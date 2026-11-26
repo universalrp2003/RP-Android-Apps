@@ -147,7 +147,7 @@ class NotebookTest {
         val db = open()
         rule.setContent { MaterialTheme { SheetScreen(db) } }
         rule.onNodeWithTag("about").performClick()
-        rule.onNodeWithTag("aboutVersion").assertTextContains("1.2", substring = true)
+        rule.onNodeWithTag("aboutVersion").assertTextContains("1.3", substring = true)
         rule.onNodeWithTag("aboutBackupWarning").assertTextContains("No backup", substring = true)
         rule.onNodeWithText("எங்கள் செயலிகள் / Our applications").assertExists()
         rule.onNodeWithTag("openGuide").performClick()
@@ -156,7 +156,7 @@ class NotebookTest {
         rule.onNodeWithTag("guideCalculator").performScrollTo().assertTextContains("six", substring = true)
         rule.onNodeWithTag("guideBackup").performScrollTo().assertTextContains("No backup", substring = true)
         rule.onNodeWithTag("closeGuide").performClick()
-        rule.onNodeWithTag("aboutVersion").assertTextContains("1.2", substring = true)
+        rule.onNodeWithTag("aboutVersion").assertTextContains("1.3", substring = true)
         rule.onNodeWithTag("closeAbout").performClick()
         assertEquals(19, OurApplications.names.size)
         assertEquals(19, OurApplications.names.distinct().size)
@@ -276,6 +276,26 @@ class NotebookTest {
         rule.onNodeWithTag("pageTabs").performTouchInput { swipeLeft() }
         rule.onNodeWithTag("page-$calculator").performClick()
         rule.onNodeWithTag("calcHistory-1").performScrollTo().assertTextEquals("55 + 1 = 56")
+    }
+
+    @Test fun completedCalculatorHistoryPersistsInOrderAndKeepsOnlySix() {
+        val prefs = context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE)
+        val history = CalculatorHistory(prefs)
+        var state = CalculatorState(history = history.load())
+        for (n in 1..7) {
+            for (key in listOf(n.toString(), "+", "1", "=", "C")) {
+                val next = state.press(key)
+                if (next.history != state.history) assertTrue(history.save(next.history))
+                state = next
+            }
+        }
+        val reopened = CalculatorState(history = CalculatorHistory(prefs).load())
+        assertEquals(6, reopened.history.size)
+        assertEquals("2 + 1 = 3", reopened.history.first())
+        assertEquals("7 + 1 = 8", reopened.history.last())
+        assertEquals(reopened.history, reopened.press("C").history)
+        prefs.edit().putString("calculator_history_v1", "bad json").commit()
+        assertTrue(history.load().isEmpty())
     }
 
 }

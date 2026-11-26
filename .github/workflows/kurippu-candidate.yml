@@ -35,20 +35,20 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/kurippu
-          cp kurippu/app/build/outputs/apk/release/*.apk /tmp/kurippu/Kurippu-v1.2.apk
+          cp kurippu/app/build/outputs/apk/release/*.apk /tmp/kurippu/Kurippu-v1.3.apk
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          "$tools/aapt" dump badging /tmp/kurippu/Kurippu-v1.2.apk > /tmp/kurippu/badging.txt
-          grep -q "package: name='com.universalrp.kurippu' versionCode='9' versionName='1.2'" /tmp/kurippu/badging.txt
+          "$tools/aapt" dump badging /tmp/kurippu/Kurippu-v1.3.apk > /tmp/kurippu/badging.txt
+          grep -q "package: name='com.universalrp.kurippu' versionCode='10' versionName='1.3'" /tmp/kurippu/badging.txt
           ! grep -q application-debuggable /tmp/kurippu/badging.txt
           ! grep -q "uses-permission: name='android.permission.INTERNET'" /tmp/kurippu/badging.txt
-          "$tools/apksigner" verify --print-certs /tmp/kurippu/Kurippu-v1.2.apk > /tmp/kurippu/signer.txt
+          "$tools/apksigner" verify --print-certs /tmp/kurippu/Kurippu-v1.3.apk > /tmp/kurippu/signer.txt
           grep -qi 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' /tmp/kurippu/signer.txt
-          (cd /tmp/kurippu && sha256sum Kurippu-v1.2.apk > Kurippu-v1.2.apk.sha256)
-          echo "::notice title=Candidate APK::$(cat /tmp/kurippu/Kurippu-v1.2.apk.sha256)"
+          (cd /tmp/kurippu && sha256sum Kurippu-v1.3.apk > Kurippu-v1.3.apk.sha256)
+          echo "::notice title=Candidate APK::$(cat /tmp/kurippu/Kurippu-v1.3.apk.sha256)"
       - uses: actions/download-artifact@v4
         with:
-          name: Kurippu-1.1-candidate
-          run-id: 45826305331
+          name: Kurippu-1.2-candidate
+          run-id: 45837740402
           github-token: ${{ github.token }}
           path: /tmp/kurippu-old
       - run: sudo chmod a+rw /dev/kvm
@@ -62,7 +62,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -memory 1536 -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: bash -o pipefail -c 'gradle :kurippu:connectedDebugAndroidTest --no-daemon --stacktrace --max-workers=2 2>&1 | tee /tmp/kurippu-native.log && OLD_APK=/tmp/kurippu-old/Kurippu-v1.1.apk NEW_APK=/tmp/kurippu/Kurippu-v1.2.apk python3 tools/kurippu_release_upgrade.py'
+          script: bash -o pipefail -c 'gradle :kurippu:connectedDebugAndroidTest --no-daemon --stacktrace --max-workers=2 2>&1 | tee /tmp/kurippu-native.log && OLD_APK=/tmp/kurippu-old/Kurippu-v1.2.apk NEW_APK=/tmp/kurippu/Kurippu-v1.3.apk python3 tools/kurippu_release_upgrade.py'
       - name: Verify native tests ran
         run: |
           python3 - <<'PY'
@@ -70,12 +70,12 @@ jobs:
           import xml.etree.ElementTree as ET
           roots = [ET.parse(p).getroot() for p in Path('kurippu/app/build/outputs/androidTest-results').rglob('*.xml')]
           tests = [c for root in roots for c in root.iter('testcase') if 'NotebookTest' in c.get('classname', '')]
-          assert len(tests) == 10 and all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in tests), 'Native tests missing or failed'
-          print('::notice title=Notebook native tests::All ten tests passed')
+          assert len(tests) == 11 and all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in tests), 'Native tests missing or failed'
+          print('::notice title=Notebook native tests::All eleven tests passed')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: Kurippu-1.2-candidate
+          name: Kurippu-1.3-candidate
           path: /tmp/kurippu/
           retention-days: 30
           if-no-files-found: error
