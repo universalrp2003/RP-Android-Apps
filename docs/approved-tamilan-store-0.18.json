@@ -1,0 +1,12 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner requested the calculator history fix and authorized publication of Kurippu and Tamilan application Store.",
+  "run_id": 45846851670,
+  "run_attempt": 1,
+  "source": "a3b5f29b594d5ad61dea35fad6485101f6f1d892",
+  "artifact_id": 15131469102,
+  "artifact_digest": "sha256:d4ce401212c08993283fd159e4ef6a1ed9ab1e6da9319a14ac42cd412075c865",
+  "apk_sha256": "e7e84269975c2aa0aa3e5e05d01c424c4dc6d515e40deb910231f7ecf06468b4",
+  "bytes": 21304916,
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
+}

@@ -280,7 +280,7 @@ RELEASE_TAG_PREFIX = {
 # The Store's current public version. Bump it in the same commit that publishes new Store bytes so
 # the module, the shared directory and every catalog move together.
 STORE_CANDIDATE_VERSION = "0.18"
-STORE_PUBLISHED_VERSION = "0.17"
+STORE_PUBLISHED_VERSION = "0.18"
 
 
 def module_version(module: str) -> str:
@@ -1053,7 +1053,7 @@ def verify_module_versions_match_sister_apps() -> int:
             continue
         # Published directory versions must match exact promoted releases.
         if gradle.parent.name == "tamilanstore":
-            # The 0.18 module is a candidate; the directory continues to point to public 0.17.
+            # The module and directory both point to the verified public 0.18 release.
             if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != STORE_CANDIDATE_VERSION:
                 raise ValueError("Tamilan stable candidate identity/version changed; review publication gates")
             if by_package.get(pkg.group(1)) != STORE_PUBLISHED_VERSION:

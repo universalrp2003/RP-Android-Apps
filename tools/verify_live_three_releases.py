@@ -52,7 +52,7 @@ def validate_zip(data, name, size, digest):
 
 
 def check_metadata():
-    for name in ('index.html', 'oor-arivippu-guide.html', 'tv-guard-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'catalog-v4.json', 'weekly-money-guide.html', 'live-guard-guide.html', 'animal-sounds-guide.html', 'images/social-preview-v18.png'):
+    for name in ('index.html', 'oor-arivippu-guide.html', 'tv-guard-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'catalog-v4.json', 'catalog-v5.json', 'weekly-money-guide.html', 'live-guard-guide.html', 'animal-sounds-guide.html', 'images/social-preview-v18.png'):
         data = get_bounded(name, 2_000_000)
         local = (ROOT / 'site' / name).read_bytes()
         matches = data == local if name.endswith(('.html', '.png')) else json.loads(data) == json.loads(local)
@@ -102,7 +102,8 @@ def main():
     checks.append(('Tamilan-Store-v0.14.apk', json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())))
     checks.append(('Tamilan-Store-v0.15.apk', json.loads((ROOT/'docs/tamilan-store-0.15-publication-receipt.json').read_text())))
     checks.append(('Tamilan-Store-v0.16.apk', json.loads((ROOT/'docs/tamilan-store-0.16-publication-receipt.json').read_text())))
-    current_names.add('Tamilan-Store-v0.17.apk')
+    current_names.add('Tamilan-Store-v0.18.apk')
+    checks.append(('Tamilan-Store-v0.18.apk', json.loads((ROOT/'docs/tamilan-store-0.18-publication-receipt.json').read_text())))
     checks.append(('Tamilan-Store-v0.17.apk', json.loads((ROOT/'docs/tamilan-store-0.17-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v0.10.apk', json.loads((ROOT/'docs/weekly-money-0.10-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v0.11.apk', json.loads((ROOT/'docs/weekly-money-0.11-publication-receipt.json').read_text())))

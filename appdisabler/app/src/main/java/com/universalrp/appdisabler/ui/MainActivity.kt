@@ -1231,7 +1231,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                     Text(biStatic(T.btnGithub, taFirst), style = MaterialTheme.typography.labelMedium)
                 }
                 OutlinedButton(
-                    onClick = { open("https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.17") },
+                    onClick = { open("https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.18") },
                     modifier = Modifier.fillMaxWidth()
                 ) { Text(biStatic(T.btnStore, taFirst), style = MaterialTheme.typography.labelMedium) }
                 OutlinedButton(onClick = { open("https://shizuku.rikka.app/download/") }, modifier = Modifier.fillMaxWidth()) {

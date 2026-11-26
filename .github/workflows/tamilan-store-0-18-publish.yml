@@ -1,0 +1,30 @@
+name: Publish verified Tamilan Store 0.18
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["docs/approved-tamilan-store-0.18.json"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: tamilan-store-publish-0-18
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/30198928-rp-android-apps'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Tamilan-Store-0.18-release-key-upgrade-candidate
+          run-id: 45846851670
+          github-token: ${{ github.token }}
+          path: /tmp/tamilan-store-release
+      - name: Verify exact signed tested bytes and publish
+        run: |
+          set -euo pipefail
+          python3 tools/publish_tamilan_store_0_18.py
