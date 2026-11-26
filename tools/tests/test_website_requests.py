@@ -63,7 +63,7 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertEqual(expected_total, 18)
         self.assertEqual(expected_non_store, 17)
 
-        self.assertIn(f'Eighteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store)', self.source)
+        self.assertIn(f'The 18 apps in the catalogue below ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store), plus the newly released குறிப்பு featured below', self.source)
         self.assertNotIn('13 non-Store + optional Tamilan Store', self.source)
         self.assertNotIn('13 non-Store apps + optional Tamilan Store', self.source)
 

@@ -1,0 +1,12 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner supplied screenshots and requested calculator multiplication, removal of extra words, and build and publish.",
+  "run_id": 45819302243,
+  "run_attempt": 2,
+  "source": "752ca3093805018a0199c0c715f6ea4afcc75844",
+  "artifact_id": 15117337010,
+  "artifact_digest": "sha256:938266d3fa00337317806bc4759f7a1fcfbd61a0b4476309417ee7f5d8a74106",
+  "apk_sha256": "50ba69a57cf6884f9fa9f7cbeefe98cb6c3c7b13e8be9cbc68b5bdef57dd5860",
+  "bytes": 7286087,
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
+}

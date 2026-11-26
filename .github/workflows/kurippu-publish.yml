@@ -1,0 +1,30 @@
+name: Publish verified Kurippu 1.0
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["docs/kurippu/approved-1.0.json"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: kurippu-publish-1-0
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/30198928-rp-android-apps'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Kurippu-1.0-candidate
+          run-id: 45819302243
+          github-token: ${{ github.token }}
+          path: /tmp/kurippu-release
+      - name: Verify exact signed tested bytes and publish
+        run: |
+          set -euo pipefail
+          python3 tools/publish_kurippu_1_0.py

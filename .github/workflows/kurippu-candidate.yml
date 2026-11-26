@@ -1,0 +1,101 @@
+name: Kurippu offline note candidate (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["kurippu/**", "settings.gradle.kts", ".github/workflows/kurippu-candidate.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: kurippu-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Unit tests, lint and build
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :kurippu:testDebugUnitTest :kurippu:lintDebug :kurippu:assembleDebug :kurippu:assembleDebugAndroidTest :kurippu:assembleRelease :kurippu:lintRelease --no-daemon --stacktrace 2>&1 | tee /tmp/kurippu-build.log
+      - name: Verify signed candidate identity
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/kurippu
+          cp kurippu/app/build/outputs/apk/release/*.apk /tmp/kurippu/Kurippu-v1.0.apk
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" dump badging /tmp/kurippu/Kurippu-v1.0.apk > /tmp/kurippu/badging.txt
+          grep -q "package: name='com.universalrp.kurippu' versionCode='7' versionName='1.0'" /tmp/kurippu/badging.txt
+          ! grep -q application-debuggable /tmp/kurippu/badging.txt
+          ! grep -q "uses-permission: name='android.permission.INTERNET'" /tmp/kurippu/badging.txt
+          "$tools/apksigner" verify --print-certs /tmp/kurippu/Kurippu-v1.0.apk > /tmp/kurippu/signer.txt
+          grep -qi 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' /tmp/kurippu/signer.txt
+          (cd /tmp/kurippu && sha256sum Kurippu-v1.0.apk > Kurippu-v1.0.apk.sha256)
+          echo "::notice title=Candidate APK::$(cat /tmp/kurippu/Kurippu-v1.0.apk.sha256)"
+      - uses: actions/download-artifact@v4
+        with:
+          name: Kurippu-0.6-candidate
+          run-id: 45814953897
+          github-token: ${{ github.token }}
+          path: /tmp/kurippu-old
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Exercise notes, totals, timestamps and persistence on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 20
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -memory 1536 -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash -o pipefail -c 'gradle :kurippu:connectedDebugAndroidTest --no-daemon --stacktrace --max-workers=2 2>&1 | tee /tmp/kurippu-native.log && OLD_APK=/tmp/kurippu-old/Kurippu-v0.6.apk NEW_APK=/tmp/kurippu/Kurippu-v1.0.apk python3 tools/kurippu_release_upgrade.py'
+      - name: Verify native tests ran
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          roots = [ET.parse(p).getroot() for p in Path('kurippu/app/build/outputs/androidTest-results').rglob('*.xml')]
+          tests = [c for root in roots for c in root.iter('testcase') if 'NotebookTest' in c.get('classname', '')]
+          assert len(tests) == 9 and all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in tests), 'Native tests missing or failed'
+          print('::notice title=Notebook native tests::All nine tests passed')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Kurippu-1.0-candidate
+          path: /tmp/kurippu/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Surface failure details
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for filename in ('/tmp/kurippu-build.log', '/tmp/kurippu-native.log'):
+              p = Path(filename)
+              if p.exists():
+                  lines = p.read_text(errors='replace').splitlines()
+                  found = [s for s in lines if 'error:' in s.lower() or 'failed' in s.lower() or 'Exception' in s]
+                  print('::error title='+filename+'::'+'%0A'.join(found[-30:])[-8000:].replace('%','%25').replace('%250A','%0A'))
+          for p in Path('kurippu/app/build/outputs/androidTest-results').rglob('*.xml'):
+              for case in ET.parse(p).getroot().iter('testcase'):
+                  for failure in case.findall('failure') + case.findall('error'):
+                      print('::error title='+case.get('name','native')+'::'+(failure.text or '')[-5000:].replace('%','%25').replace('\n','%0A'))
+          PY
+      - name: Remove signing material
+        if: always()
+        run: rm -f ci-keystore/release.p12
