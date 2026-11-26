@@ -1,5 +1,6 @@
-"""Emulator-only synthetic 1.5 -> non-debuggable 1.6 update proof. Never owner data."""
+"""Emulator-only synthetic 1.5/1.6 -> non-debuggable 1.7 update proof. Never owner data."""
 import hashlib
+import os
 import json
 from pathlib import Path
 import re
@@ -31,9 +32,16 @@ with tempfile.TemporaryDirectory() as tmp:
     adb('root'); adb('wait-for-device')
     encrypted = subprocess.check_output(['adb', 'exec-out', 'cat', '/sdcard/Download/WeeklyMoneySynthetic/weeklymoney-synthetic-upgrade.vvb'])
     assert len(encrypted) > 100 and encrypted.startswith(b'VVB\x01'), 'Missing encrypted synthetic fixture'
-    run('gh', 'release', 'download', 'weekly-money-v1.5', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v1.5.apk', '--dir', tmp)
-    old = Path(tmp)/'Weekly-Money-v1.5.apk'
-    assert hashlib.sha256(old.read_bytes()).hexdigest() == 'b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6'
+    if os.environ.get('BASELINE_APK'):
+        old = Path(os.environ['BASELINE_APK'])
+        baseline = 'owner-candidate1.6/code18'
+        expected = '329dab3a48e73728062d4644c49f822e599173b60bdce80d6035c8ffb4c0a4f8'
+    else:
+        run('gh', 'release', 'download', 'weekly-money-v1.5', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v1.5.apk', '--dir', tmp)
+        old = Path(tmp)/'Weekly-Money-v1.5.apk'
+        baseline = 'public1.5/code17'
+        expected = 'b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6'
+    assert hashlib.sha256(old.read_bytes()).hexdigest() == expected
     # Only this disposable emulator fixture is uninstalled to establish the real old baseline.
     if 'package:'+PACKAGE in adb('shell', 'pm', 'list', 'packages', PACKAGE).splitlines():
         assert 'Success' in adb('uninstall', PACKAGE)
@@ -82,9 +90,9 @@ with tempfile.TemporaryDirectory() as tmp:
     text = unlock_and_show_list()
     assert 'Check for updates' in text, 'Update check must be visible on the unlocked home of an upgraded install'
     assert 'Test preview' not in text and 'TEST 0.' not in text
-    receipt = dict(baseline='public1.5/code17', candidate='candidate1.6/code18', same_uid=True,
+    receipt = dict(baseline=baseline, candidate='candidate1.7/code19', same_uid=True,
                    encrypted_notebook_byte_identical=True, master_unlock_existing_volume=True,
                    apk_sha256=hashlib.sha256(apk.read_bytes()).hexdigest(), apk_bytes=apk.stat().st_size,
                    physical_phone=False)
-    (ROOT/'release-upgrade-receipt.json').write_text(json.dumps(receipt, indent=2)+'\n')
+    (ROOT/('release-upgrade-receipt-' + ('candidate16' if os.environ.get('BASELINE_APK') else 'public15') + '.json')).write_text(json.dumps(receipt, indent=2)+'\n')
     print('::notice title=Signed release upgrade::'+json.dumps(receipt))

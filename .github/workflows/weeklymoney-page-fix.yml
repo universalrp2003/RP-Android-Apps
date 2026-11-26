@@ -1,4 +1,4 @@
-name: Weekly Money page retention candidate (no publication)
+name: Weekly Money summary and page retention candidate (no publication)
 on:
   push:
     branches: ["arena/30198928-rp-android-apps"]
@@ -38,15 +38,24 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/weeklymoney-handover
-          cp weeklymoney/app/build/outputs/apk/release/*.apk /tmp/weeklymoney-handover/Weekly-Money-v1.6.apk
+          cp weeklymoney/app/build/outputs/apk/release/*.apk /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          "$tools/aapt" dump badging /tmp/weeklymoney-handover/Weekly-Money-v1.6.apk > /tmp/weeklymoney-handover/badging.txt
-          grep -q "package: name='com.universalrp.weeklymoney.preview.notebook' versionCode='18' versionName='1.6'" /tmp/weeklymoney-handover/badging.txt
+          "$tools/aapt" dump badging /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk > /tmp/weeklymoney-handover/badging.txt
+          grep -q "package: name='com.universalrp.weeklymoney.preview.notebook' versionCode='19' versionName='1.7'" /tmp/weeklymoney-handover/badging.txt
           ! grep -q application-debuggable /tmp/weeklymoney-handover/badging.txt
-          "$tools/apksigner" verify --print-certs /tmp/weeklymoney-handover/Weekly-Money-v1.6.apk > /tmp/weeklymoney-handover/signer.txt
+          "$tools/apksigner" verify --print-certs /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk > /tmp/weeklymoney-handover/signer.txt
           grep -qi 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' /tmp/weeklymoney-handover/signer.txt
-          (cd /tmp/weeklymoney-handover && sha256sum Weekly-Money-v1.6.apk > Weekly-Money-v1.6.apk.sha256)
-          echo "::notice title=Signed candidate::$(cat /tmp/weeklymoney-handover/Weekly-Money-v1.6.apk.sha256)"
+          (cd /tmp/weeklymoney-handover && sha256sum Weekly-Money-v1.7.apk > Weekly-Money-v1.7.apk.sha256)
+          echo "::notice title=Signed candidate::$(cat /tmp/weeklymoney-handover/Weekly-Money-v1.7.apk.sha256)"
+      - name: Download the prior phone-tried 1.6 candidate
+        uses: actions/download-artifact@v4
+        with:
+          name: WeeklyMoney-1.6-page-fix-candidate
+          path: /tmp/weeklymoney-prior
+          run-id: 45764403033
+          github-token: ${{ github.token }}
+      - name: Check prior candidate digest
+        run: echo '329dab3a48e73728062d4644c49f822e599173b60bdce80d6035c8ffb4c0a4f8  /tmp/weeklymoney-prior/Weekly-Money-v1.6.apk' | sha256sum -c -
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
       - name: Exercise page retention and encrypted in-place upgrade
@@ -60,7 +69,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -memory 1536 -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
-            bash -o pipefail -c 'gradle :weeklymoney:connectedDebugAndroidTest --no-daemon --stacktrace --max-workers=2 -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.weeklymoney.LedgerPageRetentionTest,com.universalrp.weeklymoney.BookAndScreenshotTest,com.universalrp.weeklymoney.LedgerSearchPerformanceTest 2>&1 | tee /tmp/weeklymoney-native.log && python3 weeklymoney/tools/page-fix-upgrade-smoke.py 2>&1 | tee /tmp/weeklymoney-upgrade.log'
+            bash -o pipefail -c 'gradle :weeklymoney:connectedDebugAndroidTest --no-daemon --stacktrace --max-workers=2 -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.weeklymoney.LedgerPageRetentionTest,com.universalrp.weeklymoney.BookAndScreenshotTest,com.universalrp.weeklymoney.LedgerSearchPerformanceTest 2>&1 | tee /tmp/weeklymoney-native.log && python3 weeklymoney/tools/page-fix-upgrade-smoke.py 2>&1 | tee /tmp/weeklymoney-upgrade.log && BASELINE_APK=/tmp/weeklymoney-prior/Weekly-Money-v1.6.apk python3 weeklymoney/tools/page-fix-upgrade-smoke.py 2>&1 | tee -a /tmp/weeklymoney-upgrade.log'
       - name: Verify all targeted native tests ran
         run: |
           python3 - <<'PY'
@@ -73,10 +82,10 @@ jobs:
               assert cases and all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in cases), name
               print('::notice title=Native regression::'+name+' passed '+str(len(cases))+' test(s)')
           PY
-          cp weeklymoney/app/build/release-upgrade-receipt.json /tmp/weeklymoney-handover/
+          cp weeklymoney/app/build/release-upgrade-receipt-public15.json weeklymoney/app/build/release-upgrade-receipt-candidate16.json /tmp/weeklymoney-handover/
       - uses: actions/upload-artifact@v4
         with:
-          name: WeeklyMoney-1.6-page-fix-candidate
+          name: WeeklyMoney-1.7-summary-fix-candidate
           path: /tmp/weeklymoney-handover/
           retention-days: 30
           if-no-files-found: error

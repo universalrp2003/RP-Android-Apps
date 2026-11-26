@@ -634,14 +634,22 @@ class MainActivity : ComponentActivity() {
         }
         if (summary && book != null) {
             val loans = current.volumeLoans(book.id)
-            val ids = loans.map { it.id }.toSet()
-            val paid = current.ledger().latest().filter { it.loanId in ids && it.receivedOn == collectionDate && it.amountPaise != null }
+            val collection = remember(current, book.id, collectionDate) { current.collectionSummary(book.id, collectionDate) }
             AlertDialog(properties = dialogPrivacy(), onDismissRequest = { summary = false },
                 title = { Text("வசூல் சுருக்கம்") },
                 text = { Column(Modifier.verticalScroll(rememberScrollState())) {
                     DateChoice("தேதி", collectionDate, screenshotsAllowed, "summaryDate") { collectionDate = it }
-                    Text("வசூல் · ₹${money(paid.sumOf { it.amountPaise ?: 0L })}", color = Color(0xff145c38))
-                    paid.forEach { p -> Text("${current.customerLabel(loans.first { it.id == p.loanId })} · ₹${money(p.amountPaise ?: 0L)}", color = Color(0xff145c38)) }
+                    Text("வசூல் · ₹${BigDecimal(collection.totalPaise, 2).toPlainString()}", color = Color(0xff145c38), modifier = Modifier.testTag("summaryTotal"))
+                    collection.weekly.forEach { (loan, payment) ->
+                        Text("${current.customerLabel(loan)} · ₹${money(requireNotNull(payment.amountPaise))}", color = Color(0xff145c38))
+                    }
+                    if (collection.oldBalances.isNotEmpty()) {
+                        Text("நீண்ட நாள் பாக்கி வசூல் / Old balance collections", color = Color(0xff145c38))
+                        collection.oldBalances.forEach { (debt, receipt) ->
+                            Text("${debt.customer} · ₹${money(receipt.amountPaise)}", color = Color(0xff145c38),
+                                modifier = Modifier.testTag("summaryLongReceipt-${receipt.id}"))
+                        }
+                    }
                     HorizontalDivider(Modifier.padding(vertical = 12.dp))
                     Text("புதிய கடன்கள்", color = Color(0xff7c3291))
                     loans.filter { it.started == collectionDate }.forEach { Text("${current.customerLabel(it)} · ₹${money(it.totalPaise)}", color = Color(0xff7c3291)) }
