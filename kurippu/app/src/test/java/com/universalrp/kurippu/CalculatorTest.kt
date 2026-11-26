@@ -11,6 +11,9 @@ class CalculatorTest {
         assertEquals("10", calculate("8","÷","2","+","6","=").display)
         assertEquals("-3", calculate("±","5","+","2","=").display)
         assertEquals("2.5", calculate("5","÷","2","=").display)
+        assertEquals("15", calculate("5","×","3","=").display)
+        assertEquals("-0.6", calculate("±",".","2","×","3","=").display)
+        assertEquals("20", calculate("2","+","3","×","4","=").display)
     }
     @Test fun divisionByZeroAndRepeatingDecimalAreExplicit() {
         assertTrue(calculate("5","÷","0","=").error)

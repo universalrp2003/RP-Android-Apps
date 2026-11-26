@@ -147,7 +147,7 @@ class NotebookTest {
         val db = open()
         rule.setContent { MaterialTheme { SheetScreen(db) } }
         rule.onNodeWithTag("about").performClick()
-        rule.onNodeWithTag("aboutVersion").assertTextContains("0.6", substring = true)
+        rule.onNodeWithTag("aboutVersion").assertTextContains("1.0", substring = true)
         rule.onNodeWithTag("aboutBackupWarning").assertTextContains("No backup", substring = true)
         rule.onNodeWithText("எங்கள் செயலிகள் / Our applications").assertExists()
         rule.onNodeWithTag("closeAbout").performClick()
@@ -190,7 +190,10 @@ class NotebookTest {
         rule.onNodeWithTag("calc-5").performClick(); rule.onNodeWithTag("calc-÷").performClick()
         rule.onNodeWithTag("calc-2").performClick(); rule.onNodeWithTag("calc-=").performClick()
         rule.onNodeWithTag("calcDisplay").assertTextEquals("2.5")
-        for (tag in listOf("calcTitle", "calcDescription", "calcDisplay")) {
+        rule.onNodeWithTag("calc-×").performClick(); rule.onNodeWithTag("calc-4").performClick(); rule.onNodeWithTag("calc-=").performClick()
+        rule.onNodeWithTag("calcDisplay").assertTextEquals("10")
+        rule.onNodeWithTag("calcTitle").assertDoesNotExist(); rule.onNodeWithTag("calcDescription").assertDoesNotExist()
+        for (tag in listOf("calcDisplay")) {
             val pixels = rule.onNodeWithTag(tag).captureToImage().toPixelMap()
             var bright = 0
             for (y in 0 until pixels.height) for (x in 0 until pixels.width) {

@@ -3,7 +3,7 @@ package com.universalrp.kurippu
 import java.math.BigDecimal
 import java.math.MathContext
 
-/** Standalone, left-to-right +, − and ÷ calculator. It never edits notebook entries. */
+/** Standalone, left-to-right +, −, × and ÷ calculator. It never edits notebook entries. */
 data class CalculatorState(
     val display: String = "0",
     val left: String? = null,
@@ -35,7 +35,7 @@ data class CalculatorState(
             val d = state.display.dropLast(1).let { if (it.isEmpty() || it == "-") "0" else it }
             return state.copy(display = d, approximate = false)
         }
-        if (key == "+" || key == "−" || key == "÷") {
+        if (key == "+" || key == "−" || key == "×" || key == "÷") {
             val result = if (state.operator != null && !state.waiting) state.calculate() else state
             if (result.error) return result
             return result.copy(left = result.display, operator = key, waiting = true, leftApproximate = result.approximate)
@@ -50,6 +50,7 @@ data class CalculatorState(
         val result = when (operator) {
             "+" -> a.add(b)
             "−" -> a.subtract(b)
+            "×" -> a.multiply(b)
             "÷" -> try { a.divide(b) } catch (_: ArithmeticException) { rounded = true; a.divide(b, MathContext.DECIMAL128) }
             else -> error("Unknown operation")
         }
