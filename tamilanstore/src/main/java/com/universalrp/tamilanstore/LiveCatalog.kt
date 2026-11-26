@@ -5,7 +5,7 @@ import java.net.URL
 
 /** HTTPS transport + pinned package identities; APK signer/hash verification remains separate. */
 object LiveCatalog {
-    const val URL = Catalog.WEBSITE + "catalog-v4.json"
+    const val URL = Catalog.WEBSITE + "catalog-v5.json"
     fun validate(text: String, baseline: List<StoreApp>): List<StoreApp> {
         val next = Catalog.parseLive(text)
         // A live feed can lag this build: the website is regenerated from public releases on its own
@@ -41,7 +41,7 @@ object LiveCatalog {
         connection.connectTimeout = 15_000
         connection.readTimeout = 15_000
         try {
-            if (connection.responseCode == 404 && allowLegacy) return fetchAt(Catalog.WEBSITE + "catalog-v3.json", false)
+            if (connection.responseCode == 404 && allowLegacy) return fetchAt(Catalog.WEBSITE + "catalog-v4.json", false)
             check(connection.responseCode == 200)
             return connection.inputStream.use { stream ->
                 val bytes = stream.readBytesLimited(256 * 1024)

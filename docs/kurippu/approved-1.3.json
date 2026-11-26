@@ -1,0 +1,12 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner confirmed the guide on 1.2, requested calculator history to persist after reopening, and authorized publication after the fix.",
+  "run_id": 45844938407,
+  "run_attempt": 1,
+  "source": "33f626a5d4de8e099bcae2d9b574b5a9ab711084",
+  "artifact_id": 15131247021,
+  "artifact_digest": "sha256:7c6cd4514e6297897c09f23e7f776ed8c32cd7b7d727bc449ee8c72161b524e2",
+  "apk_sha256": "aae84788572f1c1f9dbf6862f83236006846d3c9551046e63246b0bcc05f537d",
+  "bytes": 7302471,
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
+}

@@ -15,7 +15,7 @@ data class CalculatorState(
     val finished: Boolean = false,
     // Parts contain the original operands/operators, not the intermediate result.
     val expression: List<String> = emptyList(),
-    // Oldest to newest; deliberately session-only and independent of notebook entries.
+    // Oldest to newest; independent of notebook entries and saved locally.
     val history: List<String> = emptyList(),
 ) {
     fun press(key: String): CalculatorState {

@@ -118,7 +118,8 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
     var pageTitle by rememberSaveable { mutableStateOf("") }
     var calculateNew by rememberSaveable { mutableStateOf(false) }
     var calculatorNew by rememberSaveable { mutableStateOf(false) }
-    var calculatorState by remember { mutableStateOf(CalculatorState()) }
+    val calculatorHistory = remember { CalculatorHistory(preferences) }
+    var calculatorState by remember { mutableStateOf(CalculatorState(history = calculatorHistory.load())) }
     val focus = LocalFocusManager.current
     val tabScroll = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -217,7 +218,11 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
             }
         }
         if (page.isCalculator) {
-            CalculatorPage(calculatorState, { calculatorState = calculatorState.press(it) }, Modifier.weight(1f))
+            CalculatorPage(calculatorState, { key ->
+                val next = calculatorState.press(key)
+                if (next.history != calculatorState.history && !calculatorHistory.save(next.history)) failed = true
+                calculatorState = next
+            }, Modifier.weight(1f))
         } else {
         HorizontalDivider(color = line)
         key(page.id) {
@@ -292,7 +297,7 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
                 Text("தலைப்பை நீண்ட நேரம் அழுத்தி விடவும்; பெயர் மாற்று அல்லது நீக்கு தேர்ந்தெடுக்கவும். நீக்குவதை உறுதிப்படுத்தினால் அந்தப் பக்கத்தின் எல்லா வரிகளும் மறைத்த விவரங்களும் நிரந்தரமாக நீங்கும். குறைந்தது ஒரு பக்கம் இருக்க வேண்டும். / Hold and release a heading for Rename or Delete. Confirming Delete permanently removes that page and all its rows and hidden values. At least one page must remain.", modifier = Modifier.testTag("guideDelete"))
                 Text("வரியில் நேரடியாக எழுதவும். வரியை நீண்ட நேரம் அழுத்தினால் உருவாக்கிய / மாற்றிய நேரம் மற்றும் நீக்கும் விருப்பம் வரும். / Type directly in a row. Hold a row to see its created and edited times or delete it.", modifier = Modifier.testTag("guideRows"))
                 Text("அமைப்புகளில் இப்பக்கத்தின் இரண்டாவது நிரல், மொத்தம், நகல் மற்றும் இருண்ட தோற்றம் மாற்றலாம். நிரலை மறைத்தாலும் அதன் விவரம் அழியாது; மொத்தம் நிற்கும். தேர்வு / நகல் தற்போதைய பக்கத்தை மட்டும் நகலெடுக்கும்; மறைத்த விவரங்களும் சேரும். / Settings controls the current page's second column and total, copying, and dark mode. Hiding the column keeps its values but turns off the total. Select / Copy includes the current page and its hidden values.", modifier = Modifier.testTag("guideSettings"))
-                Text("கணிப்பானில் கணக்குகள் இடமிருந்து வலமாக நடைபெறும். = முடிவைக் காட்டும்; C புதிய கணக்கைத் தொடங்கும். கடைசி ஆறு கணக்குகள் கீழே தோன்றும்; செயலியை மூடினால் அவை சேமிக்கப்படாது. / Calculator operations run left to right. = completes a calculation; C starts a new one. The last six calculations appear below and are not saved when the app closes.", modifier = Modifier.testTag("guideCalculator"))
+                Text("கணிப்பானில் கணக்குகள் இடமிருந்து வலமாக நடைபெறும். = முடிவைக் காட்டும்; C புதிய கணக்கைத் தொடங்கும். கடைசி ஆறு கணக்குகள் கைப்பேசியில் சேமிக்கப்பட்டு மீண்டும் திறந்தாலும் தோன்றும். / Calculator operations run left to right. = completes a calculation; C starts a new one. The last six calculations are saved on this device and appear after reopening.", modifier = Modifier.testTag("guideCalculator"))
                 Text("Backup அல்லது sync இல்லை. செயலியை நீக்கினாலோ தரவை அழித்தாலோ கைபேசி தொலைந்தாலோ குறிப்புகளை மீட்டெடுக்க முடியாது. / No backup or sync. Uninstalling, clearing data, or losing the phone can permanently erase your notes.", modifier = Modifier.testTag("guideBackup"))
             }
         }, confirmButton = { TextButton(onClick = { guideOpen = false; aboutOpen = true }, modifier = Modifier.testTag("closeGuide")) { Text("பற்றி / Back to About") } })

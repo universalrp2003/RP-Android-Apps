@@ -15,10 +15,10 @@ object Catalog {
         "58e370e417cf6f33234689acd5bf379474f5a8c55f79181d9e892a321bc04f08" else SIGNER
     const val WEBSITE = "https://universalrp2003.github.io/RP-Android-Apps/"
     /**
-     * Seventeen entries (including Weekly Money and Animal Sounds) is the bundled contract: a Store build ships exactly the suite it was signed for.
+     * Eighteen entries (including Weekly Money, Animal Sounds and Kurippu) is the bundled contract: a Store build ships exactly the suite it was signed for.
      * A live feed is validated by [LiveCatalog] instead, where the id set must match this snapshot.
      */
-    const val EXPECTED_APPS = 17
+    const val EXPECTED_APPS = 18
     fun parse(text: String): List<StoreApp> = parse(text, EXPECTED_APPS)
     /** The catalog's own "updated" day, so the About screen can never quote a date the list does not carry. */
     fun updated(text: String): String {

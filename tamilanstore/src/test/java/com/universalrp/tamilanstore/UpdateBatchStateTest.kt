@@ -39,7 +39,7 @@ class UpdateBatchStateTest {
         }
     }
     @Test fun planIsBoundedUniqueAndCopiedAndProcessDeathHasNoApproval() {
-        for (bad in listOf(emptyList(), List(18) { "app$it" }, listOf("radio", "radio"), listOf("../radio")))
+        for (bad in listOf(emptyList(), List(Catalog.EXPECTED_APPS + 1) { "app$it" }, listOf("radio", "radio"), listOf("../radio")))
             assertThrows(IllegalArgumentException::class.java) { UpdateBatchState.start(bad) }
         val plan = mutableListOf("radio")
         val queue = UpdateBatchState.start(plan)

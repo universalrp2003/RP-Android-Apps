@@ -79,7 +79,7 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         # timestamps are independently recorded in release-dates.json.
         self.assertEqual(snapshot['updated'],served_current['updated'])
         self.assertEqual(served_legacy,dict(served_current,apps=[a for a in served_current['apps'] if a['id'] not in ('dailyvault','tvguard','appdisabler')]))
-        self.assertEqual({a['id'] for a in snapshot['apps'] if a['id'] not in ('weeklymoney','animalvoice')},{a['id'] for a in served_current['apps']})
+        self.assertEqual({a['id'] for a in snapshot['apps'] if a['id'] not in ('weeklymoney','animalvoice','kurippu')},{a['id'] for a in served_current['apps']})
         bundled={a['id']:a for a in snapshot['apps']}
         for app in served_current['apps']:
             before=bundled[app['id']]
@@ -89,7 +89,7 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
             self.assertGreaterEqual(numeric(app['version']),numeric(before['version']))
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
         # This build's bounded fallback is the frozen sixteen-entry endpoint older Stores read.
-        self.assertIn('"catalog-v3.json", false',source)
+        self.assertIn('"catalog-v4.json", false',source)
 
     def test_new_store_v3_adds_owner_notebook_without_changing_old_id_sets(self):
         snapshot=json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())
@@ -101,7 +101,7 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         self.assertEqual('Weekly Money',preview['name'])
         self.assertEqual('com.universalrp.weeklymoney.preview.notebook',preview['packageName'])
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
-        self.assertIn('"catalog-v3.json"',source)
+        self.assertIn('"catalog-v4.json", false',source)
         self.assertIn('connection.responseCode == 404 && allowLegacy',source)
 
     def test_new_store_v4_adds_animal_sounds_without_changing_old_id_sets(self):
@@ -115,10 +115,22 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         self.assertEqual('Animal Sounds',sounds['name'])
         self.assertEqual('com.universalrp.animalvoice.experimental',sounds['packageName'])
         # The bundled fallback carries the exact public release metadata the website serves.
-        self.assertEqual(bundled,current['apps'])
+        self.assertEqual([a for a in bundled if a['id'] != 'kurippu'],current['apps'])
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
-        self.assertIn('const val URL = Catalog.WEBSITE + "catalog-v4.json"',source)
-        self.assertIn('"catalog-v3.json", false',source)
+        self.assertIn('const val URL = Catalog.WEBSITE + "catalog-v5.json"',source)
+        self.assertIn('"catalog-v4.json", false',source)
+
+    def test_store_v5_adds_kurippu_and_keeps_old_feed_frozen(self):
+        import tempfile
+        snapshot = json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            module.write_catalogs(snapshot, directory)
+            v4 = json.loads((Path(directory)/'catalog-v4.json').read_text())
+            v5 = json.loads((Path(directory)/'catalog-v5.json').read_text())
+        self.assertEqual(17, len(v4['apps']))
+        self.assertEqual(18, len(v5['apps']))
+        self.assertEqual({a['id'] for a in v4['apps']} | {'kurippu'}, {a['id'] for a in v5['apps']})
+        self.assertEqual(snapshot, v5)
 
     def test_served_catalog_uses_exact_website_and_mirror_receipts(self):
         current=json.loads((ROOT/'site/catalog-v2.json').read_text())

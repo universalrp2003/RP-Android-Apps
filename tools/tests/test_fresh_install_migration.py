@@ -87,7 +87,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'launcher': ('1.8', '9', 'elderly-launcher-v1.8'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Store0.17 is public (24 Nov 2026): 17-app catalog, same stable key.
-            'tamilanstore': ('0.17', '19', 'tamilan-store-v0.17'),
+            'tamilanstore': ('0.18', '20', 'tamilan-store-v0.18'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():
