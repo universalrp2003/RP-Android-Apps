@@ -59,4 +59,13 @@ def main():
     adb('shell','am','start','-n',PACKAGE+'/.MainActivity')
     find(text('Expense')); find(text('Milk')); find(text('30'))
     print('::notice title=In-place upgrade::Exact signed 0.1 to 0.2 kept UID and synthetic section title, entry and amount; no uninstall or data clear.')
-if __name__=='__main__': main()
+if __name__=='__main__':
+    try: main()
+    except Exception:
+        import traceback
+        diagnostic = traceback.format_exc()
+        try: diagnostic += "\nSCREEN: " + ET.tostring(tree(), encoding="unicode")[-7000:]
+        except Exception: pass
+        print('::error title=Upgrade smoke failure::' + diagnostic[-10000:].replace('%','%25').replace('\n','%0A'), flush=True)
+        raise
+
