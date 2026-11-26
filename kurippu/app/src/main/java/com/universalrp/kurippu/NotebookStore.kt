@@ -64,13 +64,20 @@ class NotebookStore(context: Context) : SQLiteOpenHelper(context.applicationCont
         }
         return pages
     }
-    fun addPage(title: String, calculates: Boolean): Long {
+    fun addPage(title: String, calculates: Boolean, calculator: Boolean = false): Long {
         require(title.isNotBlank() && title.trim().length <= 100)
+        require(!calculator || !calculates)
         val db = writableDatabase
-        val next = db.rawQuery("SELECT COALESCE(MAX(sort_order),0)+1 FROM pages", null).use { it.moveToFirst(); it.getLong(0) }
-        return db.insertOrThrow("pages", null, ContentValues().apply {
-            put("title", title.trim()); put("calculates", if (calculates) 1 else 0); put("show_column", if (calculates) 1 else 0); put("sort_order", next)
-        })
+        db.beginTransaction()
+        try {
+            if (calculator) require(pages().none { it.isCalculator })
+            val next = db.rawQuery("SELECT COALESCE(MAX(sort_order),0)+1 FROM pages", null).use { it.moveToFirst(); it.getLong(0) }
+            val id = db.insertOrThrow("pages", null, ContentValues().apply {
+                put("title", title.trim()); put("calculates", if (calculates) 1 else 0); put("show_column", if (calculates) 1 else 0); put("sort_order", next); put("is_calculator", if (calculator) 1 else 0)
+            })
+            db.setTransactionSuccessful()
+            return id
+        } finally { db.endTransaction() }
     }
     /** Atomically persist a permutation only; a drag cannot add, remove or erase any page. */
     fun reorder(pageIds: List<Long>) {
@@ -82,6 +89,22 @@ class NotebookStore(context: Context) : SQLiteOpenHelper(context.applicationCont
             pageIds.forEachIndexed { index, id ->
                 check(db.update("pages", ContentValues().apply { put("sort_order", index) }, "id=?", arrayOf(id.toString())) == 1)
             }
+            db.setTransactionSuccessful()
+        } finally { db.endTransaction() }
+    }
+    fun renamePage(pageId: Long, title: String) {
+        require(title.isNotBlank() && title.trim().length <= 100)
+        check(writableDatabase.update("pages", ContentValues().apply { put("title", title.trim()) }, "id=?", arrayOf(pageId.toString())) == 1)
+    }
+    /** Never delete other pages; SQLite commits the page and its own rows as one operation. */
+    fun deletePage(pageId: Long) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val existing = pages()
+            require(existing.size > 1 && existing.any { it.id == pageId })
+            db.delete("sheet_rows", "page_id=?", arrayOf(pageId.toString()))
+            check(db.delete("pages", "id=?", arrayOf(pageId.toString())) == 1)
             db.setTransactionSuccessful()
         } finally { db.endTransaction() }
     }

@@ -106,12 +106,17 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
     var creating by rememberSaveable { mutableStateOf(false) }
     var settingsOpen by remember { mutableStateOf(false) }
     var aboutOpen by remember { mutableStateOf(false) }
+    var pageMenu by remember { mutableStateOf<Page?>(null) }
+    var renamePage by remember { mutableStateOf<Page?>(null) }
+    var renameText by rememberSaveable { mutableStateOf("") }
+    var deletingPage by remember { mutableStateOf<Page?>(null) }
     var selectedAll by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val preferences = remember { context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE) }
     var allowCopy by remember { mutableStateOf(preferences.getBoolean("bulk_copy", true)) }
     var pageTitle by rememberSaveable { mutableStateOf("") }
     var calculateNew by rememberSaveable { mutableStateOf(false) }
+    var calculatorNew by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
     val tabScroll = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -119,6 +124,7 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
     var tabArea by remember { mutableStateOf(Rect.Zero) }
     var dragging by remember { mutableStateOf<Long?>(null) }
     var dragX by remember { mutableFloatStateOf(0f) }
+    var dragDistance by remember { mutableFloatStateOf(0f) }
     fun select(id: Long) {
         try { val loaded = if (pages.first { it.id == id }.isCalculator) emptyList() else store.load(id); focus.clearFocus(); activeId = id; rows = loaded; creating = false; selectedAll = false }
         catch (_: Exception) { failed = true }
@@ -140,19 +146,23 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
                         .onGloballyPositioned { positions[option.id] = it.boundsInRoot() }
                         .pointerInput(option.id) {
                             detectDragGesturesAfterLongPress(
-                                onDragStart = { local -> dragging = option.id; dragX = (positions[option.id]?.left ?: 0f) + local.x; focus.clearFocus() },
+                                onDragStart = { local -> dragging = option.id; dragDistance = 0f; dragX = (positions[option.id]?.left ?: 0f) + local.x; focus.clearFocus() },
                                 onDragEnd = {
-                                    try { store.reorder(pages.map { it.id }); pages = store.pages() } catch (_: Exception) { pages = store.pages(); failed = true }
+                                    if (dragDistance > viewConfiguration.touchSlop) {
+                                        try { store.reorder(pages.map { it.id }); pages = store.pages() } catch (_: Exception) { pages = store.pages(); failed = true }
+                                    } else {
+                                        pages = store.pages(); pageMenu = pages.firstOrNull { it.id == option.id }
+                                    }
                                     dragging = null
                                 },
                                 onDragCancel = { pages = store.pages(); dragging = null },
                                 onDrag = { change, delta ->
-                                    change.consume(); dragX += delta.x
+                                    change.consume(); dragX += delta.x; dragDistance += kotlin.math.abs(delta.x) + kotlin.math.abs(delta.y)
                                     val target = pages.filter { positions.containsKey(it.id) }.minByOrNull { kotlin.math.abs((positions[it.id]?.center?.x ?: dragX) - dragX) }
                                     val from = pages.indexOfFirst { it.id == option.id }; val to = pages.indexOfFirst { it.id == target?.id }
-                                    if (from >= 0 && to >= 0 && from != to) pages = pages.toMutableList().apply { add(to, removeAt(from)) }
-                                    if (dragX < tabArea.left + 60f) scope.launch { tabScroll.scrollBy(-24f) }
-                                    if (dragX > tabArea.right - 60f) scope.launch { tabScroll.scrollBy(24f) }
+                                    if (dragDistance > viewConfiguration.touchSlop && from >= 0 && to >= 0 && from != to) pages = pages.toMutableList().apply { add(to, removeAt(from)) }
+                                    if (dragDistance > viewConfiguration.touchSlop && dragX < tabArea.left + 60f) scope.launch { tabScroll.scrollBy(-24f) }
+                                    if (dragDistance > viewConfiguration.touchSlop && dragX > tabArea.right - 60f) scope.launch { tabScroll.scrollBy(24f) }
                                 }
                             )
                         }) {
@@ -180,16 +190,20 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
         if (creating) {
             Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp, vertical = 8.dp)) {
                 OutlinedTextField(value = pageTitle, onValueChange = { if (it.length <= 100) pageTitle = it }, label = { Text("பக்கத்தின் பெயர் / Page name") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("pageName"))
-                Row {
-                    FilterChip(selected = !calculateNew, onClick = { calculateNew = false }, label = { Text("குறிப்பு / Note") }, modifier = Modifier.testTag("typeNote"))
+                Row(Modifier.horizontalScroll(rememberScrollState())) {
+                    FilterChip(selected = !calculateNew && !calculatorNew, onClick = { calculateNew = false; calculatorNew = false }, label = { Text("குறிப்பு / Note") }, modifier = Modifier.testTag("typeNote"))
                     Spacer(Modifier.width(8.dp))
-                    FilterChip(selected = calculateNew, onClick = { calculateNew = true }, label = { Text("மொத்தம் / Total") }, modifier = Modifier.testTag("typeTotal"))
+                    FilterChip(selected = calculateNew && !calculatorNew, onClick = { calculateNew = true; calculatorNew = false }, label = { Text("மொத்தம் / Total") }, modifier = Modifier.testTag("typeTotal"))
+                    if (pages.none { it.isCalculator }) {
+                        Spacer(Modifier.width(8.dp))
+                        FilterChip(selected = calculatorNew, onClick = { calculatorNew = true; calculateNew = false }, label = { Text("கணிப்பான் / Calculator") }, modifier = Modifier.testTag("typeCalculator"))
+                    }
                 }
                 Row {
                     TextButton(enabled = pageTitle.isNotBlank(), onClick = {
                         try {
-                            val id = store.addPage(pageTitle, calculateNew)
-                            pages = store.pages(); pageTitle = ""; calculateNew = false; select(id)
+                            val id = store.addPage(pageTitle, calculateNew, calculatorNew)
+                            pages = store.pages(); pageTitle = ""; calculateNew = false; calculatorNew = false; select(id)
                         } catch (_: Exception) { failed = true }
                     }, modifier = Modifier.testTag("createPage")) { Text("சேர் / Add") }
                     TextButton(onClick = { creating = false; focus.clearFocus() }) { Text("ரத்து / Cancel") }
@@ -199,10 +213,6 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
         if (page.isCalculator) {
             CalculatorPage(Modifier.weight(1f))
         } else {
-        Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(vertical = 7.dp)) {
-            Text("குறிப்பு / Note", color = ink, modifier = Modifier.weight(1f).padding(start = 16.dp))
-            if (page.showColumn) Text(if (page.calculates) "தொகை / Amount" else "விவரம் / Details", color = ink, textAlign = TextAlign.End, modifier = Modifier.weight(.42f).padding(end = 16.dp))
-        }
         HorizontalDivider(color = line)
         key(page.id) {
             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTag("sheet")) {
@@ -220,6 +230,39 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
         }
         }
     }
+    pageMenu?.let { selected -> AlertDialog(
+        onDismissRequest = { pageMenu = null }, title = { Text(selected.title) },
+        text = { Text(if (pages.size > 1) "தலைப்பை மாற்றலாம் அல்லது பக்கத்தை நீக்கலாம். நகர்த்த நீண்ட நேரம் அழுத்தி இழுக்கவும். / Rename, delete, or hold and drag to move the page." else "குறைந்தது ஒரு பக்கம் இருக்க வேண்டும். / Keep at least one page.") },
+        confirmButton = { TextButton(onClick = { pageMenu = null; renameText = selected.title; renamePage = selected }, modifier = Modifier.testTag("renamePage")) { Text("பெயர் மாற்று / Rename") } },
+        dismissButton = { Row {
+            TextButton(enabled = pages.size > 1, onClick = { pageMenu = null; deletingPage = selected }, modifier = Modifier.testTag("deletePage")) { Text("நீக்கு / Delete") }
+            TextButton(onClick = { pageMenu = null }) { Text("மூடு / Close") }
+        } }
+    ) }
+    renamePage?.let { selected -> AlertDialog(
+        onDismissRequest = { renamePage = null }, title = { Text("பெயர் மாற்று / Rename page") },
+        text = { OutlinedTextField(value = renameText, onValueChange = { if (it.length <= 100) renameText = it }, label = { Text("பக்கத்தின் பெயர் / Page name") }, singleLine = true, modifier = Modifier.testTag("renameInput")) },
+        confirmButton = { TextButton(enabled = renameText.isNotBlank(), onClick = {
+            try { store.renamePage(selected.id, renameText); pages = store.pages(); renamePage = null } catch (_: Exception) { failed = true }
+        }, modifier = Modifier.testTag("confirmRename")) { Text("சேமி / Save") } },
+        dismissButton = { TextButton(onClick = { renamePage = null }) { Text("ரத்து / Cancel") } }
+    ) }
+    deletingPage?.let { selected -> AlertDialog(
+        onDismissRequest = { deletingPage = null }, title = { Text("பக்கத்தை நீக்கவா? / Delete page?") },
+        text = { Text("${selected.title}\n\nஇந்தப் பக்கத்தின் எல்லா வரிகளும், மறைக்கப்பட்ட விவரங்களும் நிரந்தரமாக நீங்கும். இதை மீட்டெடுக்க முடியாது. / All rows and hidden values on this page will be permanently deleted. This cannot be undone.") },
+        confirmButton = { TextButton(onClick = {
+            try {
+                val oldIndex = pages.indexOfFirst { it.id == selected.id }
+                val remaining = pages.filterNot { it.id == selected.id }
+                require(oldIndex >= 0 && remaining.isNotEmpty())
+                val next = if (activeId == selected.id) remaining[oldIndex.coerceAtMost(remaining.lastIndex)] else remaining.first { it.id == activeId }
+                val nextRows = if (next.id == activeId) rows else if (next.isCalculator) emptyList() else store.load(next.id)
+                store.deletePage(selected.id)
+                pages = store.pages(); activeId = next.id; rows = nextRows; deletingPage = null; selectedAll = false; focus.clearFocus()
+            } catch (_: Exception) { failed = true }
+        }, modifier = Modifier.testTag("confirmDeletePage")) { Text("நிரந்தரமாக நீக்கு / Delete permanently") } },
+        dismissButton = { TextButton(onClick = { deletingPage = null }, modifier = Modifier.testTag("cancelDeletePage")) { Text("ரத்து / Cancel") } }
+    ) }
     if (aboutOpen) AlertDialog(onDismissRequest = { aboutOpen = false }, title = { Text("குறிப்பு · Note") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text("RP Ideas · Rameshprathap R (@universalrp2003)\nVersion ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})", modifier = Modifier.testTag("aboutVersion"))
@@ -319,10 +362,10 @@ private fun SheetLine(row: SheetRow, calculates: Boolean, showColumn: Boolean, s
     val invalid = calculates && row.amount.isNotBlank() && Amounts.parse(row.amount) == null
     Column(Modifier.fillMaxWidth().background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent).rowLongPress(row.id, onLongPress).testTag("row-${row.id}")) {
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-            BasicTextField(value = row.text, onValueChange = onText, textStyle = TextStyle(color = ink, fontSize = 18.sp), modifier = Modifier.weight(1f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("note-${row.id}"))
+            BasicTextField(value = row.text, onValueChange = onText, textStyle = TextStyle(color = ink, fontSize = 18.sp), modifier = Modifier.weight(1f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("note-${row.id}").semantics { contentDescription = "குறிப்பு / Note" })
             if (showColumn) {
                 Box(Modifier.fillMaxHeight().width(1.dp).background(line))
-                BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) MaterialTheme.colorScheme.error else ink, fontSize = 18.sp, textAlign = if (calculates) TextAlign.End else TextAlign.Start), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = calculates, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}"))
+                BasicTextField(value = row.amount, onValueChange = onAmount, textStyle = TextStyle(color = if (invalid) MaterialTheme.colorScheme.error else ink, fontSize = 18.sp, textAlign = if (calculates) TextAlign.End else TextAlign.Start), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text), singleLine = calculates, modifier = Modifier.weight(.42f).defaultMinSize(minHeight = 52.dp).padding(horizontal = 16.dp, vertical = 12.dp).testTag("amount-${row.id}").semantics { contentDescription = if (calculates) "தொகை / Amount" else "விவரம் / Details" })
             }
         }
         HorizontalDivider(color = line)

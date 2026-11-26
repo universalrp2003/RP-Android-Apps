@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.database.sqlite.SQLiteDatabase
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -146,7 +147,7 @@ class NotebookTest {
         val db = open()
         rule.setContent { MaterialTheme { SheetScreen(db) } }
         rule.onNodeWithTag("about").performClick()
-        rule.onNodeWithTag("aboutVersion").assertTextContains("0.5", substring = true)
+        rule.onNodeWithTag("aboutVersion").assertTextContains("0.6", substring = true)
         rule.onNodeWithTag("aboutBackupWarning").assertTextContains("No backup", substring = true)
         rule.onNodeWithText("எங்கள் செயலிகள் / Our applications").assertExists()
         rule.onNodeWithTag("closeAbout").performClick()
@@ -189,10 +190,59 @@ class NotebookTest {
         rule.onNodeWithTag("calc-5").performClick(); rule.onNodeWithTag("calc-÷").performClick()
         rule.onNodeWithTag("calc-2").performClick(); rule.onNodeWithTag("calc-=").performClick()
         rule.onNodeWithTag("calcDisplay").assertTextEquals("2.5")
+        for (tag in listOf("calcTitle", "calcDescription", "calcDisplay")) {
+            val pixels = rule.onNodeWithTag(tag).captureToImage().toPixelMap()
+            var bright = 0
+            for (y in 0 until pixels.height) for (x in 0 until pixels.width) {
+                val color = pixels[x, y]
+                if (color.red > .65f && color.green > .65f && color.blue > .65f) bright++
+            }
+            assertTrue("$tag needs visible light text in dark mode", bright > 5)
+        }
         assertEquals("50", db.read(1).first().amount)
         rule.onNodeWithTag("settings").performClick()
         rule.onNodeWithTag("darkSwitch").performScrollTo().assertIsOn().performClick()
         rule.onNodeWithTag("closeSettings").performClick()
         assertFalse(context.getSharedPreferences("kurippu-settings", Context.MODE_PRIVATE).getBoolean("dark_mode", true))
+    }
+    @Test fun renameAndDeleteOnlyTheChosenPageAndProtectLastPage() {
+        val db = open()
+        val expense = db.load(1).first(); db.update(expense, "Milk", "50")
+        val note = db.load(2).first(); db.update(note, "Remember", "hidden details")
+        db.renamePage(1, "Expenses")
+        assertEquals("Expenses", db.pages().first { it.id == 1L }.title)
+        assertEquals("50", db.read(1).first().amount)
+        db.deletePage(1)
+        assertTrue(db.read(1).isEmpty()); assertEquals("hidden details", db.read(2).first().amount)
+        val calculator = db.pages().single { it.isCalculator }.id
+        db.deletePage(calculator)
+        try { db.deletePage(2); fail("Last page cannot be deleted") } catch (_: IllegalArgumentException) {}
+        assertEquals("Remember", db.read(2).first().text)
+        val recreated = db.addPage("Calculator", false, calculator = true)
+        assertTrue(db.pages().first { it.id == recreated }.isCalculator)
+        db.close(); store = null
+        assertEquals("Remember", open().read(2).first().text)
+    }
+    @Test fun longPressPageRenamesAndDeleteNeedsConfirmation() {
+        val db = open()
+        val expense = db.load(1).first(); db.update(expense, "Milk", "50")
+        val note = db.load(2).first(); db.update(note, "Keep note", "")
+        rule.setContent { MaterialTheme { SheetScreen(db) } }
+        rule.onNodeWithTag("page-1").performTouchInput { longClick() }
+        rule.onNodeWithTag("renamePage").performClick()
+        rule.onNodeWithTag("renameInput").performTextReplacement("Food")
+        rule.onNodeWithTag("confirmRename").performClick()
+        rule.onNodeWithTag("page-1").assertTextContains("Food", substring = true)
+        rule.onNodeWithTag("total").assertTextEquals("50")
+        rule.onNodeWithTag("page-1").performTouchInput { longClick() }
+        rule.onNodeWithTag("deletePage").performClick()
+        rule.onNodeWithTag("cancelDeletePage").performClick()
+        assertEquals("Milk", db.read(1).first().text)
+        rule.onNodeWithTag("page-1").performTouchInput { longClick() }
+        rule.onNodeWithTag("deletePage").performClick()
+        rule.onNodeWithTag("confirmDeletePage").performClick()
+        assertTrue(db.read(1).isEmpty())
+        assertEquals("Keep note", db.read(2).first().text)
+        rule.onNodeWithTag("page-2").assertExists()
     }
 }
