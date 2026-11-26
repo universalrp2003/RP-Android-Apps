@@ -106,6 +106,7 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
     var creating by rememberSaveable { mutableStateOf(false) }
     var settingsOpen by remember { mutableStateOf(false) }
     var aboutOpen by remember { mutableStateOf(false) }
+    var guideOpen by remember { mutableStateOf(false) }
     var pageMenu by remember { mutableStateOf<Page?>(null) }
     var renamePage by remember { mutableStateOf<Page?>(null) }
     var renameText by rememberSaveable { mutableStateOf("") }
@@ -274,6 +275,7 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
             Spacer(Modifier.height(10.dp))
             Text("தனிப்பட்ட குறிப்புகள் இந்தக் கைபேசியில் மட்டும் உள்ளன. Backup அல்லது sync இல்லை. செயலியை நீக்கினாலோ தரவை அழித்தாலோ கைபேசி பழுதானாலோ பதிவுகள் அழியும். / Notes stay on this device. No backup or sync: uninstalling, clearing data, or losing the phone loses them.", modifier = Modifier.testTag("aboutBackupWarning"))
             Spacer(Modifier.height(10.dp))
+            TextButton(onClick = { aboutOpen = false; guideOpen = true }, modifier = Modifier.testTag("openGuide")) { Text("பயன்பாட்டு வழிகாட்டி / How to use") }
             Text("எங்கள் செயலிகள் / Our applications", style = MaterialTheme.typography.titleSmall)
             OurApplications.names.forEachIndexed { index, name -> Text("${index + 1}. $name") }
             listOf("அதிகாரப்பூர்வ இணையதளம் / Official website" to "https://universalrp2003.github.io/RP-Android-Apps/", "GitHub · Source / Issues" to "https://github.com/universalrp2003/RP-Android-Apps", "செயலி வெளியீடுகள் / Releases" to "https://github.com/universalrp2003/RP-Android-Apps/releases?q=kurippu").forEach { (label, url) ->
@@ -281,6 +283,19 @@ private fun SheetScreenContent(store: NotebookStore, darkMode: Boolean, setDarkM
             }
         }
     }, confirmButton = { TextButton(onClick = { aboutOpen = false }, modifier = Modifier.testTag("closeAbout")) { Text("மூடு / Close") } })
+    if (guideOpen) AlertDialog(onDismissRequest = { guideOpen = false; aboutOpen = true },
+        title = { Text("பயன்பாட்டு வழிகாட்டி / How to use") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()).testTag("guideScroll"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("+ அழுத்தி பெயர் தரவும். குறிப்பு (முழு அகலம்) அல்லது மொத்தம் (தொகை நிரலுடன்) தேர்ந்தெடுத்து சேர் அழுத்தவும். / Tap +, name the page, choose Note for a full-width page or Total for an amount column, then tap Add.", modifier = Modifier.testTag("guideCreate"))
+                Text("பக்கத் தலைப்பை நீண்ட நேரம் அழுத்தி இழுத்து விடவும். அல்லது அமைப்புகளில் ← / → பயன்படுத்தவும். / Hold a page heading and drag it to reorder; alternatively use ← / → in Settings.", modifier = Modifier.testTag("guideMove"))
+                Text("தலைப்பை நீண்ட நேரம் அழுத்தி விடவும்; பெயர் மாற்று அல்லது நீக்கு தேர்ந்தெடுக்கவும். நீக்குவதை உறுதிப்படுத்தினால் அந்தப் பக்கத்தின் எல்லா வரிகளும் மறைத்த விவரங்களும் நிரந்தரமாக நீங்கும். குறைந்தது ஒரு பக்கம் இருக்க வேண்டும். / Hold and release a heading for Rename or Delete. Confirming Delete permanently removes that page and all its rows and hidden values. At least one page must remain.", modifier = Modifier.testTag("guideDelete"))
+                Text("வரியில் நேரடியாக எழுதவும். வரியை நீண்ட நேரம் அழுத்தினால் உருவாக்கிய / மாற்றிய நேரம் மற்றும் நீக்கும் விருப்பம் வரும். / Type directly in a row. Hold a row to see its created and edited times or delete it.", modifier = Modifier.testTag("guideRows"))
+                Text("அமைப்புகளில் இப்பக்கத்தின் இரண்டாவது நிரல், மொத்தம், நகல் மற்றும் இருண்ட தோற்றம் மாற்றலாம். நிரலை மறைத்தாலும் அதன் விவரம் அழியாது; மொத்தம் நிற்கும். தேர்வு / நகல் தற்போதைய பக்கத்தை மட்டும் நகலெடுக்கும்; மறைத்த விவரங்களும் சேரும். / Settings controls the current page's second column and total, copying, and dark mode. Hiding the column keeps its values but turns off the total. Select / Copy includes the current page and its hidden values.", modifier = Modifier.testTag("guideSettings"))
+                Text("கணிப்பானில் கணக்குகள் இடமிருந்து வலமாக நடைபெறும். = முடிவைக் காட்டும்; C புதிய கணக்கைத் தொடங்கும். கடைசி ஆறு கணக்குகள் கீழே தோன்றும்; செயலியை மூடினால் அவை சேமிக்கப்படாது. / Calculator operations run left to right. = completes a calculation; C starts a new one. The last six calculations appear below and are not saved when the app closes.", modifier = Modifier.testTag("guideCalculator"))
+                Text("Backup அல்லது sync இல்லை. செயலியை நீக்கினாலோ தரவை அழித்தாலோ கைபேசி தொலைந்தாலோ குறிப்புகளை மீட்டெடுக்க முடியாது. / No backup or sync. Uninstalling, clearing data, or losing the phone can permanently erase your notes.", modifier = Modifier.testTag("guideBackup"))
+            }
+        }, confirmButton = { TextButton(onClick = { guideOpen = false; aboutOpen = true }, modifier = Modifier.testTag("closeGuide")) { Text("பற்றி / Back to About") } })
     if (settingsOpen) AlertDialog(onDismissRequest = { settingsOpen = false }, title = { Text("அமைப்புகள் / Settings") }, text = {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(page.title, fontWeight = FontWeight.Bold)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""In-place update from the owner-tested 1.0 APK to 1.1 candidate; synthetic data only."""
+"""In-place update from the owner-tested 1.1 APK to 1.2 candidate; synthetic data only."""
 import json, os, traceback
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -13,7 +13,7 @@ def note_tab():
     nodes = h.find(lambda n:n.get('text')=='குறிப்பு'); assert len(nodes) >= 2
     h.tap(nodes[-1])
 def main():
-    assert h.digest(h.OLD)=='50ba69a57cf6884f9fa9f7cbeefe98cb6c3c7b13e8be9cbc68b5bdef57dd5860'
+    assert h.digest(h.OLD)=='0fbb9bd6abaff461136eb962ffba1c865449349cc7cc9e72e6cf37cb9e14e241'
     # Disposable CI emulator only; remove instrumentation's synthetic installation before the fixture.
     if h.PACKAGE in h.adb('shell','pm','list','packages',h.PACKAGE):
         h.run('adb','uninstall',h.PACKAGE)
@@ -24,8 +24,8 @@ def main():
     h.adb('shell','am','force-stop',h.PACKAGE); h.adb('shell','am','start','-n',h.PACKAGE+'/.MainActivity')
     h.find(h.text('Milk')); h.find(h.text('Bread')); h.find(h.text('95'))
     note_tab(); h.find(h.text('Reminder'))
-    h.tap_text('About'); h.find(h.text('Version 1.1')); h.find(h.text('No backup'))
-    receipt={'from_version':'1.0','to_version':'1.1','package':h.PACKAGE,'same_uid':True,'expense_entries_and_total_preserved':True,'note_preserved':True,'about_version_and_warning':True,'physical_phone':False,'apk_sha256':h.digest(h.NEW),'bytes':h.NEW.stat().st_size,'source':os.environ['GITHUB_SHA']}
+    h.tap_text('About'); h.find(h.text('Version 1.2')); h.find(h.text('No backup'))
+    receipt={'from_version':'1.1','to_version':'1.2','package':h.PACKAGE,'same_uid':True,'expense_entries_and_total_preserved':True,'note_preserved':True,'about_version_and_warning':True,'physical_phone':False,'apk_sha256':h.digest(h.NEW),'bytes':h.NEW.stat().st_size,'source':os.environ['GITHUB_SHA']}
     Path('/tmp/kurippu/verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('::notice title=Signed in-place notebook upgrade::'+json.dumps(receipt),flush=True)
 if __name__=='__main__':
