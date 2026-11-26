@@ -1,0 +1,38 @@
+name: Kurippu settings signed upgrade check (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["tools/kurippu_settings_upgrade.py", ".github/workflows/kurippu-settings-upgrade.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Kurippu-0.3-candidate
+          run-id: 45797333895
+          github-token: ${{ github.token }}
+          path: /tmp/kurippu-old
+      - uses: actions/download-artifact@v4
+        with:
+          name: Kurippu-0.4-candidate
+          run-id: 45803312430
+          github-token: ${{ github.token }}
+          path: /tmp/kurippu-new
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Verify signed in-place upgrade of synthetic notes and expenses
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -memory 1536 -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: OLD_APK=/tmp/kurippu-old/Kurippu-v0.3.apk NEW_APK=/tmp/kurippu-new/Kurippu-v0.4.apk python3 tools/kurippu_settings_upgrade.py
