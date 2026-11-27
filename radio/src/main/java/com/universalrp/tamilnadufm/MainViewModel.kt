@@ -26,7 +26,11 @@ import com.universalrp.tamilnadufm.data.StationOrdering
 import com.universalrp.tamilnadufm.data.StationRepository
 import com.universalrp.tamilnadufm.player.PlayerBus
 import com.universalrp.tamilnadufm.player.PlaybackService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,6 +104,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var pendingLocalTrack: LocalTrack? = null
     private var sleepJob: Job? = null
     private var folderJob: Job? = null
+    private var directoryJob: Job? = null
 
     /** v1.13: the last-station start happens once per app process, never on every resume. */
     private var autoResumeTried = false
@@ -415,16 +420,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Live search against the open directory — thousands of stations. */
     fun searchDirectory() {
         val query = _state.value.query.trim()
+        directoryJob?.cancel()
         mutate { it.copy(directoryBusy = true, showDirectory = true) }
-        viewModelScope.launch {
+        directoryJob = viewModelScope.launch {
             val results = if (query.isBlank()) {
                 runCatching { DirectoryClient.popularTamil() }.getOrDefault(emptyList())
             } else {
                 // Search known spelling variants independently; one mirror failure must not
                 // discard results already found for another spelling.
-                ArtistSearchAliases.terms(query).flatMap { term ->
-                    runCatching { DirectoryClient.search(term) }.getOrDefault(emptyList())
-                }.distinctBy { it.url.lowercase() }
+                coroutineScope {
+                    ArtistSearchAliases.terms(query).map { term ->
+                        async {
+                            try {
+                                DirectoryClient.search(term)
+                            } catch (cancelled: CancellationException) {
+                                throw cancelled
+                            } catch (_: Exception) {
+                                emptyList()
+                            }
+                        }
+                    }.awaitAll().flatten().distinctBy { it.url.lowercase() }
+                }
             }
             mutate {
                 it.copy(
@@ -440,8 +456,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun discoverNews(language: String) {
+        directoryJob?.cancel()
         mutate { it.copy(directoryBusy = true, showDirectory = true) }
-        viewModelScope.launch {
+        directoryJob = viewModelScope.launch {
             val results = runCatching { DirectoryClient.news(language) }.getOrDefault(emptyList())
             mutate {
                 it.copy(
@@ -453,7 +470,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun closeDirectory() = mutate { it.copy(showDirectory = false) }
+    fun closeDirectory() {
+        directoryJob?.cancel()
+        mutate { it.copy(showDirectory = false, directoryBusy = false) }
+    }
 
     /** Adds a directory hit to "My stations" so it survives between sessions. */
     fun saveDirectoryStation(station: RadioStation) {
