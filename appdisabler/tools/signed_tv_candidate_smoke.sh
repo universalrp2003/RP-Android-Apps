@@ -5,8 +5,8 @@ set -euo pipefail
 work="$RUNNER_TEMP/disabler-signed"
 pkg=com.universalrp.appdisabler
 runner=com.universalrp.appdisabler.test/androidx.test.runner.AndroidJUnitRunner
-old="$work/old-0.4.1.apk"
-candidate="$work/System-App-Disabler-0.5.0-signed-candidate.apk"
+old="$work/old-0.5.0.apk"
+candidate="$work/System-App-Disabler-0.5.1-signed-candidate.apk"
 test_apk="$work/disabler-release-androidTest.apk"
 case "$(adb get-serialno | tr -d '\r')" in emulator-*) ;; *) echo 'Refusing a non-emulator' >&2; exit 1;; esac
 for f in "$old" "$candidate" "$test_apk"; do test -s "$f"; done
@@ -30,7 +30,7 @@ test "$uid_before" = "$uid_after"
 # Consume the complete dump before checking it: grep -q can exit on an early match and
 # SIGPIPE adb/tr under pipefail even though the version is correct (exit status 141).
 adb shell dumpsys package "$pkg" | tr -d '\r' > "$work/package-after-upgrade.txt"
-grep -Fq 'versionName=0.5.0' "$work/package-after-upgrade.txt"
+grep -Fq 'versionName=0.5.1' "$work/package-after-upgrade.txt"
 probe verify
 adb shell am instrument -w -r -e class com.universalrp.appdisabler.TvFocusTest "$runner" \
   | tr -d '\r' | tee "$work/tv-focus.log"
@@ -46,4 +46,4 @@ test "${#paths[@]}" -eq 1
 installed="$(adb shell sha256sum "${paths[0]}" | tr -d '\r' | awk '{print $1}')"
 expected="$(sha256sum "$candidate" | awk '{print $1}')"
 test "$installed" = "$expected"
-echo "::notice title=Signed Disabler TV checks::Public 0.4.1 updated in place; UID and synthetic preferences, inventory and private file survived; four TV focus tests passed on SHA-256 $expected. No real package was disabled."
+echo "::notice title=Signed Disabler TV checks::Public 0.5.0 updated in place; UID and synthetic preferences, inventory and private file survived; four TV focus tests passed on SHA-256 $expected. No real package was disabled."

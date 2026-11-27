@@ -36,7 +36,7 @@ class DisablerRecoveryGuidanceTests(unittest.TestCase):
     def test_signed_smoke_checks_version_without_cutting_off_the_dump(self):
         smoke = (ROOT / 'appdisabler/tools/signed_tv_candidate_smoke.sh').read_text()
         self.assertIn('> "$work/package-after-upgrade.txt"', smoke)
-        self.assertIn('grep -Fq \'versionName=0.5.0\' "$work/package-after-upgrade.txt"', smoke)
+        self.assertIn('grep -Fq \'versionName=0.5.1\' "$work/package-after-upgrade.txt"', smoke)
         self.assertNotIn("tr -d '\\r' | grep -Fq", smoke)
 
 
