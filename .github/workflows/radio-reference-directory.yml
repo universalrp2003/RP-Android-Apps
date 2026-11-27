@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["arena/30198928-rp-android-apps"]
-    paths: ["tools/radio_reference/**", ".github/workflows/radio-reference-directory.yml"]
+    paths: ["tools/radio_reference/fetch_directory.py", "tools/radio_reference/screenshot-inventory.txt", ".github/workflows/radio-reference-directory.yml"]
 permissions:
   contents: read
 jobs:
