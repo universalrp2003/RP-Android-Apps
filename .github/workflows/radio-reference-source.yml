@@ -8,6 +8,7 @@ permissions:
   contents: read
 jobs:
   research:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -35,6 +36,7 @@ jobs:
           print('::notice title=Historical source receipt::blob='+json.loads(result.stdout)['sha'])
 
   player:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -62,6 +64,7 @@ jobs:
           print('::notice title=Player reference receipt::blob='+json.loads(result.stdout)['sha'])
 
   public_players:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:

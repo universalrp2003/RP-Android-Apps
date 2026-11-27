@@ -19,6 +19,12 @@ PAGES = [
     'https://www.tamilradios.com/page/2',
     'https://www.tamilradios.com/page/3',
     'https://www.tamilradios.com/page/4',
+    'https://www.tamilradios.com/page/5',
+    'https://www.tamilradios.com/page/6',
+    'https://www.tamilradios.com/page/7',
+    'https://www.tamilradios.com/page/8',
+    'https://www.tamilradios.com/page/9',
+    'https://www.tamilradios.com/page/10',
 ]
 PATTERN = re.compile(r'"name":"([^"\\]{1,160})"[^{}]{0,600}?"url":"(https?://[^"\\]{1,1000})"')
 
