@@ -57,13 +57,13 @@ class WebsiteRequestsTest(unittest.TestCase):
     def test_suite_counts_hashes_and_sizes_match_across_header_table_and_cards(self):
         import re
         sister_source = (ROOT / 'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        expected_total = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
+        expected_total = len(json.loads((ROOT / 'site/catalog-v5.json').read_text())['apps']) + 1
         expected_optional = 1
         expected_non_store = expected_total - expected_optional
-        self.assertEqual(expected_total, 18)
-        self.assertEqual(expected_non_store, 17)
+        self.assertEqual(expected_total, 19)
+        self.assertEqual(expected_non_store, 18)
 
-        self.assertIn(f'The 18 apps in the catalogue below ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store), plus the newly released குறிப்பு featured below', self.source)
+        self.assertIn(f'The 19 apps in the catalogue below ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store)', self.source)
         self.assertNotIn('13 non-Store + optional Tamilan Store', self.source)
         self.assertNotIn('13 non-Store apps + optional Tamilan Store', self.source)
 
@@ -81,7 +81,7 @@ class WebsiteRequestsTest(unittest.TestCase):
             r'<script type="application/ld\+json">(.*?)</script>', self.source, re.S
         ).group(1))
         items = data['mainEntity']['itemListElement']
-        self.assertEqual([item['position'] for item in items], list(range(1, 19)))
+        self.assertEqual([item['position'] for item in items], list(range(1, 20)))
         ld_assets = {item['item']['downloadUrl'].rsplit('/', 1)[-1] for item in items}
         ld_tags = {item['item']['url'].rsplit('/', 1)[-1] for item in items}
         table = re.findall(
@@ -94,26 +94,29 @@ class WebsiteRequestsTest(unittest.TestCase):
             r'[^>]*href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1"',
             self.source, re.S,
         )
-        self.assertEqual(len(items), 18)
-        self.assertEqual(len(table), 18)
-        self.assertEqual(len(cards), 18)
+        self.assertEqual(len(items), 19)
+        self.assertEqual(len(table), 19)
+        self.assertEqual(len(cards), 19)
         self.assertEqual({asset for asset, _ in table}, ld_assets)
         self.assertEqual({asset for asset, _ in cards}, ld_assets)
         self.assertEqual({tag for _, tag in table}, ld_tags)
         self.assertEqual({tag for _, tag in cards}, ld_tags)
         self.assertIn('Tamilan-Store-v0.18.apk', ld_assets)
         self.assertIn('DailyVault-v0.5.apk', ld_assets)
+        self.assertIn('Kurippu-v1.3.apk', ld_assets)
+        self.assertIn('kurippu-v1.3', ld_tags)
         optional_tags = {'tamilan-store-v0.18'}
         self.assertTrue(optional_tags.issubset(ld_tags))
         self.assertEqual(len(optional_tags), 1)
-        self.assertEqual(len(ld_tags - optional_tags), 17)
-        self.assertEqual(localization.verify_site_versions_match_downloads(), (54, 18))
+        self.assertEqual(len(ld_tags - optional_tags), 18)
+        self.assertEqual(localization.verify_site_versions_match_downloads(), (57, 19))
 
     def assert_site_rejected(self, source):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'site').mkdir()
             (root / 'site/index.html').write_text(source)
+            (root / 'site/catalog-v5.json').write_text((ROOT / 'site/catalog-v5.json').read_text())
             sister = root / 'shared/src/main/java/com/universalrp/updates/SisterApps.kt'
             sister.parent.mkdir(parents=True)
             sister.write_text((ROOT / 'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
@@ -175,7 +178,7 @@ class WebsiteRequestsTest(unittest.TestCase):
                                                 'அனைத்து 7 RP Ideas செயலிகள்', 1)
         self.assert_site_rejected(stale_tamil_count)
         stale_intro = self.source.replace(
-            '(17 non-Store apps + 1 optional: Tamilan Store)',
+            '(18 non-Store apps + 1 optional: Tamilan Store)',
             '(13 non-Store apps + 2 optional: Tamilan Store and DailyVault)',
         )
         self.assertNotEqual(stale_intro, self.source)
@@ -201,7 +204,7 @@ class RealApplicationImageCoverageTest(unittest.TestCase):
         site=(ROOT/'site/index.html').read_text()
         cards=re.findall(r'<article class="card"[^>]*>(.*?)</article>',site,re.S)
         app_cards=[c for c in cards if re.search(r'<h2[^>]+id="app-',c)]
-        self.assertEqual(len(app_cards),18)
+        self.assertEqual(len(app_cards),19)
         for card in app_cards:
             sources=re.findall(r'<img[^>]+src="(images/[^"]+)"',card)
             self.assertTrue(sources)
@@ -213,7 +216,7 @@ class ApkButtonVersionTest(unittest.TestCase):
     def test_all_table_and_card_apk_buttons_show_their_exact_link_version(self):
         source=(ROOT/'site/index.html').read_text()
         buttons=re.findall(r'(<a\b[^>]*data-apk="[^"]+"[^>]*>)([^<]*)</a>',source)
-        self.assertEqual(len(buttons),36)
+        self.assertEqual(len(buttons),38)
         for opening,label in buttons:
             version=re.search(r'-v([0-9.]+)\.apk',opening).group(1)
             self.assertEqual(label,f'APK · v{version}')
