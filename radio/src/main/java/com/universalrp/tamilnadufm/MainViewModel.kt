@@ -417,6 +417,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // -------------------------------------------------------------- directory
 
+    private suspend fun directoryOrEmpty(fetch: suspend () -> List<RadioStation>): List<RadioStation> =
+        try {
+            fetch()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            emptyList()
+        }
+
     /** Live search against the open directory — thousands of stations. */
     fun searchDirectory() {
         val query = _state.value.query.trim()
@@ -424,21 +433,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(directoryBusy = true, showDirectory = true) }
         directoryJob = viewModelScope.launch {
             val results = if (query.isBlank()) {
-                runCatching { DirectoryClient.popularTamil() }.getOrDefault(emptyList())
+                directoryOrEmpty { DirectoryClient.popularTamil() }
             } else {
                 // Search known spelling variants independently; one mirror failure must not
                 // discard results already found for another spelling.
                 coroutineScope {
                     ArtistSearchAliases.terms(query).map { term ->
-                        async {
-                            try {
-                                DirectoryClient.search(term)
-                            } catch (cancelled: CancellationException) {
-                                throw cancelled
-                            } catch (_: Exception) {
-                                emptyList()
-                            }
-                        }
+                        async { directoryOrEmpty { DirectoryClient.search(term) } }
                     }.awaitAll().flatten().distinctBy { it.url.lowercase() }
                 }
             }
@@ -459,7 +460,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         directoryJob?.cancel()
         mutate { it.copy(directoryBusy = true, showDirectory = true) }
         directoryJob = viewModelScope.launch {
-            val results = runCatching { DirectoryClient.news(language) }.getOrDefault(emptyList())
+            val results = directoryOrEmpty { DirectoryClient.news(language) }
             mutate {
                 it.copy(
                     directoryBusy = false,
