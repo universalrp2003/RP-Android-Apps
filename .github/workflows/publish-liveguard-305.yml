@@ -1,0 +1,34 @@
+name: Publish owner-authorized Live Guard 3.05 exact signed APK
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["docs/approved-live-guard-3.05.json"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: liveguard-publish-305
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/30198928-rp-android-apps'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/download-artifact@v4
+        with:
+          name: Live-Guard-3.05-signed-candidate
+          run-id: 45975418127
+          github-token: ${{ github.token }}
+          path: /tmp/liveguard305-publish
+      - name: Verify and publish exact signed APK without rebuilding
+        run: python3 tools/publish_liveguard_305.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: liveguard-3.05-publication-receipt
+          path: /tmp/liveguard305-publication-receipt.json
+          retention-days: 30
