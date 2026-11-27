@@ -27,7 +27,7 @@ def main(path):
     for station in stations:
         by_name[key(station['name'])].append(station)
     with open(path, 'w', encoding='utf8', newline='') as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, lineterminator='\n')
         writer.writerow(['reference_label', 'screenshots', 'review_state', 'seed_name_only_matches'])
         for label, screens in sorted(inventory.items(), key=lambda x: x[0].casefold()):
             matches = by_name[key(label)] if '[' not in label else []

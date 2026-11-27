@@ -32,9 +32,9 @@ A1 Tamil,28,unresolved; search or inspect,
 A9 New,"18,19",unresolved; search or inspect,
 A9 Old,"18,19",unresolved; search or inspect,
 A9 Radio,"18,19",name-only match; identity/content still require review,A9 Radio [99c0feea-9437-428e-b29e-864e9264a283]
-Aadhi Sivam FM,"32,33",unresolved; search or inspect,
+Aadhi Sivam FM,"32,33",name-only match; identity/content still require review,Aadhi Sivam FM [ref-aadhi-sivam-fm]
 Aaha FM,12,unresolved; search or inspect,
-Aanmeega Sudar,34,unresolved; search or inspect,
+Aanmeega Sudar,34,name-only match; identity/content still require review,Aanmeega Sudar [ref-aanmeega-sudar]
 Aaruthal FM,35,unresolved; search or inspect,
 ABC Tamil,"24,25,28",name-only match; identity/content still require review,abctamil [03fd5750-9669-4070-b589-db408d413791]
 Adirai FM,12,unresolved; search or inspect,
@@ -199,7 +199,7 @@ isai.live,"19,20",unresolved; search or inspect,
 Isaimurasu,"37,38",unresolved; search or inspect,
 Isaithoranam,24,unresolved; search or inspect,
 Isaiyaruvi,28,unresolved; search or inspect,
-Islamic Radio,38,unresolved; search or inspect,
+Islamic Radio,38,name-only match; identity/content still require review,Islamic Radio [ref-islamic-radio]
 Iyal Isai,25,unresolved; search or inspect,
 Iyal Isai Bakthi,34,unresolved; search or inspect,
 J P [cropped],"07,08",unresolved; search or inspect,
@@ -299,7 +299,7 @@ Noyyal FM Covai,"15,16",unresolved; search or inspect,
 Old Gold,06,unresolved; search or inspect,
 Oli FM,"01,02,09,10",unresolved; search or inspect,
 Oli Saaral,22,unresolved; search or inspect,
-Om Sakthi FM,"32,33",unresolved; search or inspect,
+Om Sakthi FM,"32,33",name-only match; identity/content still require review,Om Sakthi FM [ref-om-sakthi-fm]
 Osai FM,23,unresolved; search or inspect,
 P B Sreenivas,"07,08",unresolved; search or inspect,
 Paaddu FM,28,unresolved; search or inspect,

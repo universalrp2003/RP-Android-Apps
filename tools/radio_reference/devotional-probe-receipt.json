@@ -1,0 +1,393 @@
+{
+  "checkedAtRunnerUtc": "2026-11-27T16:21:28.806235+00:00",
+  "candidates": [
+    {
+      "id": "ref-aanmeega-sudar",
+      "name": "Aanmeega Sudar",
+      "url": "https://stream.zeno.fm/ymkr7th4f2zuv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/aanmeega-sudar",
+      "tags": "devotional",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 34,
+      "referenceEvidence": "https://www.tamilradios.com/aanmeega-sudar",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "ref-aadhi-sivam-fm",
+      "name": "Aadhi Sivam FM",
+      "url": "https://cast6.asurahosting.com/proxy/aadhisivam/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/aanmeega-sudar",
+      "tags": "devotional",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 32,
+      "referenceEvidence": "https://www.tamilradios.com/aanmeega-sudar",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "ref-om-sakthi-fm",
+      "name": "Om Sakthi FM",
+      "url": "https://cast6.asurahosting.com/proxy/omsakthifm/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/aanmeega-sudar",
+      "tags": "devotional",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 32,
+      "referenceEvidence": "https://www.tamilradios.com/aanmeega-sudar",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "ref-vishnu-fm",
+      "name": "Vishnu FM",
+      "url": "https://cast6.asurahosting.com/proxy/vishnufm/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/aanmeega-sudar",
+      "tags": "devotional",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 32,
+      "referenceEvidence": "https://www.tamilradios.com/aanmeega-sudar",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "ref-ayngaran-radio",
+      "name": "Ayngaran Radio",
+      "url": "https://cast6.asurahosting.com/proxy/ayngaranradio/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/aanmeega-sudar",
+      "tags": "devotional",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 32,
+      "referenceEvidence": "https://www.tamilradios.com/aanmeega-sudar",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "ref-saranam-ayyappa-fm",
+      "name": "Saranam Ayyappa FM",
+      "url": "https://cast6.asurahosting.com/proxy/saranamayyappa/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/aanmeega-sudar",
+      "tags": "devotional",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 33,
+      "referenceEvidence": "https://www.tamilradios.com/aanmeega-sudar",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "ref-islamic-radio",
+      "name": "Islamic Radio",
+      "url": "https://cast6.asurahosting.com/proxy/islamicradio/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/aanmeega-sudar",
+      "tags": "devotional",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 38,
+      "referenceEvidence": "https://www.tamilradios.com/aanmeega-sudar",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "ref-akashvani-kodaikanal",
+      "name": "Akashvani Kodaikanal",
+      "url": "https://radio.wavespb.com/live/eef8fc0421c2cc48/eef8fc0421c2cc48.m3u8",
+      "favicon": "",
+      "homepage": "https://www.radio-browser.info/",
+      "tags": "",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "Tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 30,
+      "referenceName": "Akashvani Kodaikanal",
+      "referenceEvidence": "https://www.radio-browser.info/"
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-aanmeega-sudar",
+      "name": "Aanmeega Sudar",
+      "url": "https://stream.zeno.fm/ymkr7th4f2zuv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "AANMEEGA SUDAR",
+        "icy-br": "128",
+        "StreamTitle": "Hara Hara Sivane Arunachalane Annamalaye Potri (128  kbps) - stafabandmp3.top",
+        "StreamUrl": ""
+      }
+    },
+    {
+      "id": "ref-aadhi-sivam-fm",
+      "name": "Aadhi Sivam FM",
+      "url": "https://cast6.asurahosting.com/proxy/aadhisivam/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Aadhi Sivam",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Unknown - NAMASIVAYA"
+      }
+    },
+    {
+      "id": "ref-om-sakthi-fm",
+      "name": "Om Sakthi FM",
+      "url": "https://cast6.asurahosting.com/proxy/omsakthifm/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Om Sakthi FM",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Aaye Magamaye - S P Sailaja Chorus"
+      }
+    },
+    {
+      "id": "ref-vishnu-fm",
+      "name": "Vishnu FM",
+      "url": "https://cast6.asurahosting.com/proxy/vishnufm/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Vishnu FM",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Unknown - Vishnu 1"
+      }
+    },
+    {
+      "id": "ref-ayngaran-radio",
+      "name": "Ayngaran Radio",
+      "url": "https://cast6.asurahosting.com/proxy/ayngaranradio/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Ayngaran Radio",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Vinayagar Chaturthi 2026 Pillaiyar Patti Karpaga Vinayagar Bakthi Padalgal Kaakum Ganapathiye - Emusic Abirami 128k"
+      }
+    },
+    {
+      "id": "ref-saranam-ayyappa-fm",
+      "name": "Saranam Ayyappa FM",
+      "url": "https://cast6.asurahosting.com/proxy/saranamayyappa/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Saranam Ayyappa",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Unknown - Ayyappan 10"
+      }
+    },
+    {
+      "id": "ref-islamic-radio",
+      "name": "Islamic Radio",
+      "url": "https://cast6.asurahosting.com/proxy/islamicradio/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Islamic Radio",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Unknown - 024 ZINDABAD S"
+      }
+    },
+    {
+      "id": "ref-akashvani-kodaikanal",
+      "name": "Akashvani Kodaikanal",
+      "url": "https://radio.wavespb.com/live/eef8fc0421c2cc48/eef8fc0421c2cc48.m3u8",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {}
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}
