@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -54,6 +55,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
@@ -63,6 +65,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
@@ -75,6 +78,7 @@ import com.universalrp.tamilnadufm.data.RadioStation
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
 import com.universalrp.updates.AppStrings
+import kotlinx.coroutines.launch
 
 // --------------------------------------------------------------------- radio
 
@@ -88,6 +92,19 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     var iconView by rememberSaveable { mutableStateOf(true) }
     var selectedIconStation by remember { mutableStateOf<RadioStation?>(null) }
     var showGuide by rememberSaveable { mutableStateOf(false) }
+    val screenScope = rememberCoroutineScope()
+    var showArtists by rememberSaveable { mutableStateOf(false) }
+    if (showArtists) {
+        BackHandler { showArtists = false }
+        ArtistScreen(onBack = { showArtists = false }, onSelect = { artist ->
+            vm.setCategory(Category.ALL)
+            vm.setQuery(artist.query)
+            searchOpen = true
+            showArtists = false
+            screenScope.launch { listState.scrollToItem(0) }
+        })
+        return
+    }
     if (showGuide) {
         BackHandler { showGuide = false }
         com.universalrp.updates.GuideScreen(
@@ -215,6 +232,12 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                 onDrop = vm::dropCategoryTab,
                 onMove = { id, delta -> vm.moveTab(false, id, delta) },
             )
+        }
+
+        item {
+            TextButton(onClick = { showArtists = true }) {
+                Text(if (AppLanguageState.current == AppLanguage.TAMIL) "கலைஞர்கள் & பிரபலமான பாடல்கள் →" else "Artists & popular songs →", color = Saffron)
+            }
         }
 
         // Continue where you left off
@@ -824,5 +847,64 @@ fun DirectorySheet(vm: MainViewModel, state: UiState) {
                 item { Spacer(Modifier.height(20.dp)) }
             }
         }
+    }
+}
+
+
+/** Artist cards are searches, not pre-labelled playable streams. */
+@Composable
+private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit) {
+    var credits by rememberSaveable { mutableStateOf(false) }
+    val tamil = AppLanguageState.current == AppLanguage.TAMIL
+    val columns = StationGridLayout.columns(LocalConfiguration.current.screenWidthDp, LocalDensity.current.fontScale)
+    val rows = remember(columns) { ArtistBrowse.artists.chunked(columns) }
+    LazyColumn(Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onBack) { Text(if (tamil) "← திரும்ப" else "← Back", color = Saffron) }
+                Text(if (tamil) "கலைஞர்கள்" else "Artists", modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge, color = TextPrimary, fontWeight = FontWeight.Bold)
+                TextButton(onClick = { credits = true }) { Text(if (tamil) "பட உதவி" else "Photo credits", color = Saffron) }
+            }
+        }
+        item {
+            Text(if (tamil) "ஒரு படத்தைத் தட்டினால் நிலையப் பெயர்களில் தேடும். பாடல்கள் அல்லது நேரடி ஒலிபரப்பு இருப்பது உறுதி அல்ல. மேலும் தேட வானொலி பட்டியல் பொத்தானைப் பயன்படுத்தவும்."
+                 else "Tap an artist to search station names. A card does not guarantee a live station or a particular song. Use the directory button to search further.",
+                style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+        }
+        items(rows, key = { it.first().name }) { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { artist ->
+                    val artwork = remember(artist) { RadioStation(id = artist.name, name = artist.name, url = "", favicon = artist.photo) }
+                    StationGalleryCard(artwork, playing = false, modifier = Modifier.weight(1f), onOpen = { onSelect(artist) })
+                }
+                repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+        item { Spacer(Modifier.height(16.dp)) }
+    }
+    if (credits) {
+        val uri = LocalUriHandler.current
+        val creditRows = listOf(
+            Triple("Ilaiyaraaja — Sriram Narasimhan / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Ilaiyaraaja_at_Merku_Thodarchi_Malai_Press_Meet.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("A. R. Rahman — Dani Charles / Silverscreen", "https://commons.wikimedia.org/wiki/File:AR_Rahman_At_The_%E2%80%98Marvel_Anthem%E2%80%99_Launch.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("S. P. Balasubrahmanyam — Aravind Sivaraj", "https://commons.wikimedia.org/wiki/File:S._P._Balasubrahmanyam_in_2013.JPG", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("K. S. Chithra — Jayanthjwala", "https://commons.wikimedia.org/wiki/File:KS_Chithra.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
+            Triple("P. Susheela — Kris Iyer; cropped by Commons", "https://commons.wikimedia.org/wiki/File:With_P_Susheela_(cropped).jpg", "https://creativecommons.org/publicdomain/zero/1.0/"),
+        )
+        AlertDialog(onDismissRequest = { credits = false }, title = { Text("Photo credits") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text("Photos from Wikimedia Commons; display is resized, files are not modified by the app.")
+                    creditRows.forEach { (label, source, licence) ->
+                        Text(label, style = MaterialTheme.typography.bodySmall)
+                        Row {
+                            TextButton(onClick = { uri.openUri(source) }) { Text("Source") }
+                            TextButton(onClick = { uri.openUri(licence) }) { Text("Licence") }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { credits = false }) { Text("OK") } })
     }
 }

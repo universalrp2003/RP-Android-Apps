@@ -6,6 +6,8 @@ on:
       - "radio/src/main/java/com/universalrp/tamilnadufm/ui/Components.kt"
       - "radio/src/main/java/com/universalrp/tamilnadufm/ui/StationsScreens.kt"
       - "radio/src/main/java/com/universalrp/tamilnadufm/ui/StationGridLayout.kt"
+      - "radio/src/main/java/com/universalrp/tamilnadufm/ui/ArtistBrowse.kt"
+      - "radio/src/test/java/com/universalrp/tamilnadufm/ui/ArtistBrowseTest.kt"
       - "radio/src/test/java/com/universalrp/tamilnadufm/ui/StationGridLayoutTest.kt"
       - ".github/workflows/radio-gallery-check.yml"
   workflow_dispatch:
@@ -35,5 +37,10 @@ jobs:
           assert len(files) == 1, files
           root = ET.parse(files[0]).getroot()
           assert int(root.get('tests', '0')) == 2
+          assert root.get('failures') == root.get('errors') == root.get('skipped') == '0'
+          files = list(Path('radio/build/test-results/testDebugUnitTest').glob('*ArtistBrowseTest.xml'))
+          assert len(files) == 1, files
+          root = ET.parse(files[0]).getroot()
+          assert int(root.get('tests', '0')) == 1
           assert root.get('failures') == root.get('errors') == root.get('skipped') == '0'
           PY
