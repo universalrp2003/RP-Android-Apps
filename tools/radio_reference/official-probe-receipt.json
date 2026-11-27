@@ -1,0 +1,219 @@
+{
+  "checkedAtRunnerUtc": "2026-11-27T23:57:45.949305+00:00",
+  "candidates": [
+    {
+      "id": "ref-etr-official",
+      "name": "ETR European Tamil Radio",
+      "url": "https://live.etr.audio/listen/stream/s1",
+      "favicon": "",
+      "homepage": "https://etr.fm/",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 16,
+      "referenceName": "ETR European Tamil Radio",
+      "referenceEvidence": "https://etr.fm/"
+    },
+    {
+      "id": "ref-etr-music-comparison",
+      "name": "ETR music comparison only",
+      "url": "https://live.etr.audio/listen/etrmusic/s1",
+      "favicon": "",
+      "homepage": "https://etr.fm/",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 16,
+      "referenceName": "ETR music comparison only",
+      "referenceEvidence": "https://etr.fm/"
+    },
+    {
+      "id": "ref-shaivam-comparison",
+      "name": "Shaivam official comparison only",
+      "url": "http://198.7.59.28:8381/stream",
+      "favicon": "",
+      "homepage": "https://shaivam.org/radio/",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 33,
+      "referenceName": "Shaivam official comparison only",
+      "referenceEvidence": "https://shaivam.org/radio/"
+    },
+    {
+      "id": "da0c4636-963f-4e1e-bee0-236858201444",
+      "name": "Shaiva Lahari (comparison only)",
+      "url": "https://24293.live.streamtheworld.com/SP_R2925215_SC",
+      "favicon": "",
+      "homepage": "https://shaivam.org/radio-shaivalahari/#gsc.tab=0",
+      "tags": "devotional,hindu,religion",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "tamil",
+      "codec": "MP3",
+      "bitrate": 128,
+      "votes": 44,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "directory",
+      "order": 0
+    },
+    {
+      "id": "ref-shaivam-thiruneriya-tamizhosai",
+      "name": "Shaivam Thiruneriya Tamizhosai (comparison only)",
+      "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SP_R2923580_SC",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/8",
+      "tags": "devotional",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 33,
+      "referenceEvidence": "https://www.tamilradios.com/page/8",
+      "auditStatus": "audio_reachable"
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-etr-official",
+      "name": "ETR European Tamil Radio",
+      "url": "https://live.etr.audio/listen/stream/s1",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "192",
+        "icy-name": "European Tamil Radio",
+        "icy-pub": "0",
+        "StreamTitle": "A.R.Rahman, Amina Rafiq, Shridhar Ramesh - MassTamilan - Yetho Yetho - MassTamilan"
+      }
+    },
+    {
+      "id": "ref-etr-music-comparison",
+      "name": "ETR music comparison only",
+      "url": "https://live.etr.audio/listen/etrmusic/s1",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "StreamTitle": ""
+      }
+    },
+    {
+      "id": "ref-shaivam-comparison",
+      "name": "Shaivam official comparison only",
+      "url": "http://198.7.59.28:8381/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "audio": [],
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "da0c4636-963f-4e1e-bee0-236858201444",
+      "name": "Shaiva Lahari (comparison only)",
+      "url": "https://24293.live.streamtheworld.com/SP_R2925215_SC",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "Shaiva Lahari",
+        "icy-description": "Hindu spiritual radio devoted to Lord Shiva",
+        "icy-url": "http://spacial.com",
+        "icy-genre": "",
+        "icy-br": "128",
+        "StreamTitle": "031 - 031_ssk-veda-dsda-shukla-yajur-veda-kanva-shakha-032-adhyayam-32"
+      }
+    },
+    {
+      "id": "ref-shaivam-thiruneriya-tamizhosai",
+      "name": "Shaivam Thiruneriya Tamizhosai (comparison only)",
+      "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SP_R2923580_SC",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "திருநெறிய தமிழோசை",
+        "icy-description": "Tamil Hindu Devotional Radio to Lord Shiva",
+        "icy-url": "http://spacial.com",
+        "icy-genre": "",
+        "icy-br": "128",
+        "StreamTitle": "045_tis - sat-sun-thevaram-70-thiruvenpakkam-pizhalai-ullane.mp3"
+      }
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}
