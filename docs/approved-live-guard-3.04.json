@@ -1,0 +1,12 @@
+{
+  "owner_authorized": true,
+  "authorization": "The owner approved publication after reviewing the announcement wording; phone installation or audible testing was not confirmed.",
+  "source": "0b3963568cca5a474d24cd70c1d38a29629bff38",
+  "run_id": 45934079949,
+  "run_attempt": 1,
+  "artifact_id": 15169882742,
+  "artifact_digest": "sha256:ab9bc3cf6159344ca8687529b25711d6756047086a929f769e31f2fc18d8c3be",
+  "apk_sha256": "e68d03392796fac7bee4296016e1fb87ab311a9b12799fecce8690c3e4c0610d",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "draft_release_id": 460143187
+}
