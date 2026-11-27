@@ -18,6 +18,7 @@ import com.universalrp.tamilnadufm.audio.Bands
 import com.universalrp.tamilnadufm.audio.EqPreset
 import com.universalrp.tamilnadufm.audio.EqPresets
 import com.universalrp.tamilnadufm.data.Category
+import com.universalrp.tamilnadufm.data.ArtistSearchAliases
 import com.universalrp.tamilnadufm.data.DirectoryClient
 import com.universalrp.tamilnadufm.data.LocalTrack
 import com.universalrp.tamilnadufm.data.RadioStation
@@ -363,13 +364,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun applyFilter() {
         val s = _state.value
-        val query = s.query.trim().lowercase()
+        val queries = ArtistSearchAliases.terms(s.query)
         val list = s.stations.filter { station ->
-            val matchesQuery = query.isEmpty() ||
+            val matchesQuery = queries.isEmpty() || queries.any { query ->
                 station.name.lowercase().contains(query) ||
-                station.tags.lowercase().contains(query) ||
-                station.country.lowercase().contains(query) ||
-                station.language.lowercase().contains(query)
+                    station.tags.lowercase().contains(query) ||
+                    station.country.lowercase().contains(query) ||
+                    station.language.lowercase().contains(query)
+            }
 
             val matchesCategory = when (s.category) {
                 Category.ALL -> true
@@ -415,10 +417,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val query = _state.value.query.trim()
         mutate { it.copy(directoryBusy = true, showDirectory = true) }
         viewModelScope.launch {
-            val results = runCatching {
-                if (query.isBlank()) DirectoryClient.popularTamil()
-                else DirectoryClient.search(query)
-            }.getOrDefault(emptyList())
+            val results = if (query.isBlank()) {
+                runCatching { DirectoryClient.popularTamil() }.getOrDefault(emptyList())
+            } else {
+                // Search known spelling variants independently; one mirror failure must not
+                // discard results already found for another spelling.
+                ArtistSearchAliases.terms(query).flatMap { term ->
+                    runCatching { DirectoryClient.search(term) }.getOrDefault(emptyList())
+                }.distinctBy { it.url.lowercase() }
+            }
             mutate {
                 it.copy(
                     directoryBusy = false,
