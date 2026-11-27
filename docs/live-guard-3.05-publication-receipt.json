@@ -1,0 +1,21 @@
+{
+  "source": "8aa4acbe7b9bf89f9746e3453172eb3ead03b88a",
+  "run_id": 45975418127,
+  "artifact_id": 15186767817,
+  "artifact_sha256": "269edf5c6abc15379c1e0845b1943f5f39d0fd2c5dac0c1a7cc34721102691c1",
+  "apk_sha256": "304c31b778b4020b136dbb24ba2c96fb6f6172c921ba0da268a69585e4e2c42b",
+  "bytes": 14813623,
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "package": "com.universalrp.cleansweep",
+  "version": "3.05",
+  "version_code": 110,
+  "release_id": 460402992,
+  "asset_id": 799874883,
+  "publisher_run": 45975945605,
+  "published_at": "2026-11-27T09:42:53Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.05/CleanSweep-v3.05.apk",
+  "rebuilt": false,
+  "physical_phone_tested": false,
+  "emulator_upgrade_tested": false,
+  "note": "Signed APK built and checked for package, version, signer and unchanged permissions versus 3.04; no device or emulator install, upgrade or audible playback test."
+}

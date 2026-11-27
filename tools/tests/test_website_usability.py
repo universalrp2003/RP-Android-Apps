@@ -38,10 +38,10 @@ class WebsiteUsabilityTest(unittest.TestCase):
             self.assertRegex(label, r'^\d{2} [A-Z][a-z]{2} \d{4}$')
 
     def test_changed_tag_and_stale_date_are_rejected(self):
-        stamp = self.evidence['releases']['live-guard-v3.04']
+        stamp = self.evidence['releases']['live-guard-v3.05']
         for stale in [self.source.replace('datetime="' + stamp + '"', 'datetime="2025-01-01T01:00:00Z"', 1),
                       self.source.replace('>30 Oct 2026</time>', '>31 Oct 2026</time>', 1),
-                      self.source.replace('data-release-tag="live-guard-v3.04"', 'data-release-tag="live-guard-v0.0"', 1)]:
+                      self.source.replace('data-release-tag="live-guard-v3.05"', 'data-release-tag="live-guard-v0.0"', 1)]:
             with self.assertRaises(ValueError):
                 dates.check(stale, self.evidence)
 
@@ -60,12 +60,12 @@ class WebsiteUsabilityTest(unittest.TestCase):
     def test_refresh_repairs_date_tag_after_a_pinned_release_changes(self):
         # Corrupt the table row's tag only; the download link still names the release, so
         # refresh can recover the date from real evidence.
-        live = self.source.index('data-release-tag="live-guard-v3.04"')
+        live = self.source.index('data-release-tag="live-guard-v3.05"')
         row_start = self.source.rindex('<tr>', 0, live)
         row_end = self.source.index('</tr>', live) + len('</tr>')
         row = self.source[row_start:row_end]
         stale = (self.source[:row_start]
-                 + row.replace('data-release-tag="live-guard-v3.04"', 'data-release-tag="old-version"')
+                 + row.replace('data-release-tag="live-guard-v3.05"', 'data-release-tag="old-version"')
                  + self.source[row_end:])
         self.assertNotEqual(stale, self.source)
         source, evidence = dates.refresh(stale, lambda tag: {'tag_name': tag, 'published_at': self.evidence['releases'][tag]})
@@ -113,14 +113,14 @@ class WebsiteUsabilityTest(unittest.TestCase):
         ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
         self.assertEqual(len(ids), 18)
         localization.verify_newest_first(site, ids)
-        self.assertEqual(ids[:6], ['app-system-app-disabler', 'app-live-guard', 'app-kurippu', 'app-weekly-money', 'app-tv-guard', 'app-sms-guard'])
+        self.assertEqual(ids[:6], ['app-live-guard', 'app-system-app-disabler', 'app-kurippu', 'app-weekly-money', 'app-tv-guard', 'app-sms-guard'])
 
         # Moving the oldest card to the front must be rejected.
         oldest = site.index('        <!-- Secret Message -->')
         end = site.index('</article>', oldest) + len('</article>')
         block = site[oldest:end]
         shuffled = site[:oldest] + site[end:]
-        first = shuffled.index('        <!-- System App Disabler -->')
+        first = shuffled.index('        <!-- Live Guard -->')
         shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
         shuffled_ids = re.findall(
             r'<h2 id="(app-[^"]+)"',
@@ -135,7 +135,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         end = pristine.index('</article>', middle) + len('</article>')
         block = pristine[middle:end]
         reordered = pristine[:middle] + pristine[end:]
-        top = reordered.index('        <!-- System App Disabler -->')
+        top = reordered.index('        <!-- Live Guard -->')
         reordered = reordered[:top] + block + '\n\n' + reordered[top:]
         ids2 = re.findall(
             r'<h2 id="(app-[^"]+)"',

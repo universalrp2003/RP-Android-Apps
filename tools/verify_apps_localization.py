@@ -679,6 +679,7 @@ def verify_release_notes_honesty() -> int:
     # A note that was really installed on a phone is just as required to say so.
     phrases = (
         "not installed on a phone",
+        "has not undergone an android device or emulator installation",
         "not been tested on a physical phone",
         "no physical-device test",
         "no device test",
@@ -719,7 +720,7 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.18"',
-            'tagPrefix = "live-guard"', 'publishedVersion = "3.04"',
+            'tagPrefix = "live-guard"', 'publishedVersion = "3.05"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
@@ -1053,7 +1054,7 @@ def verify_module_versions_match_sister_apps() -> int:
             continue
         if gradle.parent.name == "cleaner":
             # The module and shared directory both identify the exact promoted public release.
-            if pkg.group(1) != "com.universalrp.cleansweep" or ver.group(1) != "3.04" or by_package.get(pkg.group(1)) != "3.04":
+            if pkg.group(1) != "com.universalrp.cleansweep" or ver.group(1) != "3.05" or by_package.get(pkg.group(1)) != "3.05":
                 raise ValueError("Live Guard candidate/public versions need review")
             checked += 1
             continue

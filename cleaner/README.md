@@ -1,12 +1,12 @@
 # Live Guard (CleanSweep)
 
-Current public APK: **3.04 / code 109**, package `com.universalrp.cleansweep`, Android 8.0/API 26+.
+Current public APK: **3.05 / code 110**, package `com.universalrp.cleansweep`, Android 8.0/API 26+.
 
-[Download CleanSweep-v3.04.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.04/CleanSweep-v3.04.apk) · [release notes](../releases/live-guard-v3.04.md) · [guide and screenshots](https://universalrp2003.github.io/RP-Android-Apps/live-guard-guide.html) · [verification](../docs/live-guard-3.04-publication-receipt.json).
+[Download CleanSweep-v3.05.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.05/CleanSweep-v3.05.apk) · [release notes](../releases/live-guard-v3.05.md) · [guide and screenshots](https://universalrp2003.github.io/RP-Android-Apps/live-guard-guide.html) · [verification](../docs/live-guard-3.05-publication-receipt.json).
 
-## This update — 3.04
+## This update — 3.05
 
-Shorter Tamil and English voice announcements and an observed charging-session summary. The exact APK passed emulator upgrade checks; phone installation and audible playback have not been independently confirmed. Update without uninstalling or clearing data.
+Recognised abbreviated Tamil and English months in news dates are expanded for speech. Installation, upgrade and audible playback of the exact APK have not been tested on a phone or emulator. Update without uninstalling or clearing data.
 
 ## Previous update — 3.00 (12 November 2026)
 
