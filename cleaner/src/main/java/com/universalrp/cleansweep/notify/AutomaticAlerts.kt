@@ -140,13 +140,13 @@ object AutomaticAlerts {
                     prefs.getString("charge_283_spoken", "").orEmpty(),prefs.getInt("charge_283_rank",0))
                 if (rank > previousRank) {
                     val en = when (kind) {
-                        "confirmed" -> "Battery reports full; measured current is near zero."
-                        "estimated" -> "Battery at 100 percent. Charge completion is estimated."
+                        "confirmed" -> "Battery reports full. Unplug when convenient."
+                        "estimated" -> "Battery is at 100 percent. Charging may be complete."
                         else -> "Battery reached 100 percent."
                     }
                     val ta = when (kind) {
-                        "confirmed" -> "பேட்டரி முழு நிலையைக் காட்டுகிறது; அளந்த மின்னோட்டம் பூஜ்ஜியத்திற்கு அருகில் உள்ளது."
-                        "estimated" -> "பேட்டரி 100 சதவீதம். சார்ஜ் நிறைவு மதிப்பீடு மட்டுமே."
+                        "confirmed" -> "பேட்டரி முழு நிலையைக் காட்டுகிறது. வசதியாக சார்ஜரை அகற்றலாம்."
+                        "estimated" -> "பேட்டரி 100 சதவீதம். சார்ஜ் முடிந்திருக்கலாம்."
                         else -> "பேட்டரி நூறு சதவீதத்தை எட்டியது."
                     }
                     Announcer.speakIfStillRelevant(context, en, ta, Announcer.Event.BATTERY_FULL,

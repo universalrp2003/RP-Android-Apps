@@ -428,9 +428,9 @@ object ChargeNotifier {
         // 42 °C before) says the battery is unusually warm — no cause is claimed.
         val thermalAtPlug = ThermalWarningPolicy.decide(battery.temperatureC, null, null)
         if (thermalAtPlug.warn && thermalAtPlug.sensor == ThermalWarningPolicy.Sensor.BATTERY) {
-            val tempRound = thermalAtPlug.celsius?.toInt() ?: 0
-            val warnTamil = "பேட்டரி வெப்பம் $tempRound டிகிரி. சார்ஜ் நிலையைச் சரிபார்க்கவும்."
-            Announcer.speakAndWait(app, "Battery is hot. Check charging conditions.", warnTamil,
+            val tempRound = thermalAtPlug.celsius?.toInt() ?: return
+            val warnTamil = "பேட்டரி $tempRound டிகிரி செல்சியஸ் சூடாக உள்ளது. சார்ஜ் நிலையைச் சரிபார்க்கவும்."
+            Announcer.speakAndWait(app, "Battery is hot: $tempRound degrees Celsius. Check charging conditions.", warnTamil,
                 Announcer.Event.OVERHEAT, onStarted = { prefs.edit().putString("voice_last_spoken_connection", token).apply() },
                 requestKey = "plug:$token")
             return

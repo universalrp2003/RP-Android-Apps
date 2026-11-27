@@ -11,33 +11,29 @@ object ChargingSessionSpeech {
         val duration = snapshot.elapsedMs?.takeIf { it >= 0 }
         val en = StringBuilder("Charger disconnected.")
         val ta = StringBuilder("சார்ஜர் துண்டிக்கப்பட்டது.")
-        if (end == null) {
-            en.append(" Battery level unavailable.")
-            ta.append(" பேட்டரி அளவு தெரியவில்லை.")
-        } else if (start == null) {
-            en.append(" Battery $end percent; starting level unavailable.")
-            ta.append(" பேட்டரி $end சதவீதம்; தொடக்க அளவு தெரியவில்லை.")
-        } else {
+        if (end != null && start == null) {
+            en.append(" Battery $end percent.")
+            ta.append(" பேட்டரி $end சதவீதம்.")
+        } else if (end != null && start != null) {
             en.append(" Battery $start to $end percent")
-            ta.append(" பேட்டரி $start முதல் $end சதவீதம்")
-            if (duration != null) {
-                en.append(" in ").append(durationEnglish(duration))
-                ta.append("; கடந்த நேரம் ").append(durationTamil(duration)).append(";")
-            }
+            ta.append(" பேட்டரி $start முதல் $end சதவீதம்.")
+            if (duration != null) en.append(" in ").append(durationEnglish(duration))
+            en.append('.')
             val change = end - start
+            if (duration != null) ta.append(" கடந்த நேரம் ").append(durationTamil(duration)).append(".")
             when {
-                change > 0 -> { en.append(", up $change percentage points."); ta.append(" $change சதவீதப் புள்ளிகள் உயர்வு.") }
-                change < 0 -> { en.append(", down ${-change} percentage points."); ta.append(" ${-change} சதவீதப் புள்ளிகள் குறைவு.") }
-                else -> { en.append("; no change."); ta.append("; மாற்றமில்லை.") }
+                change > 0 -> { en.append(" Up $change percentage points."); ta.append(" $change சதவீதப் புள்ளிகள் உயர்ந்தது.") }
+                change < 0 -> { en.append(" Down ${-change} percentage points."); ta.append(" ${-change} சதவீதப் புள்ளிகள் குறைந்தது.") }
+                else -> { en.append(" No change."); ta.append(" மாற்றமில்லை.") }
             }
         }
         if ((start == null || end == null) && duration != null) {
             en.append(" Since connection: ").append(durationEnglish(duration)).append('.')
-            ta.append(" இணைப்பிலிருந்து கடந்த நேரம் ").append(durationTamil(duration)).append(".")
+            ta.append(" இணைப்பிலிருந்து ").append(durationTamil(duration)).append(".")
         }
         if (early && end != null) {
-            en.append(" You unplugged before 90 percent.")
-            ta.append(" 90 சதவீதத்தை எட்டும்முன் சார்ஜரைத் துண்டித்துள்ளீர்கள்.")
+            en.append(" Unplugged before 90 percent.")
+            ta.append(" 90 சதவீதத்திற்கு முன்பே துண்டிக்கப்பட்டது.")
         }
         return ChargingSpeech(en.toString(), ta.toString())
     }

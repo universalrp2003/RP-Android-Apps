@@ -674,8 +674,8 @@ object Announcer {
     /** Previews a curated Studio Ultra-HD voice profile immediately. */
     fun previewOnlineVoice(context: Context, profile: com.universalrp.voice.CuratedNeuralVoiceProfile): Boolean {
         val wanted = Lang.languageIn(context)
-        val sampleEn = "Hello! Studio Ultra HD voice is active on Live Guard."
-        val sampleTa = "வணக்கம்! லைவ் கார்டின் ஸ்டுடியோ Ultra HD குரல் தெளிவாக இயங்குகிறது."
+        val sampleEn = "Live Guard voice preview."
+        val sampleTa = "லைவ் கார்ட் குரல் சோதனை."
         return submit(
             context,
             Request(

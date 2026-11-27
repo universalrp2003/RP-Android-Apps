@@ -132,8 +132,8 @@ class HealthWatchWorker(
                 val freeGb = "%.1f".format(storage.free / 1024.0 / 1024.0 / 1024.0)
                 Announcer.speakAndWait(
                     ctx,
-                    "Storage nearly full. About $freeGb gigabytes free.",
-                    "சேமிப்பு கிட்டத்தட்ட நிரம்பிவிட்டது. சுமார் $freeGb ஜிகாபைட் காலி.",
+                    "Storage almost full. About $freeGb gigabytes free.",
+                    "ஸ்டோரேஜ் கிட்டத்தட்ட நிரம்பிவிட்டது. சுமார் $freeGb ஜிகாபைட் காலி.",
                     Announcer.Event.STORAGE_LOW,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_STORAGE, System.currentTimeMillis()).apply() },
                 )
@@ -193,9 +193,9 @@ class HealthWatchWorker(
             if (highRisks.isNotEmpty()) {
                 val riskCount = highRisks.size
                 prefs.edit().putString("widget_security_alert", "$riskCount critical security alert${if (riskCount > 1) "s" else ""}").apply()
+                val speech = com.universalrp.cleansweep.voice.VoiceAlertSpeech.securityReminder(riskCount)
                 Announcer.speakAndWait(
-                    ctx, "Security: review $riskCount important settings.",
-                    "பாதுகாப்பு: $riskCount முக்கிய அமைப்புகளைச் சரிபார்க்கவும்.",
+                    ctx, speech.english, speech.tamil,
                     Announcer.Event.DAILY,
                     onStarted = { prefs.edit().putLong("last_sec_reminder_ms", System.currentTimeMillis()).apply() },
                 )
@@ -322,10 +322,8 @@ class HealthWatchWorker(
 
         // ---- the one line that is spoken (Strictly High/Medium security risk warnings)
         val spoken: Pair<String, String>? = when {
-            high > 0 -> ("Security: $high high-risk issue${if (high == 1) "" else "s"}. Open Live Guard to review.") to
-                ("பாதுகாப்பு: $high அதிக ஆபத்துள்ள எச்சரிக்கைகள். லைவ் கார்டில் சரிபார்க்கவும்.")
-            medium > 0 -> ("Security: $medium moderate warning${if (medium == 1) "" else "s"}. Open Live Guard to review.") to
-                ("பாதுகாப்பு: $medium மிதமான எச்சரிக்கைகள். லைவ் கார்டில் சரிபார்க்கவும்.")
+            high > 0 -> com.universalrp.cleansweep.voice.VoiceAlertSpeech.securityBrief(high, true).let { it.english to it.tamil }
+            medium > 0 -> com.universalrp.cleansweep.voice.VoiceAlertSpeech.securityBrief(medium, false).let { it.english to it.tamil }
             else -> null // Safe / clean — remain silent as configured
         }
 

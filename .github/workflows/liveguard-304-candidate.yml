@@ -51,8 +51,8 @@ jobs:
           tests2=list(Path('cleaner/build/test-results/testReleaseUnitTest').glob('*VoiceAlertSpeechTest.xml'))
           assert len(tests2)==1, tests2
           second=ET.parse(tests2[0]).getroot()
-          assert int(second.get('tests','0')) == 4 and second.get('failures') == second.get('errors') == second.get('skipped') == '0'
-          print('::notice title=Voice wording tests::All seven focused test cases passed')
+          assert int(second.get('tests','0')) == 5 and second.get('failures') == second.get('errors') == second.get('skipped') == '0'
+          print('::notice title=Voice wording tests::All eight focused test cases passed')
           PY
           mkdir -p /tmp/liveguard304-candidate /tmp/liveguard304-old
           cp cleaner/build/outputs/apk/release/*.apk /tmp/liveguard304-candidate/candidate.apk

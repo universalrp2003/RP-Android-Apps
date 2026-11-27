@@ -1449,10 +1449,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** The "hear the voice" button in Settings: always allowed, ignores quiet hours. */
     fun testVoice() {
         val tamil = Lang.current == AppLang.TA
-        val english = "Hello. This is CleanSweep. I will tell you when your battery is low or full, " +
-            "when your phone is running hot, and I will read out the daily brief."
-        val tamilText = "வணக்கம். இது சுத்தம் செய்பவர். பேட்டரி குறையும்போது, முழுவதும் சார்ஜ் ஆகும்போது, " +
-            "போன் சூடாகும்போது நான் சொல்வேன்; தினசரி அறிக்கையையும் படித்துக் காட்டுவேன்."
+        val english = "Hello, this is Live Guard. I announce battery, heat and security alerts."
+        val tamilText = "வணக்கம், இது லைவ் கார்ட். பேட்டரி, வெப்பம் மற்றும் பாதுகாப்பு எச்சரிக்கைகளை அறிவிப்பேன்."
         val text = if (tamil) tamilText else english
         val spoke = Announcer.speakNow(ctx, text, if (tamil) AppLang.TA else AppLang.EN)
         mutate {
