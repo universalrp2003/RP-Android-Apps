@@ -74,7 +74,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
     def test_replacement_releases_have_unique_version_codes_and_migration_notes(self):
         modules = {
             # Candidate 3.02 builds on the published 3.01 migration note.
-            'cleaner': ('3.03', '108', 'live-guard-v3.03'),
+            'cleaner': ('3.04', '109', 'live-guard-v3.04'),
             'radio': ('1.31', '31', 'ramesh-radio-v1.31'),
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),

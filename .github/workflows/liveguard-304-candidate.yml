@@ -1,0 +1,116 @@
+name: Live Guard 3.04 concise voice candidate (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["cleaner/**", "tools/run_liveguard_304_upgrade.py", ".github/workflows/liveguard-304-candidate.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: liveguard-304-voice-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      BASELINE_SHA: 1422d1efca59f78f2a541d127d406695931b62fc7a65894010be071f2849854f
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Source and localization checks
+        run: |
+          python3 tools/verify_cleaner_localization.py
+          python3 tools/verify_cleaner_core_manifest.py
+          python3 tools/verify_apps_localization.py
+          python3 -m unittest discover -s tools/tests -q
+      - name: Unit tests, lint and exact signed candidate
+        run: |
+          set -o pipefail
+          gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee /tmp/liveguard304-build.log
+      - name: Verify new speech tests, identity and stable signer
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          tests=list(Path('cleaner/build/test-results/testReleaseUnitTest').glob('*ChargingSessionSpeechTest.xml'))
+          assert len(tests)==1, tests
+          root=ET.parse(tests[0]).getroot()
+          assert int(root.get('tests','0')) == 3 and root.get('failures') == root.get('errors') == root.get('skipped') == '0'
+          tests2=list(Path('cleaner/build/test-results/testReleaseUnitTest').glob('*VoiceAlertSpeechTest.xml'))
+          assert len(tests2)==1, tests2
+          second=ET.parse(tests2[0]).getroot()
+          assert int(second.get('tests','0')) == 4 and second.get('failures') == second.get('errors') == second.get('skipped') == '0'
+          print('::notice title=Voice wording tests::All seven focused test cases passed')
+          PY
+          mkdir -p /tmp/liveguard304-candidate /tmp/liveguard304-old
+          cp cleaner/build/outputs/apk/release/*.apk /tmp/liveguard304-candidate/candidate.apk
+          cp cleaner/build/outputs/apk/androidTest/release/*.apk /tmp/liveguard304-candidate/test.apk
+          sha256sum /tmp/liveguard304-candidate/candidate.apk | awk '{print $1}' > /tmp/liveguard304-candidate/sha256.txt
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" dump badging /tmp/liveguard304-candidate/candidate.apk > /tmp/liveguard304-candidate/badging.txt
+          grep -q "package: name='com.universalrp.cleansweep' versionCode='109' versionName='3.04'" /tmp/liveguard304-candidate/badging.txt
+          ! grep -q application-debuggable /tmp/liveguard304-candidate/badging.txt
+          "$tools/apksigner" verify --print-certs /tmp/liveguard304-candidate/candidate.apk > /tmp/liveguard304-candidate/signer.txt
+          grep -qi 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' /tmp/liveguard304-candidate/signer.txt
+          gh release download live-guard-v3.02 --pattern CleanSweep-v3.02.apk --dir /tmp/liveguard304-old
+          cp /tmp/liveguard304-old/CleanSweep-v3.02.apk /tmp/liveguard304-baseline.apk
+          echo "$BASELINE_SHA  /tmp/liveguard304-baseline.apk" | sha256sum -c -
+          "$tools/apksigner" verify --print-certs /tmp/liveguard304-baseline.apk | grep -qi 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d'
+          "$tools/aapt" dump badging /tmp/liveguard304-baseline.apk > /tmp/liveguard304-candidate/old-badging.txt
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from verify_release_permission_delta import parse_badging
+          base=Path('/tmp/liveguard304-candidate')
+          assert parse_badging((base/'old-badging.txt').read_text()) == parse_badging((base/'badging.txt').read_text()), 'APK permissions differ'
+          PY
+          echo "::notice title=Live Guard 3.04 candidate SHA256::$(cat /tmp/liveguard304-candidate/sha256.txt)"
+      - run: sudo chmod a+rw /dev/kvm
+      - name: In-place upgrade and native session tests on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash -o pipefail -c 'python3 tools/run_liveguard_304_upgrade.py 2>&1 | tee /tmp/liveguard304-upgrade.log'
+      - name: Archive exact signed tested candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: Live-Guard-3.04-signed-candidate
+          path: /tmp/liveguard304-candidate/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Surface failure diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for p in (Path('/tmp/liveguard304-build.log'),Path('/tmp/liveguard304-upgrade.log')):
+              if p.exists():
+                  lines=p.read_text(errors='replace').splitlines()
+                  hits=[s for s in lines if 'error:' in s.lower() or s.startswith('e: ') or 'FAILED' in s or 'Exception' in s]
+                  print('::error title=Live Guard candidate::'+('\n'.join(hits[-30:]) or '\n'.join(lines[-20:]))[-7000:].replace('%','%25').replace('\n','%0A'))
+          for p in Path('cleaner/build/test-results').rglob('*.xml'):
+              for failure in ET.parse(p).getroot().iter('failure'):
+                  print('::error title=Live Guard unit test::'+(failure.text or '')[-4000:].replace('%','%25').replace('\n','%0A'))
+          PY
+      - name: Remove private signing material
+        if: always()
+        run: rm -f ci-keystore/release.p12

@@ -47,8 +47,8 @@ class PowerVoiceWorker(context: Context, parameters: WorkerParameters) : Corouti
             "idle" -> {
                 val current = battery.currentA
                 if (battery.powerConnected && !battery.charging && battery.percent in 1..99 && current != null && kotlin.math.abs(current) < 0.05f)
-                    Announcer.speakAndWait(context, "The charger is connected but the battery is not charging at this sample. It may be paused; review if unexpected.",
-                        "சார்ஜர் இணைந்துள்ளது. இப்போது சார்ஜ் ஆகவில்லை; இடைநிறுத்தமாக இருக்கலாம். எதிர்பாராத நிலையில் சரிபார்க்கவும்.", event)
+                    Announcer.speakAndWait(context, "Charger connected, but not charging right now.",
+                        "சார்ஜர் இணைந்துள்ளது; இப்போது சார்ஜ் ஆகவில்லை.", event)
             }
         }
         return Result.success()

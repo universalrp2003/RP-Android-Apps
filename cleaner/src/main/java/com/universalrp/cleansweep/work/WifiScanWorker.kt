@@ -57,16 +57,9 @@ class WifiScanWorker(
 
         if (known.isNotEmpty() && fresh.isNotEmpty()) {
             val count = fresh.size
-            val tamilMsg = if (count == 1) {
-                "உங்கள் வைஃபை நெட்வொர்க்கில் இதுவரை அறியாத ஒரு சாதனம் கண்டறியப்பட்டது."
-            } else {
-                "உங்கள் வைஃபை நெட்வொர்க்கில் இதுவரை அறியாத $count சாதனங்கள் கண்டறியப்பட்டன."
-            }
-            val engMsg = if (count == 1) {
-                "One previously unrecognized device was detected on your Wi-Fi network."
-            } else {
-                "$count previously unrecognized devices were detected on your Wi-Fi network."
-            }
+            val speech = com.universalrp.cleansweep.voice.VoiceAlertSpeech.unknownWifiDevices(count)
+            val tamilMsg = speech.tamil
+            val engMsg = speech.english
 
             notifyIntruder(ctx, engMsg, tamilMsg)
             Announcer.speakAndWait(ctx, engMsg, tamilMsg, Announcer.Event.NEW_DEVICE)

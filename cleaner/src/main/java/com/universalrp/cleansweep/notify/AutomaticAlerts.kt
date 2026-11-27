@@ -103,9 +103,9 @@ object AutomaticAlerts {
         knownTransport = current
         Announcer.prefs(context).edit().putString("last_transport", current).apply()
         if (!VoiceDeliveryPolicy.changedTransport(before, current)) return // Initial state/VPN/unknown is not an invented transition.
-        if (current == "mobile") Announcer.speakIfStillRelevant(context, "You are now on mobile data; this uses your data plan.",
-            "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
-        else Announcer.speakIfStillRelevant(context, "You are back on Wi-Fi.", "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
+        if (current == "mobile") Announcer.speakIfStillRelevant(context, "Mobile data connected.",
+            "மொபைல் டேட்டா இணைந்துள்ளது.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
+        else Announcer.speakIfStillRelevant(context, "Wi-Fi connected.", "வைஃபை இணைந்துள்ளது.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
     }
 
     private fun sampleBattery(context: Context) {
@@ -122,7 +122,7 @@ object AutomaticAlerts {
             }
             if (com.universalrp.cleansweep.data.BatteryAlertPolicy.low(battery.percent, battery.powerConnected, Announcer.lowPercent(context)))
                 alert(Announcer.KEY_LAST_LOW, 6 * 60 * 60 * 1000L, Announcer.Event.BATTERY_LOW,
-                    "Battery low: ${battery.percent} percent. Please recharge.", "பேட்டரி குறைவு: ${battery.percent} சதவீதம். சார்ஜ் செய்யவும்.")
+                    "Battery low: ${battery.percent} percent.", "பேட்டரி குறைவு: ${battery.percent} சதவீதம்.")
             // A percentage-only notice is not a charge-termination claim. Deduplicate per connection,
             // and mark only after playback starts (quiet/call/offline rejection must not consume it).
             if (!battery.powerConnected) prefs.edit().remove("charge_283_spoken").remove("charge_283_rank").apply()
@@ -140,13 +140,13 @@ object AutomaticAlerts {
                     prefs.getString("charge_283_spoken", "").orEmpty(),prefs.getInt("charge_283_rank",0))
                 if (rank > previousRank) {
                     val en = when (kind) {
-                        "confirmed" -> "Battery reports full with sustained near-zero measured battery current. Unplug when convenient."
-                        "estimated" -> "Battery is 100 percent with sustained low battery intake. Charge completion is estimated, not verified."
+                        "confirmed" -> "Battery reports full; measured current is near zero."
+                        "estimated" -> "Battery at 100 percent. Charge completion is estimated."
                         else -> "Battery reached 100 percent."
                     }
                     val ta = when (kind) {
-                        "confirmed" -> "பேட்டரி முழு நிலையைக் காட்டுகிறது; அளந்த மின்னோட்டம் தொடர்ந்து பூஜ்ஜியத்திற்கு அருகில் உள்ளது. வசதியாக சார்ஜரை அகற்றலாம்."
-                        "estimated" -> "பேட்டரி நூறு சதவீதம். குறைந்த மின்னோட்டம் நீடிக்கிறது. சார்ஜ் நிறைவு ஒரு மதிப்பீடு மட்டுமே; உறுதிப்படுத்தப்படவில்லை."
+                        "confirmed" -> "பேட்டரி முழு நிலையைக் காட்டுகிறது; அளந்த மின்னோட்டம் பூஜ்ஜியத்திற்கு அருகில் உள்ளது."
+                        "estimated" -> "பேட்டரி 100 சதவீதம். சார்ஜ் நிறைவு மதிப்பீடு மட்டுமே."
                         else -> "பேட்டரி நூறு சதவீதத்தை எட்டியது."
                     }
                     Announcer.speakIfStillRelevant(context, en, ta, Announcer.Event.BATTERY_FULL,
@@ -164,7 +164,7 @@ object AutomaticAlerts {
             }
             if ((battery.temperatureC ?: -100f) >= Announcer.HOT_BATTERY_C)
                 alert(Announcer.KEY_LAST_HOT, 3 * 60 * 60 * 1000L, Announcer.Event.OVERHEAT,
-                    "The battery is running hot. Please review charging and phone use.", "பேட்டரி அதிக வெப்பமாக உள்ளது. சார்ஜ் மற்றும் போன் பயன்பாட்டை சரிபார்க்கவும்.")
+                    "Battery is hot. Check charging and phone use.", "பேட்டரி அதிக வெப்பம். சார்ஜ் மற்றும் போன் பயன்பாட்டைச் சரிபார்க்கவும்.")
         }
     }
 }

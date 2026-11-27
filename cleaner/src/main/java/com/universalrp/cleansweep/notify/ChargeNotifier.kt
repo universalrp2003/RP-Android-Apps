@@ -429,8 +429,8 @@ object ChargeNotifier {
         val thermalAtPlug = ThermalWarningPolicy.decide(battery.temperatureC, null, null)
         if (thermalAtPlug.warn && thermalAtPlug.sensor == ThermalWarningPolicy.Sensor.BATTERY) {
             val tempRound = thermalAtPlug.celsius?.toInt() ?: 0
-            val warnTamil = "எச்சரிக்கை. சார்ஜரை இணைக்கும்போது பேட்டரி வெப்பநிலை $tempRound டிகிரியாக உள்ளது. சார்ஜ் செய்யும் சூழலைச் சரிபார்க்கவும்."
-            Announcer.speakAndWait(app, "The battery is unusually warm at plug-in. Please review charging conditions.", warnTamil,
+            val warnTamil = "பேட்டரி வெப்பம் $tempRound டிகிரி. சார்ஜ் நிலையைச் சரிபார்க்கவும்."
+            Announcer.speakAndWait(app, "Battery is hot. Check charging conditions.", warnTamil,
                 Announcer.Event.OVERHEAT, onStarted = { prefs.edit().putString("voice_last_spoken_connection", token).apply() },
                 requestKey = "plug:$token")
             return
@@ -440,16 +440,9 @@ object ChargeNotifier {
         // The estimate is based on observed battery changes, not a promised completion time.
         val minutes = runCatching { batteryTimeMinutes(battery) }.getOrNull()
             ?.takeIf { it in 2..480 && battery.currentA != null && battery.currentA > 0.25f && percent in 5..94 }
-        val english = buildString {
-            append(if (percent in 0..100) "Charger connected. Battery level is $percent percent." else "Charger connected. Battery level is unavailable.")
-            if (minutes != null) append(" Estimated time to 100 percent: about $minutes minutes.")
-        }
-        val tamil = buildString {
-            append(if (percent in 0..100) "சார்ஜர் இணைக்கப்பட்டது. பேட்டரி அளவு $percent சதவீதம்." else "சார்ஜர் இணைக்கப்பட்டது. பேட்டரி அளவு தெரியவில்லை.")
-            if (minutes != null) append(" 100 சதவீதத்தை எட்ட சுமார் $minutes நிமிடங்கள் ஆகலாம்; இது ஒரு மதிப்பீடு.")
-        }
-        Announcer.speakAndWait(app, english,
-            tamil, Announcer.Event.CHARGING, onStarted = {
+        val speech = com.universalrp.cleansweep.voice.VoiceAlertSpeech.connected(percent, minutes)
+        Announcer.speakAndWait(app, speech.english,
+            speech.tamil, Announcer.Event.CHARGING, onStarted = {
                 prefs.edit().putString("voice_last_spoken_connection", token).putLong(KEY_LAST_PLUG_ANNOUNCE, System.currentTimeMillis()).apply()
             }, requestKey = "plug:$token")
     }

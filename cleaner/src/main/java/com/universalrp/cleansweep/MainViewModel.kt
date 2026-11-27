@@ -2415,15 +2415,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 val known = _state.value.knownNetworkMacs + _state.value.verifiedWifiMacs
                 val fresh = report.devices.filter { it.mac != null && it.mac !in known && !it.isSelf && !it.isGateway }
                 if (known.isNotEmpty() && fresh.isNotEmpty()) {
-                    Announcer.speakTamil(
-                        ctx,
-                        if (fresh.size == 1) {
-                            "எச்சரிக்கை! உங்கள் வைஃபை நெட்வொர்க்கில் ஒரு புதிய சாதனம் இணைந்துள்ளது."
-                        } else {
-                            "எச்சரிக்கை! உங்கள் வைஃபை நெட்வொர்க்கில் ${fresh.size} புதிய சாதனங்கள் இணைந்துள்ளன."
-                        },
-                        Announcer.Event.NEW_DEVICE,
-                    )
+                    val speech = com.universalrp.cleansweep.voice.VoiceAlertSpeech.unknownWifiDevices(fresh.size)
+                    Announcer.speak(ctx, speech.english, speech.tamil, Announcer.Event.NEW_DEVICE)
                 }
                 mutate {
                     it.copy(

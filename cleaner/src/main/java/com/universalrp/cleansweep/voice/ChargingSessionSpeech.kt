@@ -12,34 +12,28 @@ object ChargingSessionSpeech {
         val en = StringBuilder("Charger disconnected.")
         val ta = StringBuilder("சார்ஜர் துண்டிக்கப்பட்டது.")
         if (end == null) {
-            en.append(" Battery level is unavailable.")
+            en.append(" Battery level unavailable.")
             ta.append(" பேட்டரி அளவு தெரியவில்லை.")
-            if (duration != null) {
-                en.append(" Time since connection was detected: ").append(durationEnglish(duration)).append('.')
-                ta.append(" இணைப்பு கவனிக்கப்பட்டதிலிருந்து கடந்த நேரம் ").append(durationTamil(duration)).append(".")
-            }
         } else if (start == null) {
-            en.append(" Battery level is $end percent. The starting level is unavailable.")
-            ta.append(" பேட்டரி அளவு $end சதவீதம். தொடக்க அளவு தெரியவில்லை.")
-            if (duration != null) {
-                en.append(" Time since connection was detected: ").append(durationEnglish(duration)).append('.')
-                ta.append(" இணைப்பு கவனிக்கப்பட்டதிலிருந்து கடந்த நேரம் ").append(durationTamil(duration)).append(".")
-            }
+            en.append(" Battery $end percent; starting level unavailable.")
+            ta.append(" பேட்டரி $end சதவீதம்; தொடக்க அளவு தெரியவில்லை.")
         } else {
-            en.append(" Since the connection was detected, the battery level went from $start to $end percent")
-            ta.append(" இணைப்பு கவனிக்கப்பட்டதிலிருந்து பேட்டரி அளவு $start சதவீதத்திலிருந்து $end சதவீதமாக மாறியுள்ளது")
+            en.append(" Battery $start to $end percent")
+            ta.append(" பேட்டரி $start முதல் $end சதவீதம்")
             if (duration != null) {
                 en.append(" in ").append(durationEnglish(duration))
-                ta.append("; இணைப்பு கவனிக்கப்பட்டதிலிருந்து கடந்த நேரம் ").append(durationTamil(duration))
+                ta.append("; கடந்த நேரம் ").append(durationTamil(duration)).append(";")
             }
-            en.append('.')
-            ta.append('.')
             val change = end - start
             when {
-                change > 0 -> { en.append(" An increase of $change percentage points."); ta.append(" $change சதவீதப் புள்ளிகள் அதிகரித்துள்ளது.") }
-                change < 0 -> { en.append(" A decrease of ${-change} percentage points."); ta.append(" ${-change} சதவீதப் புள்ளிகள் குறைந்துள்ளது.") }
-                else -> { en.append(" The battery level did not change."); ta.append(" பேட்டரி அளவில் மாற்றம் இல்லை.") }
+                change > 0 -> { en.append(", up $change percentage points."); ta.append(" $change சதவீதப் புள்ளிகள் உயர்வு.") }
+                change < 0 -> { en.append(", down ${-change} percentage points."); ta.append(" ${-change} சதவீதப் புள்ளிகள் குறைவு.") }
+                else -> { en.append("; no change."); ta.append("; மாற்றமில்லை.") }
             }
+        }
+        if ((start == null || end == null) && duration != null) {
+            en.append(" Since connection: ").append(durationEnglish(duration)).append('.')
+            ta.append(" இணைப்பிலிருந்து கடந்த நேரம் ").append(durationTamil(duration)).append(".")
         }
         if (early && end != null) {
             en.append(" You unplugged before 90 percent.")
@@ -61,6 +55,6 @@ object ChargingSessionSpeech {
         if (minutes == 0L) return "ஒரு நிமிடத்திற்கும் குறைவாக"
         val hours = minutes / 60
         val rest = minutes % 60
-        return "சுமார் " + if (hours == 0L) "$rest நிமிடம்" else if (rest == 0L) "$hours மணி நேரம்" else "$hours மணி நேரம் $rest நிமிடம்"
+        return "சுமார் " + if (hours == 0L) "$rest நிமிடங்கள்" else if (rest == 0L) "$hours மணி நேரம்" else "$hours மணி நேரம் $rest நிமிடங்கள்"
     }
 }
