@@ -21,7 +21,7 @@ def main(candidates, out):
     # Look for broadcaster-provided ICY labels on the artist candidates. This is only
     # supporting evidence; a stream can be renamed or mislabelled by its operator.
     for row, result in zip(rows, results):
-        if row['name'] not in ('A. R. Rahman Hits HD', 'SPB Hits HD', 'Mano Hits Radio', 'JP Chandrababu Hits', 'Naga FM', 'Osai FM', 'Viduthalai FM') or result['status'] != 'audio_reachable':
+        if row['name'] not in ('A. R. Rahman Hits HD', 'SPB Hits HD', 'Mano Hits Radio', 'JP Chandrababu Hits', 'Naga FM', 'Osai FM', 'Viduthalai FM', 'Aanmeega Sudar', 'Aadhi Sivam FM', 'Om Sakthi FM', 'Vishnu FM', 'Ayngaran Radio', 'Saranam Ayyappa FM', 'Islamic Radio', 'Akashvani Kodaikanal') or result['status'] != 'audio_reachable':
             continue
         try:
             proc = subprocess.run(['ffprobe', '-v', 'error', '-rw_timeout', '5000000',
