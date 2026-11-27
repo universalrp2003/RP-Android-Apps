@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -59,6 +60,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -79,7 +85,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     // station list down before the user has chosen anything.
     var searchOpen by rememberSaveable { mutableStateOf(state.query.isNotBlank()) }
     var showSortInfo by rememberSaveable { mutableStateOf(false) }
-    var iconView by rememberSaveable { mutableStateOf(false) }
+    var iconView by rememberSaveable { mutableStateOf(true) }
     var selectedIconStation by remember { mutableStateOf<RadioStation?>(null) }
     var showGuide by rememberSaveable { mutableStateOf(false) }
     if (showGuide) {
@@ -93,7 +99,8 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         return
     }
     // Cache rows in composition, not in the non-composable LazyListScope builder.
-    val iconRows = remember(state.visible) { state.visible.chunked(4) }
+    val gridColumns = StationGridLayout.columns(LocalConfiguration.current.screenWidthDp, LocalDensity.current.fontScale)
+    val iconRows = remember(state.visible, gridColumns) { state.visible.chunked(gridColumns) }
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -349,30 +356,16 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
 
         if (iconView) {
             items(iconRows, key = { row -> row.first().url }) { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { station ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(SurfaceC)
-                                .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
-                                .clickable { selectedIconStation = station },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            // Compact mode intentionally shows only the station's artwork or
-                            // monogram. Tapping opens a name-and-play confirmation; it never
-                            // starts a stream from an accidental icon touch.
-                            StationLogo(station, 52.dp)
-                        }
+                        StationGalleryCard(
+                            station = station,
+                            playing = state.nowPlaying?.url == station.url,
+                            modifier = Modifier.weight(1f),
+                            onOpen = { selectedIconStation = station },
+                        )
                     }
-                    repeat(4 - row.size) {
-                        Spacer(Modifier.weight(1f).aspectRatio(1f))
-                    }
+                    repeat(gridColumns - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         } else {
@@ -397,7 +390,27 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         AlertDialog(
             onDismissRequest = { selectedIconStation = null },
             title = { Text(station.name, color = TextPrimary) },
-            text = { Text(station.subtitle.ifBlank { "Live stream" }, color = TextSecondary) },
+            text = {
+                Column {
+                    Text(station.subtitle.ifBlank { AppStrings.translate("Live stream") }, color = TextSecondary)
+                    if (com.universalrp.tamilnadufm.data.RadioStreamPolicy.heldForReview(station.url)) {
+                        Text(if (AppLanguageState.current == AppLanguage.TAMIL) "வழங்குநர் ஒலிபரப்பு பரிசீலனையில்" else "Provider stream held for review", color = Warn)
+                    } else if (!station.verified) {
+                        Text(if (AppLanguageState.current == AppLanguage.TAMIL) "சரிபார்க்கப்படாத ஒலிபரப்பு" else "Stream not verified", color = Warn)
+                    }
+                    val favourite = state.favourites.contains(station.url.lowercase())
+                    Row {
+                        IconButton(onClick = { vm.toggleFavourite(station) }) {
+                            Icon(if (favourite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                                contentDescription = AppStrings.translate(if (favourite) "Remove favourite" else "Add favourite"),
+                                tint = if (favourite) Gold else TextSecondary)
+                        }
+                        IconButton(onClick = { vm.shareStation(station) }) {
+                            Icon(Icons.Filled.Share, contentDescription = AppStrings.translate("Share"), tint = TextSecondary)
+                        }
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
                     selectedIconStation = null
@@ -410,6 +423,24 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                 }
             },
         )
+    }
+}
+
+/** Picture above a readable name, inspired by the owner's reference, without copying its artwork. */
+@Composable
+private fun StationGalleryCard(station: RadioStation, playing: Boolean, modifier: Modifier = Modifier, onOpen: () -> Unit) {
+    val shape = RoundedCornerShape(10.dp)
+    Column(
+        modifier.clip(shape).background(Color.White)
+            .border(if (playing) 2.dp else 1.dp, if (playing) Saffron else OutlineC, shape)
+            .clickable(role = Role.Button, onClick = onOpen),
+    ) {
+        StationArtwork(station, Modifier.fillMaxWidth().aspectRatio(1.55f), decorative = true)
+        Box(Modifier.fillMaxWidth().heightIn(min = 50.dp).padding(horizontal = 5.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center) {
+            Text(station.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF18151C), textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
