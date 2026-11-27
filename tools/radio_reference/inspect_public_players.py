@@ -20,6 +20,15 @@ PAGES = {
     'Gilli official': 'https://gillifm.com/',
     'Muthamil official': 'https://muthamiltv.com/',
     'Mersey Tamil directory': 'https://liveradios.in/mersey-radio-fm.html',
+    'Sona official': 'https://www.sona.fm/',
+    'Sona Zeno': 'https://zeno.fm/radio/sona-fm-107-8/',
+    'Shyamalavani Zeno': 'https://zeno.fm/radio/shyamalavani-crs/',
+    'Pudhugai Zeno': 'https://zeno.fm/radio/krishna-fm/',
+    'Vaanpura Zeno': 'https://zeno.fm/radio/vaanpura-tamil-radio/',
+    'Kadal Osai official': 'https://kadalosaifm.in/',
+    'Durham Tamil official': 'https://durhamtamilradio.com/',
+    'ETR official': 'https://etr.fm/',
+    'Shaivam official': 'https://shaivam.org/radio/',
 }
 
 
