@@ -1,3 +1,8 @@
+## Live Guard 3.05 — owner-authorized signed release
+
+- [CleanSweep-v3.05.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.05/CleanSweep-v3.05.apk): 14,813,623 bytes; SHA-256 `304c31b778b4020b136dbb24ba2c96fb6f6172c921ba0da268a69585e4e2c42b`.
+- Published without rebuilding by run 45975945605 from signed build 45975418127. Package, version, signer and permissions were checked; no phone or emulator installation, upgrade or audible playback was tested. [Receipt](live-guard-3.05-publication-receipt.json).
+
 ## System App Disabler 0.5.1 — exact tested candidate
 
 - [System-App-Disabler-v0.5.1.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.5.1/System-App-Disabler-v0.5.1.apk): 11,685,141 bytes; SHA-256 `d2336e614f52cfb035a64fa3cbf739bbc823d6b67d6c5c32951ac7dde9ae230a`.

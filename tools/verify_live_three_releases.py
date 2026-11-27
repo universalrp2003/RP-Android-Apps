@@ -124,6 +124,7 @@ def main():
     checks.append(('CleanSweep-v3.01.apk', json.loads((ROOT/'docs/live-guard-3.01-publication-receipt.json').read_text())))
     checks.append(('CleanSweep-v3.02.apk', json.loads((ROOT/'docs/live-guard-3.02-publication-receipt.json').read_text())))
     checks.append(('CleanSweep-v3.04.apk', json.loads((ROOT/'docs/live-guard-3.04-publication-receipt.json').read_text())))
+    checks.append(('CleanSweep-v3.05.apk', json.loads((ROOT/'docs/live-guard-3.05-publication-receipt.json').read_text())))
     checks.append(('CleanSweep-v2.99.apk', json.loads((ROOT/'docs/live-guard-2.99-publication-receipt.json').read_text())))
     for name, pin in checks:
         # 80 MB keeps every post-deploy download bounded while admitting Animal Sounds (52.8 MB,

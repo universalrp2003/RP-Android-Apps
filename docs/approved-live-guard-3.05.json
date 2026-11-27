@@ -1,0 +1,11 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner requested publication of the small news month speech fix without extended testing. Device, emulator upgrade, and audible playback tests were not performed.",
+  "source": "8aa4acbe7b9bf89f9746e3453172eb3ead03b88a",
+  "run_id": 45975418127,
+  "run_attempt": 1,
+  "artifact_id": 15186767817,
+  "artifact_digest": "sha256:269edf5c6abc15379c1e0845b1943f5f39d0fd2c5dac0c1a7cc34721102691c1",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "draft_release_id": 460402992
+}
