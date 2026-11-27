@@ -8,29 +8,34 @@ import concurrent.futures
 import datetime
 import json
 import pathlib
-import sys
 import subprocess
+import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from audit_radio_catalogue import probe
 
 
+def probe_with_tags(row):
+    result = probe(row)
+    if result['status'] != 'audio_reachable' or result['providerReview']:
+        return result
+    # Broadcaster-provided labels are supporting evidence only; the operator can
+    # change them and they do not establish station identity or rights.
+    try:
+        proc = subprocess.run(['ffprobe', '-v', 'error', '-rw_timeout', '5000000',
+            '-protocol_whitelist', 'http,https,tcp,tls,crypto,httpproxy',
+            '-show_entries', 'format_tags', '-of', 'json', row['url']],
+            capture_output=True, text=True, timeout=12)
+        result['reportedTags'] = json.loads(proc.stdout or '{}').get('format', {}).get('tags', {})
+    except Exception as exc:
+        result['reportedTagsError'] = type(exc).__name__
+    return result
+
+
 def main(candidates, out):
     rows = json.loads(pathlib.Path(candidates).read_text(encoding='utf8'))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-        results = list(pool.map(probe, rows))
-    # Look for broadcaster-provided ICY labels on the artist candidates. This is only
-    # supporting evidence; a stream can be renamed or mislabelled by its operator.
-    for row, result in zip(rows, results):
-        if row['name'] not in ('A. R. Rahman Hits HD', 'SPB Hits HD', 'Mano Hits Radio', 'JP Chandrababu Hits', 'Naga FM', 'Osai FM', 'Viduthalai FM', 'Aanmeega Sudar', 'Aadhi Sivam FM', 'Om Sakthi FM', 'Vishnu FM', 'Ayngaran Radio', 'Saranam Ayyappa FM', 'Islamic Radio', 'Akashvani Kodaikanal') or result['status'] != 'audio_reachable':
-            continue
-        try:
-            proc = subprocess.run(['ffprobe', '-v', 'error', '-rw_timeout', '5000000',
-                '-protocol_whitelist', 'http,https,tcp,tls,crypto,httpproxy',
-                '-show_entries', 'format_tags', '-of', 'json', row['url']],
-                capture_output=True, text=True, timeout=12)
-            result['reportedTags'] = json.loads(proc.stdout or '{}').get('format', {}).get('tags', {})
-        except Exception as exc:
-            result['reportedTagsError'] = type(exc).__name__
+    # Keep the load bounded, including when many candidates share a host.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(probe_with_tags, rows))
     report = {'checkedAtRunnerUtc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
               'candidates': rows, 'results': results,
               'limits': 'Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review.'}
