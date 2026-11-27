@@ -2,7 +2,7 @@ name: Radio historical reference research (no publication)
 on:
   push:
     branches: ["arena/30198928-rp-android-apps"]
-    paths: ["tools/radio_reference/fetch_legacy_source.py", ".github/workflows/radio-reference-source.yml"]
+    paths: ["tools/radio_reference/fetch_legacy_source.py", "tools/radio_reference/fetch_player_source.py", ".github/workflows/radio-reference-source.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,3 +33,30 @@ jobs:
           payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
           result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
           print('::notice title=Historical source receipt::blob='+json.loads(result.stdout)['sha'])
+
+  player:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve public player metadata without executing it
+        run: python3 tools/radio_reference/fetch_player_source.py "$RUNNER_TEMP/player-reference"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-player-reference
+          retention-days: 14
+          path: ${{ runner.temp }}/player-reference/player-source.json
+      - name: Expose receipt blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'player-reference'/'player-source.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Player reference receipt::blob='+json.loads(result.stdout)['sha'])
