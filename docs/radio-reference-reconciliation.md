@@ -10,4 +10,6 @@ The reported `psrlive*.listenon.in` provider family remains held for review. Unr
 
 SPB Hits HD, A. R. Rahman Hits HD, Mano Hits and JP Chandrababu Hits also reported matching ICY station names during a later bounded probe (run 46030621342). This supports the historical listings but is not continuous content review. Historical Susheela and SPB alternatives, Radio Gilli, Kodai Ragam, KJ Yesudas, Dhanush and SS Radio Natham did not respond to that probe; the name-only lookup and earlier source listing are not proof they are permanently offline.
 
-A further public player source returned a verification challenge in CI run 46030951509, not usable player metadata; no endpoints were imported from it. A separate historical GitHub gist is being probed cautiously and may be stale.
+A further public player source returned a verification challenge in CI run 46030951509, not usable player metadata; no endpoints were imported from it. A separate [historical GitHub gist](https://gist.github.com/nsdevaraj/a99ba4647f9da9413a51b259a55674ff) supplied candidate URLs for Naga FM, Osai FM and Viduthalai FM; all three were unavailable in bounded probe run 46031186224 (receipt blob `def83a6624e17edcf153c8bb843837a2aaf5cc7a`). They were not added; other streams may still exist.
+
+KS Chitra name variants already appear in the existing seed; name matches alone do not establish current content or reachability. Artist searches accept spelling variants, but finding a listing is not confirmation of playback.
