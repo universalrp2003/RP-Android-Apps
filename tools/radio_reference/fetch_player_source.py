@@ -27,7 +27,10 @@ def read(url):
     with urllib.request.urlopen(req,timeout=20) as response:
         data=response.read(3_000_001)
         if len(data)>3_000_000:raise ValueError('response too large')
-        return data.decode('utf8',errors='replace')
+        text = data.decode('utf8', errors='replace')
+        if 'Please wait while your request is being verified' in text:
+            raise ValueError('verification challenge; no player data retrieved')
+        return text
 
 def main(output):
     results={};errors=[]
