@@ -1,0 +1,35 @@
+name: Radio historical reference research (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["tools/radio_reference/fetch_legacy_source.py", ".github/workflows/radio-reference-source.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read bounded public historical listing
+        run: python3 tools/radio_reference/fetch_legacy_source.py "$RUNNER_TEMP/legacy-reference"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-historical-reference
+          retention-days: 14
+          path: ${{ runner.temp }}/legacy-reference/historical-source.json
+      - name: Expose receipt blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'legacy-reference'/'historical-source.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Historical source receipt::blob='+json.loads(result.stdout)['sha'])
