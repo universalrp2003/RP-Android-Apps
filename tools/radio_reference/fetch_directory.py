@@ -7,7 +7,9 @@ current playback, programme content, or rights. No station is added automaticall
 import concurrent.futures
 import json
 import pathlib
+import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 
@@ -16,6 +18,7 @@ USER_AGENT = 'RameshRadio/1.0 reference-station-reconciliation (+https://github.
 
 
 def query(params):
+    time.sleep(0.5)  # Keep discovery gentle on the community-run directory.
     errors = []
     for base in MIRRORS:
         try:
@@ -33,6 +36,27 @@ def query(params):
     return [], errors
 
 
+def reference_queries(inventory):
+    """Choose distinctive ASCII name tokens, avoiding broad searches like radio and tamil.
+
+    These are discovery hints only: every result still requires individual identity review.
+    """
+    ignored = {'radio', 'tamil', 'song', 'songs', 'hits', 'live', 'city', 'online',
+               'music', 'service', 'fm', 'hd', 'old', 'new', 'logo', 'tile', 'cropped',
+               'continue', 'three', 'news', 'part', 'stations'}
+    terms = set()
+    for line in inventory.splitlines():
+        if not re.match(r'^\d\d \|', line):
+            continue
+        for label in line.split(' | ')[1:]:
+            label = re.sub(r'\[[^]]*\]', '', label)
+            words = [x.lower() for x in re.findall(r'[A-Za-z0-9]+', label)]
+            words = [w for w in words if len(w) >= 4 and w not in ignored and not w.isdigit()]
+            if words:
+                terms.add(max(words, key=len))
+    return sorted(terms)
+
+
 def main(out):
     # Also include named artists: some directory entries have no language metadata.
     requests = [dict(language='tamil', limit='1000', offset=str(offset), order='votes', reverse='true') for offset in (0, 1000, 2000)]
@@ -42,7 +66,9 @@ def main(out):
         'susheela', 'suseela', 'yesudas', 'mano', 'harris', 'anirudh', 'yuvan', 'vidyasagar',
         'hariharan', 'janaki', 'swarnalatha', 'kannadasan', 'soundararajan', 'viswanathan',
         'vadivelu', 'goundamani', 'vivek', 'santhanam', 'tamil comedy')]
-    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+    inventory = (pathlib.Path(__file__).parent/'screenshot-inventory.txt').read_text(encoding='utf8')
+    requests += [dict(name=term, limit='50') for term in reference_queries(inventory)]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(query, requests))
     rows = {}; failures = []
     for params, (data, errors) in zip(requests, results):
