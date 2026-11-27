@@ -1,0 +1,34 @@
+name: Publish authorized System App Disabler 0.5.1 exact candidate
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["docs/approved-appdisabler-0.5.1.json"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: appdisabler-publish-051
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/30198928-rp-android-apps'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/download-artifact@v4
+        with:
+          name: appdisabler-0.5.1-stable-signed-tested-candidate
+          run-id: 45963927491
+          github-token: ${{ github.token }}
+          path: /tmp/appdisabler051-publish
+      - name: Verify and publish exact tested candidate without rebuilding
+        run: python3 tools/publish_appdisabler_051.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-0.5.1-publication-receipt
+          path: /tmp/appdisabler051-publication-receipt.json
+          retention-days: 30

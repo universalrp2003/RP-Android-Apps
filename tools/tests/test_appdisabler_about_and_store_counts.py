@@ -320,7 +320,7 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertIn('"Blocked"', self.ui)
 
     def test_disabled_and_suspended_states_precede_running_status(self):
-        disabled = self.ui.index('!app.isEnabled -> "● disabled — tap Enable to restore"')
+        disabled = self.ui.index('!app.isEnabled -> "● disabled — Enable tries recovery"')
         suspended = self.ui.index('app.isSuspended -> "● suspended — may still run"')
         running = self.ui.index('-> "● running now"')
         stopped = self.ui.index('app.isStopped -> "● marked stopped by Android"')

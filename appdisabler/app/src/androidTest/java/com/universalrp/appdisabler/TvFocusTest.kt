@@ -3,11 +3,13 @@ package com.universalrp.appdisabler
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performScrollTo
@@ -59,6 +61,9 @@ class TvFocusTest {
         awaitFocus("disabler-guide-start")
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.onNodeWithTag("disabler-nav-setup").assertExists()
+        // Read-only guidance is reachable on TV without granting Shizuku or changing a package.
+        compose.onNodeWithText("Any app may be needed", substring = true).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Back up important data separately", substring = true).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun searchAndFilterControlsWorkWithRemote() {
