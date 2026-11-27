@@ -1,0 +1,543 @@
+{
+  "checkedAtRunnerUtc": "2026-11-27T16:27:07.341645+00:00",
+  "candidates": [
+    {
+      "id": "ref-kodaicity-fm",
+      "name": "Kodaicity FM",
+      "url": "https://listen.openstream.co/6812/audio",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/6",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 22,
+      "referenceName": "Kodaicity FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/6"
+    },
+    {
+      "id": "ref-radio-blacksheep",
+      "name": "Radio Blacksheep",
+      "url": "https://stream.zeno.fm/v0zd6xmpgkovv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/7",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 16,
+      "referenceName": "Radio Blacksheep",
+      "referenceEvidence": "https://www.tamilradios.com/page/7"
+    },
+    {
+      "id": "ref-radio-lime",
+      "name": "Radio Lime",
+      "url": "https://s5.radio.co/sa8b2e14b5/listen",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/7",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 16,
+      "referenceName": "Radio Lime",
+      "referenceEvidence": "https://www.tamilradios.com/page/7"
+    },
+    {
+      "id": "ref-ss-radio-natham",
+      "name": "SS Radio Natham",
+      "url": "https://cast6.asurahosting.com/proxy/ssradio/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/8",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 10,
+      "referenceName": "SS Radio Natham",
+      "referenceEvidence": "https://www.tamilradios.com/page/8"
+    },
+    {
+      "id": "ref-tamil-ai-fm",
+      "name": "Tamil AI FM",
+      "url": "https://servidor23-4.brlogic.com:7072/live",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/8",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 13,
+      "referenceName": "Tamil AI FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/8"
+    },
+    {
+      "id": "ref-na-muthukumar-hits",
+      "name": "Na Muthukumar Hits",
+      "url": "https://stream-172.zeno.fm/v7d1g1hvfy8uv?",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/6",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 5,
+      "referenceName": "Na Muthukumar Hits",
+      "referenceEvidence": "https://www.tamilradios.com/page/6"
+    },
+    {
+      "id": "ref-namathu-fm",
+      "name": "Namathu FM",
+      "url": "http://198.178.123.8:10526/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/7",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 24,
+      "referenceName": "Namathu FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/7"
+    },
+    {
+      "id": "ref-thuli-fm",
+      "name": "Thuli FM",
+      "url": "https://s4.voscast.com:8735/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/9",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 26,
+      "referenceName": "Thuli FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/9"
+    },
+    {
+      "id": "ref-punnagai-fm",
+      "name": "Punnagai FM",
+      "url": "https://stream.zeno.fm/q41zyb13bzzuv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/7",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 23,
+      "referenceName": "Punnagai FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/7"
+    },
+    {
+      "id": "61aee13c-9470-40f6-baef-c3fabd5079b3",
+      "name": "Chellam FM (comparison only)",
+      "url": "https://sugu.radioca.st/stream/;stream/1",
+      "favicon": "https://liveradios.in/wp-content/uploads/chellamfm.jpg",
+      "homepage": "",
+      "tags": "",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "tamil",
+      "codec": "MP3",
+      "bitrate": 128,
+      "votes": 160,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": true,
+      "source": "directory",
+      "order": 0
+    },
+    {
+      "id": "ref-paaddu-fm",
+      "name": "Paaddu FM (comparison only)",
+      "url": "https://sugu.radioca.st/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/3",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 28,
+      "referenceName": "Paaddu FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/3"
+    },
+    {
+      "id": "df6fd1af-734b-4d51-b446-ebd1c8d29a57",
+      "name": "Punnagai Radio (comparison only)",
+      "url": "https://onair.punnagairadio.com/8146/stream",
+      "favicon": "https://punnagairadio.com/public/frontend/assets/images/logo/logo.png",
+      "homepage": "https://punnagairadio.com/",
+      "tags": "entertainment,local news,tamil,tamil music",
+      "country": "Sri Lanka",
+      "countryCode": "LK",
+      "state": "Colombo",
+      "language": "tamil",
+      "codec": "AAC+",
+      "bitrate": 64,
+      "votes": 210,
+      "category": "tamil_news",
+      "isCustom": false,
+      "verified": false,
+      "source": "directory",
+      "order": 0
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-kodaicity-fm",
+      "name": "Kodaicity FM",
+      "url": "https://listen.openstream.co/6812/audio",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "64",
+        "icy-pub": "0",
+        "icy-description": "Unspecified description",
+        "icy-url": "http://localhost/",
+        "icy-genre": "Unspecified",
+        "icy-name": "Kodai city FM",
+        "StreamTitle": "Unknown - SPB HITS 118 [1PaH]"
+      }
+    },
+    {
+      "id": "ref-radio-blacksheep",
+      "name": "Radio Blacksheep",
+      "url": "https://stream.zeno.fm/v0zd6xmpgkovv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "Radio Blacksheep",
+        "icy-br": "128",
+        "StreamTitle": "Bombay Jeyasri - MassTamilan.com - Vaseegara - MassTamilan.com",
+        "StreamUrl": "&artist=Bombay Jeyasri - MassTamilan.com&album=Minnale - MassTamilan.com"
+      }
+    },
+    {
+      "id": "ref-radio-lime",
+      "name": "Radio Lime",
+      "url": "https://s5.radio.co/sa8b2e14b5/listen",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "128",
+        "icy-name": "Radio Lime Tamil",
+        "icy-pub": "1",
+        "icy-url": "http://www.radiolime.co.uk",
+        "StreamTitle": "Kay Kay ::: www.sensongs.com :::  � Riya collections � - En Vennilave ::: www.sensongs.com :::  � Riya collections �"
+      }
+    },
+    {
+      "id": "ref-ss-radio-natham",
+      "name": "SS Radio Natham",
+      "url": "https://cast6.asurahosting.com/proxy/ssradio/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "SS Radio Natham",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Engey En Kj Yesudas - SSRadioNatham"
+      }
+    },
+    {
+      "id": "ref-tamil-ai-fm",
+      "name": "Tamil AI FM",
+      "url": "https://servidor23-4.brlogic.com:7072/live",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-aim": "N/A",
+        "icy-br": "128",
+        "icy-genre": "Misc",
+        "icy-icq": "N/A",
+        "icy-irc": "N/A",
+        "icy-name": "Tamil Ai Fm",
+        "icy-prebuffer": "64000",
+        "icy-pub": "1",
+        "StreamTitle": "Saran & Mix 1"
+      }
+    },
+    {
+      "id": "ref-na-muthukumar-hits",
+      "name": "Na Muthukumar Hits",
+      "url": "https://stream-172.zeno.fm/v7d1g1hvfy8uv?",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "Na Mu Hits",
+        "icy-br": "128",
+        "StreamTitle": "DRGM - 04 - Soda Bottle-(www.SenSongsMp3.co)",
+        "StreamUrl": "&artist=DRGM&album=Aaru %282005%29"
+      }
+    },
+    {
+      "id": "ref-namathu-fm",
+      "name": "Namathu FM",
+      "url": "http://198.178.123.8:10526/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "128",
+        "icy-description": "VosCast Auto DJ",
+        "icy-genre": "Assorted",
+        "icy-name": "Namathu FM",
+        "icy-pub": "1",
+        "icy-url": "http://voscast.com",
+        "StreamTitle": "Sid Sriram - MassTamilan.com - Yey Penney En Nenjil (High On Love) - MassTamilan.com"
+      }
+    },
+    {
+      "id": "ref-thuli-fm",
+      "name": "Thuli FM",
+      "url": "https://s4.voscast.com:8735/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "audio": [],
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "ref-punnagai-fm",
+      "name": "Punnagai FM",
+      "url": "https://stream.zeno.fm/q41zyb13bzzuv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "Punnagai Fm",
+        "icy-br": "128",
+        "StreamTitle": "Deva love songs hits-1 _Audio jukebox"
+      }
+    },
+    {
+      "id": "61aee13c-9470-40f6-baef-c3fabd5079b3",
+      "name": "Chellam FM (comparison only)",
+      "url": "https://sugu.radioca.st/stream/;stream/1",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Paaddu Stream",
+        "icy-genre": "Paaddu",
+        "icy-br": "128",
+        "icy-sr": "44100",
+        "icy-url": "http://www.paaddu.com",
+        "icy-pub": "1",
+        "StreamTitle": "paaddu.com - www.tamiloli.com [3Lo3]"
+      }
+    },
+    {
+      "id": "ref-paaddu-fm",
+      "name": "Paaddu FM (comparison only)",
+      "url": "https://sugu.radioca.st/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Paaddu Stream",
+        "icy-genre": "Paaddu",
+        "icy-br": "128",
+        "icy-sr": "44100",
+        "icy-url": "http://www.paaddu.com",
+        "icy-pub": "1",
+        "StreamTitle": "paaddu.com - www.tamiloli.com [3Lo3]"
+      }
+    },
+    {
+      "id": "df6fd1af-734b-4d51-b446-ebd1c8d29a57",
+      "name": "Punnagai Radio (comparison only)",
+      "url": "https://onair.punnagairadio.com/8146/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "detail": "gaierror"
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}
