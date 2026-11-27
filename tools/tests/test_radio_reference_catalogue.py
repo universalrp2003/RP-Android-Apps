@@ -3,9 +3,19 @@ import importlib.util
 import json
 import pathlib
 import unittest
+import urllib.parse
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 REFERENCE = ROOT / 'tools/radio_reference'
+
+
+def endpoint_key(url):
+    """Flag common Shoutcast aliases for review, not a proof of equivalence."""
+    parsed = urllib.parse.urlsplit(url.strip())
+    path = parsed.path.rstrip('/')
+    if path in ('/;', '/;stream.mp3'):
+        path = ''
+    return (parsed.netloc.lower(), path, parsed.query)
 
 
 class RadioReferenceCatalogueTest(unittest.TestCase):
@@ -17,10 +27,10 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
 
     def test_candidate_receipt_and_added_seed_entries(self):
         seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())
-        receipts = [json.loads((REFERENCE/name).read_text()) for name in ('first-probe-receipt.json', 'second-probe-receipt.json', 'artist-probe-receipt.json', 'devotional-probe-receipt.json', 'expanded-probe-receipt.json', 'further-probe-receipt.json', 'regional-probe-receipt.json', 'community-artist-probe-receipt.json')]
+        receipts = [json.loads((REFERENCE/name).read_text()) for name in ('first-probe-receipt.json', 'second-probe-receipt.json', 'artist-probe-receipt.json', 'devotional-probe-receipt.json', 'expanded-probe-receipt.json', 'further-probe-receipt.json', 'regional-probe-receipt.json', 'community-artist-probe-receipt.json', 'identity-review-probe-receipt.json')]
         results = {r['url']: r for receipt in receipts for r in receipt['results']}
         added = [s for s in seed['stations'] if s.get('source') in ('reference-directory', 'reference-manual')]
-        self.assertEqual(len(added), 81)
+        self.assertEqual(len(added), 85)
         self.assertEqual(seed['total'], len(seed['stations']))
         self.assertEqual(seed['verifiedCount'], sum(s.get('verified', True) for s in seed['stations']))
         self.assertEqual(seed['counts'], {k: sum(s['category'] == k for s in seed['stations']) for k in seed['counts']})
@@ -32,6 +42,18 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
             self.assertFalse(result['contentReviewed'])
             self.assertEqual(station['auditStatus'], 'audio_reachable')
             self.assertTrue(1 <= station['referenceScreen'] <= 38)
+
+    def test_added_endpoints_do_not_duplicate_common_url_forms(self):
+        self.assertEqual(endpoint_key('http://example.test:5206/;stream.mp3'),
+                         endpoint_key('https://example.test:5206/'))
+        self.assertNotEqual(endpoint_key('https://example.test/a?mount=one'),
+                            endpoint_key('https://example.test/a?mount=two'))
+        seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())['stations']
+        for station in seed:
+            if station.get('source') in ('reference-directory', 'reference-manual'):
+                duplicates = [s['name'] for s in seed if s is not station and
+                              endpoint_key(s['url']) == endpoint_key(station['url'])]
+                self.assertEqual(duplicates, [], f"{station['name']}: {duplicates}")
 
     def test_nesaganam_keeps_original_id_without_duplicate_station(self):
         seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())
