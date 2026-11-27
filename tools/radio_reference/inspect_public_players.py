@@ -42,14 +42,20 @@ def inspect(url):
         path = parsed.path
         if re.search(r'(stream|listen|radio\.co|zeno\.fm|\.m3u8|\.mp3|\.aac|player|embed)', host + path, re.I):
             matches.add(urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, path, '', '')))
-    return sorted(matches)[:250]
+    contexts = []
+    if url == PAGES['Aanmeega Sudar directory']:
+        for needle in ('ymkr7th4f2zuv', 'aadhisivam', 'omsakthifm', 'vishnufm', 'ayngaranradio', 'islamicradio', 'saranamayyappa'):
+            offset = text.find(needle)
+            if offset >= 0:
+                contexts.append(text[max(0, offset - 300):offset + len(needle) + 100])
+    return {'urls': sorted(matches)[:250], 'contexts': contexts}
 
 
 def main(out):
     result = {}
     for name, url in PAGES.items():
         try:
-            result[name] = {'page': url, 'urlLeads': inspect(url)}
+            result[name] = {'page': url, 'leads': inspect(url)}
         except Exception as exc:
             result[name] = {'page': url, 'error': type(exc).__name__}
     path = pathlib.Path(out)
