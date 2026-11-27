@@ -40,8 +40,8 @@ class PublicationBoundaryTest(unittest.TestCase):
 
     def test_version_and_notes_track_the_module(self):
         gradle = (ROOT / 'cleaner/build.gradle.kts').read_text()
-        self.assertIn('versionName = "3.02"', gradle)
-        self.assertIn('versionCode = 107', gradle)
+        self.assertIn('versionName = "3.03"', gradle)
+        self.assertIn('versionCode = 108', gradle)
         note = (ROOT / 'releases/live-guard-v3.00.md').read_text()
         # Tamil must be the LAST section: the English view is everything before it.
         headings = [line for line in note.splitlines() if line.startswith('## ')]

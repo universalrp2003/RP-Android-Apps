@@ -7,6 +7,8 @@ import com.universalrp.cleansweep.data.BatteryReader
 import com.universalrp.cleansweep.notify.ChargeNotifier
 import com.universalrp.cleansweep.voice.Announcer
 import com.universalrp.cleansweep.voice.VoiceDeliveryPolicy
+import com.universalrp.cleansweep.voice.ChargingSessionSpeech
+import com.universalrp.cleansweep.voice.ChargingVoiceSnapshot
 import java.util.concurrent.TimeUnit
 
 /** Short enabled-event job, not a new persistent monitor. Keeps TTS alive after a power broadcast returns. */
@@ -28,13 +30,18 @@ class PowerVoiceWorker(context: Context, parameters: WorkerParameters) : Corouti
             "plug" -> if (battery.powerConnected) ChargeNotifier.announcePluggedIn(context, delayMs = 600)
             "unplug" -> {
                 val hour = java.time.LocalTime.now().hour
-                if (!battery.powerConnected && battery.percent in 0..100) {
+                if (!battery.powerConnected) {
+                    val snapshot = ChargingVoiceSnapshot(
+                        inputData.getInt("start_percent", -1).takeIf { it in 0..100 },
+                        inputData.getInt("end_percent", -1).takeIf { it in 0..100 },
+                        inputData.getLong("duration_ms", -1).takeIf { it >= 0 },
+                    )
                     val early = com.universalrp.cleansweep.data.ChargeAnnouncementSettings.earlyReminder(context) &&
-                        battery.percent < Announcer.UNPLUG_BEFORE_PERCENT && hour >= Announcer.unplugStartHour(context)
-                    Announcer.speakAndWait(context, "Charger removed. Battery level is ${battery.percent} percent." +
-                        if (early) " Removed before ${Announcer.UNPLUG_BEFORE_PERCENT} percent." else "",
-                        "சார்ஜர் அகற்றப்பட்டது. பேட்டரி அளவு ${battery.percent} சதவீதம்." +
-                            if (early) " ${Announcer.UNPLUG_BEFORE_PERCENT} சதவீதத்திற்கு முன் அகற்றப்பட்டது." else "", event)
+                        snapshot.end != null && snapshot.end < Announcer.UNPLUG_BEFORE_PERCENT && hour >= Announcer.unplugStartHour(context)
+                    val speech = ChargingSessionSpeech.make(snapshot, early)
+                    Announcer.speakAndWait(context, speech.english, speech.tamil, event,
+                        stillRelevant = { prefs.getString("voice_connection_token", "") == token &&
+                            runCatching { !BatteryReader.read(context).powerConnected }.getOrDefault(false) })
                 }
             }
             "idle" -> {
@@ -48,10 +55,12 @@ class PowerVoiceWorker(context: Context, parameters: WorkerParameters) : Corouti
     }
 
     companion object {
-        fun schedule(context: Context, kind: String, token: String) {
+        fun schedule(context: Context, kind: String, token: String, snapshot: ChargingVoiceSnapshot? = null) {
             if (kind !in setOf("plug", "unplug", "idle")) return
             val request = OneTimeWorkRequestBuilder<PowerVoiceWorker>()
-                .setInputData(workDataOf("kind" to kind, "connection" to token, "trigger_at" to System.currentTimeMillis()))
+                .setInputData(workDataOf("kind" to kind, "connection" to token, "trigger_at" to System.currentTimeMillis(),
+                    "start_percent" to (snapshot?.start ?: -1), "end_percent" to (snapshot?.end ?: -1),
+                    "duration_ms" to (snapshot?.elapsedMs ?: -1L)))
             if (kind == "idle") request.setInitialDelay(25, TimeUnit.SECONDS)
             else if (Build.VERSION.SDK_INT >= 31) request.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             runCatching { WorkManager.getInstance(context.applicationContext).enqueueUniqueWork("voice_power_${kind}_$token", ExistingWorkPolicy.KEEP, request.build()) }

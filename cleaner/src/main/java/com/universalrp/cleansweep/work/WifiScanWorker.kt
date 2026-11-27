@@ -58,14 +58,14 @@ class WifiScanWorker(
         if (known.isNotEmpty() && fresh.isNotEmpty()) {
             val count = fresh.size
             val tamilMsg = if (count == 1) {
-                "எச்சரிக்கை! உங்கள் வைஃபை நெட்வொர்க்கில் ஒரு புதிய சாதனம் இணைந்துள்ளது."
+                "உங்கள் வைஃபை நெட்வொர்க்கில் இதுவரை அறியாத ஒரு சாதனம் கண்டறியப்பட்டது."
             } else {
-                "எச்சரிக்கை! உங்கள் வைஃபை நெட்வொர்க்கில் $count புதிய சாதனங்கள் இணைந்துள்ளன."
+                "உங்கள் வைஃபை நெட்வொர்க்கில் இதுவரை அறியாத $count சாதனங்கள் கண்டறியப்பட்டன."
             }
             val engMsg = if (count == 1) {
-                "Alert: 1 new unrecognized device joined your Wi-Fi network."
+                "One previously unrecognized device was detected on your Wi-Fi network."
             } else {
-                "Alert: $count new unrecognized devices joined your Wi-Fi network."
+                "$count previously unrecognized devices were detected on your Wi-Fi network."
             }
 
             notifyIntruder(ctx, engMsg, tamilMsg)

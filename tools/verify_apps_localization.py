@@ -1051,6 +1051,12 @@ def verify_module_versions_match_sister_apps() -> int:
             if by_package.get(pkg.group(1)) != ver.group(1):
                 raise ValueError("DailyVault directory candidate version differs from source")
             continue
+        if gradle.parent.name == "cleaner":
+            # The local 3.03 candidate is not public: keep the shared directory at published 3.02.
+            if pkg.group(1) != "com.universalrp.cleansweep" or ver.group(1) != "3.03" or by_package.get(pkg.group(1)) != "3.02":
+                raise ValueError("Live Guard candidate/public versions need review")
+            checked += 1
+            continue
         # Published directory versions must match exact promoted releases.
         if gradle.parent.name == "tamilanstore":
             # The module and directory both point to the verified public 0.18 release.

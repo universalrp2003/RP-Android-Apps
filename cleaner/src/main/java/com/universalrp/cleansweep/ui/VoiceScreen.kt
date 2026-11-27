@@ -712,8 +712,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.STORAGE_LOW, it) },
                 )
                 VoiceSwitch(
-                    title = watchWords("Charger removed — current battery level", "சார்ஜர் அகற்றப்பட்டது — தற்போதைய பேட்டரி அளவு"),
-                    subtitle = watchWords("Announces at any battery level. Early-removal reminders are separate.", "எந்த பேட்டரி அளவிலும் அறிவிக்கும். முன்கூட்டியே அகற்றிய நினைவூட்டல் தனியானது."),
+                    title = watchWords("Charger disconnected — session summary", "சார்ஜர் துண்டிப்பு — அமர்வுச் சுருக்கம்"),
+                    subtitle = watchWords("Announces the observed starting and ending levels, net change and connection time when available. Early-removal reminders are separate.", "தொடக்க மற்றும் இறுதி அளவு, நிகர மாற்றம், இணைந்திருந்த நேரம் தெரிந்தால் அறிவிக்கும். முன்கூட்டிய துண்டிப்பு நினைவூட்டல் தனியானது."),
                     icon = Icons.Outlined.PowerOff,
                     tint = WarnAmber,
                     checked = state.voiceUnplugged,

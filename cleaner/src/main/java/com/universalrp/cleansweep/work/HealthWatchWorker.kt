@@ -113,7 +113,7 @@ class HealthWatchWorker(
             val last = prefs.getLong(Announcer.KEY_LAST_LOW, 0L)
             if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
                 Announcer.speakAndWait(
-                    ctx, "",
+                    ctx, "Battery is low: ${battery.percent} percent. Please charge the phone.",
                     "பேட்டரி குறைவு: ${battery.percent} சதவீதம். சார்ஜ் செய்யவும்.",
                     Announcer.Event.BATTERY_LOW,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_LOW, System.currentTimeMillis()).apply() },
@@ -132,9 +132,9 @@ class HealthWatchWorker(
                 val freeGb = "%.1f".format(storage.free / 1024.0 / 1024.0 / 1024.0)
                 Announcer.speakAndWait(
                     ctx,
-                    "Storage is nearly full — only $freeGb gigabytes free. Open CleanSweep and clean some junk.",
+                    "Storage is nearly full. About $freeGb gigabytes are free. Open Live Guard to review storage.",
                     "சேமிப்பு கிட்டத்தட்ட நிரம்பிவிட்டது — $freeGb ஜிகாபைட் மட்டுமே காலி. " +
-                        "சுத்தம் செய்பவரைத் திறந்து குப்பையை அகற்றவும்.",
+                        "லைவ் கார்டைத் திறந்து சேமிப்பைப் பார்வையிடவும்.",
                     Announcer.Event.STORAGE_LOW,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_STORAGE, System.currentTimeMillis()).apply() },
                 )
@@ -158,9 +158,9 @@ class HealthWatchWorker(
                 Announcer.speakAndWait(
                     ctx,
                     "Battery health notice: your battery now holds about $healthPercent percent of its " +
-                        "original capacity, so it drains faster than when it was new.",
+                        "original capacity. This is an estimate, not a battery-health diagnosis.",
                     "பேட்டரி ஆரோக்கியம்: உங்கள் பேட்டரி புதியதாக இருந்ததில் சுமார் $healthPercent " +
-                        "சதவீதம் மட்டுமே தேக்க முடிகிறது, எனவே விரைவாகக் குறையும்.",
+                        "சதவீதம் என மதிப்பிடப்படுகிறது. இது ஒரு மதிப்பீடு மட்டுமே; பேட்டரி நிலைக்கான உறுதியான பரிசோதனை அல்ல.",
                     Announcer.Event.BATTERY_HEALTH,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_HEALTH, System.currentTimeMillis()).apply() },
                 )
@@ -178,8 +178,8 @@ class HealthWatchWorker(
                 val batteryText = thermal.celsius?.let { "%.0f".format(it) } ?: "?"
                 val plugWarning = if (battery.charging) " வேகமாக சார்ஜ் செய்வதைத் தவிர்க்கவும்." else ""
                 Announcer.speakAndWait(
-                    ctx, "",
-                    "போன் அதிக வெப்பமாக உள்ளது: பேட்டரி $batteryText டிகிரி.$plugWarning",
+                    ctx, "The battery is unusually warm: $batteryText degrees Celsius. Please review charging and phone use.",
+                    "பேட்டரி அதிக வெப்பமாக உள்ளது: $batteryText டிகிரி செல்சியஸ். சார்ஜ் மற்றும் போன் பயன்பாட்டைச் சரிபார்க்கவும்.$plugWarning",
                     Announcer.Event.OVERHEAT,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_HOT, System.currentTimeMillis()).apply() },
                 )
