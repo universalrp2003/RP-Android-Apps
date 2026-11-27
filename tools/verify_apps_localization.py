@@ -1213,19 +1213,21 @@ def verify_site_versions_match_downloads() -> int:
             "site/index.html latest-releases table: " + ", ".join(row_mismatch)
         )
 
-    # Derived from the shared sister-app directory rather than hard-coded, so adding an app there
-    # and forgetting the table is a failure rather than a silent gap.
+    # The current Store catalog includes newer apps not yet in the baked-in sister directory.
+    # Use its release identities plus the separately listed optional Store for website parity.
     sister_source = (ROOT / "shared" / "src" / "main" / "java" / "com" / "universalrp" / "updates" / "SisterApps.kt").read_text(encoding="utf-8")
-    expected_apps = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
+    sister_count = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
+    catalog_apps = json.loads((ROOT / "site/catalog-v5.json").read_text(encoding="utf-8"))["apps"]
+    expected_apps = len(catalog_apps) + 1
     if len(rows) != expected_apps:
         raise ValueError(
-            f"site/index.html latest-releases table has {len(rows)} rows, but SisterApps.kt lists "
+            f"site/index.html latest-releases table has {len(rows)} rows, but the current catalog plus Store lists "
             f"{expected_apps} apps. A missing row is an app a visitor cannot find from the top of "
             "the page."
         )
     if len(entries) != expected_apps:
         raise ValueError(
-            f"site/index.html JSON-LD ItemList has {len(entries)} entries, but SisterApps.kt lists "
+            f"site/index.html JSON-LD ItemList has {len(entries)} entries, but the current catalog plus Store lists "
             f"{expected_apps} apps."
         )
 
@@ -1245,8 +1247,15 @@ def verify_site_versions_match_downloads() -> int:
         tag = f"{tag_prefix.group(1)}-v{version.group(1)}"
         expected_tags.add(tag)
         sister_id_tags[app_id.group(1)] = tag
-    if len(sister_entries) != expected_apps or len(expected_tags) != expected_apps or len(sister_id_tags) != expected_apps:
+    if len(sister_entries) != sister_count or len(expected_tags) != sister_count or len(sister_id_tags) != sister_count:
         raise ValueError("SisterApps.kt does not contain one unique public release per app.")
+    catalog_tags = {entry["releaseUrl"].rsplit("/", 1)[-1] for entry in catalog_apps}
+    if len(catalog_tags) != len(catalog_apps):
+        raise ValueError("Current catalog must contain unique release identities.")
+    store_tag = sister_id_tags["tamilanstore"]
+    if expected_tags - {store_tag} - catalog_tags or store_tag in catalog_tags:
+        raise ValueError("Current catalog and sister-app releases disagree.")
+    expected_tags = catalog_tags | {store_tag}
 
     ld_blocks = [json.loads(block) for block in re.findall(
         r'<script type="application/ld\+json">(.*?)</script>', site, re.S
@@ -1268,7 +1277,7 @@ def verify_site_versions_match_downloads() -> int:
         if app["softwareVersion"] != asset_tag(asset.removesuffix(".apk")) or not tag.endswith("-v" + app["softwareVersion"]):
             raise ValueError(f"JSON-LD version/download mismatch for {asset}.")
     if len(ld_assets) != expected_apps or len(ld_tags) != expected_apps or ld_tags != expected_tags:
-        raise ValueError("JSON-LD ItemList does not match the unique public releases in SisterApps.kt.")
+        raise ValueError("JSON-LD ItemList does not match the current catalog and optional Store.")
 
     table_downloads = re.findall(
         r'<td class="lsize">([0-9]+\.[0-9]+ MB)</td>\s*\n\s*'
@@ -1290,7 +1299,7 @@ def verify_site_versions_match_downloads() -> int:
     cards = [card for card in cards if card.startswith('<article class="card"')]
     if len(cards) != expected_apps:
         raise ValueError(
-            f"site/index.html has {len(cards)} app cards, but SisterApps.kt lists {expected_apps} apps."
+            f"site/index.html has {len(cards)} app cards, but the current catalog plus Store lists {expected_apps} apps."
         )
     card_assets, card_tags = set(), set()
     for card in cards:

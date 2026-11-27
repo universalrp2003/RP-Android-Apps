@@ -20,3 +20,22 @@ class KurippuFeatureTest(unittest.TestCase):
             path = f'images/kurippu/owner-0.6-{index}.jpg'
             self.assertIn(path, page)
             self.assertGreater((ROOT/'site'/path).stat().st_size, 0)
+
+    def test_kurippu_is_a_normal_selectable_release_with_exact_mirror_identity(self):
+        import re
+        page = (ROOT / 'site/index.html').read_text()
+        controls = (ROOT / 'site/site-controls.js').read_text()
+        workflow = (ROOT / '.github/workflows/pages.yml').read_text()
+        pin = json.loads((ROOT / 'docs/kurippu/approved-1.3.json').read_text())
+        table = page.split('<tbody>', 1)[1].split('</tbody>', 1)[0]
+        card = re.search(r'<article class="card"[^>]*>.*?<h2 id="app-kurippu".*?</article>', page, re.S).group()
+        row = re.search(r'<tr>\s*<td class="lname"><a href="#app-kurippu">.*?</tr>', table, re.S).group()
+        for block in (card, row):
+            self.assertIn('kurippu-v1.3/Kurippu-v1.3.apk', block)
+            self.assertIn(pin['apk_sha256'], block)
+            self.assertIn('2026-11-26T15:10:11Z', block)
+        self.assertIn("'kurippu': 'productivity'", controls)
+        self.assertIn("document.querySelectorAll('article.card')", controls)
+        self.assertIn("jump.appendChild(option)", controls)
+        self.assertIn(f'("kurippu-v1.3", "Kurippu-v1.3.apk", {pin["bytes"]}, "{pin["apk_sha256"]}")', workflow)
+        self.assertIn('href="apks/Kurippu-v1.3.zip"', card)

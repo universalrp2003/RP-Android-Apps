@@ -17,12 +17,13 @@ class RegularVaultGroupingTest(unittest.TestCase):
         self.assertIn('$RELEASE_BASE/tamilan-store-v0.16', source)
         self.assertIn('$RELEASE_BASE/daily-vault-v0.5', source)
         site = (ROOT/'site/index.html').read_text()
-        regular = re.search(r'aria-label="17 regular Android applications">(.*?)</section>', site, re.S)[1]
+        regular = re.search(r'aria-label="18 regular Android applications">(.*?)</section>', site, re.S)[1]
         optional = re.search(r'aria-label="Optional Tamilan Store">(.*?)</section>', site, re.S)[1]
-        self.assertEqual(len(re.findall(r'<article class="card"[^>]*>', regular)), 17)
+        self.assertEqual(len(re.findall(r'<article class="card"[^>]*>', regular)), 18)
         self.assertIn('id="app-tv-guard"', regular)
         self.assertIn('id="app-system-app-disabler"', regular)
         self.assertIn('id="app-daily-vault"', regular)
+        self.assertIn('id="app-kurippu"', regular)
         self.assertNotIn('id="app-tamilan-store"', regular)
         self.assertNotIn('id="app-daily-vault"', optional)
         self.assertEqual(len(re.findall(r'<article class="card"[^>]*>', optional)), 1)

@@ -49,6 +49,7 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
+              ("kurippu-v1.3", "Kurippu-v1.3.apk", 7302471, "aae84788572f1c1f9dbf6862f83236006846d3c9551046e63246b0bcc05f537d"),
               ("animal-sounds-v0.22", "Animal-Sounds-v0.22.apk", 52813729, "dcabd2d99a922b2634b76af5f4fa26db250a0122c527c68bb00716c985cdb708"),
               ("weekly-money-v1.7", "Weekly-Money-v1.7.apk", 7499595, "0dac276f391fb4099fe13ac45d67adfade6fe245b644d634a87a6b6af1cbc81a"),
               # Retention rule: the current release of every app. Historical releases are
@@ -103,6 +104,8 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
+          test -s site/apks/Kurippu-v1.3.apk
+          test -s site/apks/Kurippu-v1.3.zip
           test -s site/apks/CleanSweep-v3.04.apk
           test -s site/apks/CleanSweep-v3.04.zip
           test -s site/apks/Android-TV-Guard-v1.5.3.apk

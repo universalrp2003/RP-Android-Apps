@@ -52,7 +52,7 @@ def validate_zip(data, name, size, digest):
 
 
 def check_metadata():
-    for name in ('index.html', 'oor-arivippu-guide.html', 'tv-guard-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'catalog-v4.json', 'catalog-v5.json', 'weekly-money-guide.html', 'live-guard-guide.html', 'animal-sounds-guide.html', 'images/social-preview-v18.png'):
+    for name in ('index.html', 'oor-arivippu-guide.html', 'tv-guard-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'catalog-v4.json', 'catalog-v5.json', 'weekly-money-guide.html', 'live-guard-guide.html', 'animal-sounds-guide.html', 'images/social-preview-v19.png'):
         data = get_bounded(name, 2_000_000)
         local = (ROOT / 'site' / name).read_bytes()
         matches = data == local if name.endswith(('.html', '.png')) else json.loads(data) == json.loads(local)
@@ -114,6 +114,8 @@ def main():
     checks.append(('Weekly-Money-v1.4.apk', json.loads((ROOT/'docs/weekly-money-1.4-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v1.5.apk', json.loads((ROOT/'docs/weekly-money-1.5-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v1.7.apk', json.loads((ROOT/'docs/weekly-money-1.7-publication-receipt.json').read_text())))
+    current_names.add('Kurippu-v1.3.apk')
+    checks.append(('Kurippu-v1.3.apk', json.loads((ROOT/'docs/kurippu/approved-1.3.json').read_text())))
     current_names.add('Weekly-Money-v1.7.apk')
     current_names.add('Animal-Sounds-v0.22.apk')
     checks.append(('Animal-Sounds-v0.22.apk', json.loads((ROOT/'docs/animal-sounds-0.22-publication-receipt.json').read_text())))
