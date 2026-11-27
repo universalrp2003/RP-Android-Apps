@@ -1,12 +1,5 @@
 name: Live Guard 3.02 candidate verification (no publication)
 on:
-  push:
-    branches: ["arena/30198928-rp-android-apps"]
-    paths:
-      - "cleaner/build.gradle.kts"
-      - ".github/workflows/liveguard-302-candidate.yml"
-      - "tools/run_liveguard_302_upgrade.py"
-      - "cleaner/src/androidTest/java/com/universalrp/cleansweep/CandidateUpgradeNativeTest.kt"
   workflow_dispatch:
 permissions:
   contents: read

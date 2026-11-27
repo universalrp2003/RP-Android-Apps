@@ -113,8 +113,8 @@ class HealthWatchWorker(
             val last = prefs.getLong(Announcer.KEY_LAST_LOW, 0L)
             if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
                 Announcer.speakAndWait(
-                    ctx, "",
-                    "பேட்டரி குறைவு: ${battery.percent} சதவீதம். சார்ஜ் செய்யவும்.",
+                    ctx, "Battery low: ${battery.percent} percent.",
+                    "பேட்டரி குறைவு: ${battery.percent} சதவீதம்.",
                     Announcer.Event.BATTERY_LOW,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_LOW, System.currentTimeMillis()).apply() },
                 )
@@ -132,9 +132,8 @@ class HealthWatchWorker(
                 val freeGb = "%.1f".format(storage.free / 1024.0 / 1024.0 / 1024.0)
                 Announcer.speakAndWait(
                     ctx,
-                    "Storage is nearly full — only $freeGb gigabytes free. Open CleanSweep and clean some junk.",
-                    "சேமிப்பு கிட்டத்தட்ட நிரம்பிவிட்டது — $freeGb ஜிகாபைட் மட்டுமே காலி. " +
-                        "சுத்தம் செய்பவரைத் திறந்து குப்பையை அகற்றவும்.",
+                    "Storage almost full. About $freeGb gigabytes free.",
+                    "ஸ்டோரேஜ் கிட்டத்தட்ட நிரம்பிவிட்டது. சுமார் $freeGb ஜிகாபைட் காலி.",
                     Announcer.Event.STORAGE_LOW,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_STORAGE, System.currentTimeMillis()).apply() },
                 )
@@ -157,10 +156,8 @@ class HealthWatchWorker(
             if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 7 * 24 * 60 * 60 * 1000L)) {
                 Announcer.speakAndWait(
                     ctx,
-                    "Battery health notice: your battery now holds about $healthPercent percent of its " +
-                        "original capacity, so it drains faster than when it was new.",
-                    "பேட்டரி ஆரோக்கியம்: உங்கள் பேட்டரி புதியதாக இருந்ததில் சுமார் $healthPercent " +
-                        "சதவீதம் மட்டுமே தேக்க முடிகிறது, எனவே விரைவாகக் குறையும்.",
+                    "Estimated battery capacity: $healthPercent percent of original.",
+                    "பேட்டரி கொள்ளளவு மதிப்பீடு: ஆரம்ப அளவில் $healthPercent சதவீதம்.",
                     Announcer.Event.BATTERY_HEALTH,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_HEALTH, System.currentTimeMillis()).apply() },
                 )
@@ -176,10 +173,9 @@ class HealthWatchWorker(
                 com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, ThermalWarningPolicy.HUSH_MS)
             if (cooled) {
                 val batteryText = thermal.celsius?.let { "%.0f".format(it) } ?: "?"
-                val plugWarning = if (battery.charging) " வேகமாக சார்ஜ் செய்வதைத் தவிர்க்கவும்." else ""
                 Announcer.speakAndWait(
-                    ctx, "",
-                    "போன் அதிக வெப்பமாக உள்ளது: பேட்டரி $batteryText டிகிரி.$plugWarning",
+                    ctx, "Battery is hot: $batteryText degrees Celsius. Check charging and phone use.",
+                    "பேட்டரி வெப்பம் $batteryText டிகிரி செல்சியஸ். சார்ஜ் மற்றும் போன் பயன்பாட்டைச் சரிபார்க்கவும்.",
                     Announcer.Event.OVERHEAT,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_HOT, System.currentTimeMillis()).apply() },
                 )
@@ -197,9 +193,9 @@ class HealthWatchWorker(
             if (highRisks.isNotEmpty()) {
                 val riskCount = highRisks.size
                 prefs.edit().putString("widget_security_alert", "$riskCount critical security alert${if (riskCount > 1) "s" else ""}").apply()
+                val speech = com.universalrp.cleansweep.voice.VoiceAlertSpeech.securityReminder(riskCount)
                 Announcer.speakAndWait(
-                    ctx, "Security reminder: review $riskCount important security settings.",
-                    "பாதுகாப்பு நினைவூட்டல்: $riskCount முக்கிய பாதுகாப்பு அமைப்புகளை சரிபார்க்கவும்.",
+                    ctx, speech.english, speech.tamil,
                     Announcer.Event.DAILY,
                     onStarted = { prefs.edit().putLong("last_sec_reminder_ms", System.currentTimeMillis()).apply() },
                 )
@@ -244,8 +240,8 @@ class HealthWatchWorker(
         when (now) {
             "mobile" -> Announcer.speakAndWait(
                 ctx,
-                "You are now on mobile data. This uses your data plan.",
-                "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.",
+                "Mobile data connected.",
+                "மொபைல் டேட்டா இணைந்துள்ளது.",
                 Announcer.Event.NETWORK_CHANGE,
                 stillRelevant = {
                     val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
@@ -254,8 +250,8 @@ class HealthWatchWorker(
             )
             "wifi" -> Announcer.speakAndWait(
                 ctx,
-                "You are back on Wi-Fi.",
-                "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.",
+                "Wi-Fi connected.",
+                "வைஃபை இணைந்துள்ளது.",
                 Announcer.Event.NETWORK_CHANGE,
                 stillRelevant = {
                     val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
@@ -326,14 +322,8 @@ class HealthWatchWorker(
 
         // ---- the one line that is spoken (Strictly High/Medium security risk warnings)
         val spoken: Pair<String, String>? = when {
-            high > 0 -> ("Important: $high high-risk security issue${if (high == 1) "" else "s"} need attention. " +
-                "Open CleanSweep to see them.") to
-                ("முக்கிய எச்சரிக்கை: $high அதிக ஆபத்துள்ள பாதுகாப்பு அமைப்புகளில் கவனம் தேவை. " +
-                    "விவரங்களுக்கு CleanSweep-ஐத் திறக்கவும்.")
-            medium > 0 -> ("Attention: $medium moderate security warning${if (medium == 1) "" else "s"} detected. " +
-                "Open CleanSweep to review.") to
-                ("கவனம்: $medium மிதமான பாதுகாப்பு எச்சரிக்கைகள் உள்ளன. " +
-                    "விவரங்களுக்கு CleanSweep-ஐத் திறக்கவும்.")
+            high > 0 -> com.universalrp.cleansweep.voice.VoiceAlertSpeech.securityBrief(high, true).let { it.english to it.tamil }
+            medium > 0 -> com.universalrp.cleansweep.voice.VoiceAlertSpeech.securityBrief(medium, false).let { it.english to it.tamil }
             else -> null // Safe / clean — remain silent as configured
         }
 

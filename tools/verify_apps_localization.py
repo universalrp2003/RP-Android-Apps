@@ -719,7 +719,7 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.18"',
-            'tagPrefix = "live-guard"', 'publishedVersion = "3.02"',
+            'tagPrefix = "live-guard"', 'publishedVersion = "3.04"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
@@ -1050,6 +1050,12 @@ def verify_module_versions_match_sister_apps() -> int:
                 raise ValueError("Daily Vault 0.5 identity/version changed; review publication gates")
             if by_package.get(pkg.group(1)) != ver.group(1):
                 raise ValueError("DailyVault directory candidate version differs from source")
+            continue
+        if gradle.parent.name == "cleaner":
+            # The module and shared directory both identify the exact promoted public release.
+            if pkg.group(1) != "com.universalrp.cleansweep" or ver.group(1) != "3.04" or by_package.get(pkg.group(1)) != "3.04":
+                raise ValueError("Live Guard candidate/public versions need review")
+            checked += 1
             continue
         # Published directory versions must match exact promoted releases.
         if gradle.parent.name == "tamilanstore":

@@ -1,6 +1,6 @@
 # RP-Android-Apps (RP Ideas) — Official Open-Source Tamil & English Android Apps
 
-Live Guard **3.02** improves news voice, weather, security and app-usage review. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.02) · Update without uninstalling or clearing data. Emulator verified; exact 3.02 bytes have not been phone-tested.
+Live Guard **3.04** offers shorter voice alerts and a charging-session summary. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.04) · Update without uninstalling or clearing data. Emulator verified; phone installation and playback have not been independently confirmed.
 
 
 Animal Sounds **0.22** fixes what the owner saw on a phone: Tamil text now reads at the English visual size (no more two-line title), Settings shows every detail without dropdowns, About keeps only the website and GitHub links with the apps as a plain list, and reference photos are on by default. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22) installs over 0.21 in place. Emulator-verified only; not phone-tested before publication.
@@ -36,7 +36,7 @@ DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion.
 | [**Animal Sounds (விலங்கு ஒலிகள்)**](animalvoice/README.md) · 8.0+ (API 26) | [0.22 / code 22](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22) | [`Animal-Sounds-v0.22.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.22/Animal-Sounds-v0.22.apk) |
 | [**வார வசூல் · Weekly Money**](weeklymoney/README.md) · 8.0+ (API 26) | [1.7 / code 19](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.7) | [`Weekly-Money-v1.7.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.7/Weekly-Money-v1.7.apk) |
 | [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.18 / code 24](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.18) | [`SMS-Guard-v1.1.18.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.18/SMS-Guard-v1.1.18.apk) |
-| [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [3.02 / code 107](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.02) | [`CleanSweep-v3.02.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.02/CleanSweep-v3.02.apk) |
+| [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [3.04 / code 109](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.04) | [`CleanSweep-v3.04.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.04/CleanSweep-v3.04.apk) |
 | [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.3.4 / code 8](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.4) | [`Voice-Notes-v1.3.4.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk) |
 | [**Expense Tracker (செலவு கண்காணிப்பு)**](expensetracker/README.md) · 8.0+ (API 26) | [1.2 / code 3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.2) | [`Expense-Tracker-v1.2.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk) |
 | [**Ramesh Radio (தமிழன் வானொலி)**](radio/README.md) · 8.0+ (API 26) | [1.31 / code 31](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.31) | [`Ramesh-Radio-v1.31.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk) |
@@ -55,7 +55,7 @@ DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion.
 
 ## Latest Live Guard release — 16 November 2026
 
-**[Live Guard 3.02 / code 107](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.02)** improves news voice, weather, security and app-usage review. Same-key upgrades from both 3.01 variants passed on an emulator; the owner reported the preceding candidate worked on their phone, but the exact 3.02 APK has not been physically tested. [Release notes](releases/live-guard-v3.02.md) · [Receipt](docs/live-guard-3.02-publication-receipt.json).
+**[Live Guard 3.04 / code 109](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.04)** offers shorter voice alerts and charging-session summaries. The exact published APK passed a same-key 3.02 upgrade on an emulator; phone installation and audible playback have not been independently confirmed. [Release notes](releases/live-guard-v3.04.md) · [Receipt](docs/live-guard-3.04-publication-receipt.json).
 
 ### Previous release — 12 November 2026
 

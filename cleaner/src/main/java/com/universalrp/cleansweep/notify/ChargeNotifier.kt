@@ -428,42 +428,21 @@ object ChargeNotifier {
         // 42 °C before) says the battery is unusually warm — no cause is claimed.
         val thermalAtPlug = ThermalWarningPolicy.decide(battery.temperatureC, null, null)
         if (thermalAtPlug.warn && thermalAtPlug.sensor == ThermalWarningPolicy.Sensor.BATTERY) {
-            val tempRound = thermalAtPlug.celsius?.toInt() ?: 0
-            val warnTamil = "எச்சரிக்கை! போன் மிக அதிக வெப்பமாக உள்ளது ($tempRound டிகிரி). வேகமாக சார்ஜ் செய்வதைத் தவிர்க்கவும் அல்லது சார்ஜரை அகற்றவும்."
-            Announcer.speakAndWait(app, "The battery is unusually warm at plug-in. Please review charging conditions.", warnTamil,
+            val tempRound = thermalAtPlug.celsius?.toInt() ?: return
+            val warnTamil = "பேட்டரி $tempRound டிகிரி செல்சியஸ் சூடாக உள்ளது. சார்ஜ் நிலையைச் சரிபார்க்கவும்."
+            Announcer.speakAndWait(app, "Battery is hot: $tempRound degrees Celsius. Check charging conditions.", warnTamil,
                 Announcer.Event.OVERHEAT, onStarted = { prefs.edit().putString("voice_last_spoken_connection", token).apply() },
                 requestKey = "plug:$token")
             return
         }
 
         val percent = battery.percent
-        val watts = battery.powerW
-        // Remaining time estimate: only announce when charging is stable and verified
-        val currentA = battery.currentA
-        val timeEstimate = try {
-            val mins = batteryTimeMinutes(battery)
-            if (mins != null && mins in 2..480 && currentA != null && currentA > 0.25f && percent in 5..94) {
-                val h = mins / 60
-                val m = mins % 60
-                if (h > 0) "$h மணி $m நிமிடம்" else "$m நிமிடம்"
-            } else null
-        } catch (e: Exception) {
-            null
-        }
-
-        // Spoken immediately in Tamil on plug-in:
-        val tamil = buildString {
-            if (watts != null && watts < 4.0f && percent < 90) {
-                append("மெதுவான சார்ஜிங்: $percent சதவீதம்.")
-            } else {
-                append(if (percent in 0..100) "சார்ஜர் இணைக்கப்பட்டது: $percent சதவீதம்." else "சார்ஜர் இணைக்கப்பட்டது. பேட்டரி அளவு தெரியவில்லை.")
-            }
-            if (timeEstimate != null) {
-                append(" நிறைவடைய $timeEstimate.")
-            }
-        }
-        Announcer.speakAndWait(app, "Charger connected" + (if (battery.percent in 0..100) ": ${battery.percent} percent." else ". Battery level not reported."),
-            tamil, Announcer.Event.CHARGING, onStarted = {
+        // The estimate is based on observed battery changes, not a promised completion time.
+        val minutes = runCatching { batteryTimeMinutes(battery) }.getOrNull()
+            ?.takeIf { it in 2..480 && battery.currentA != null && battery.currentA > 0.25f && percent in 5..94 }
+        val speech = com.universalrp.cleansweep.voice.VoiceAlertSpeech.connected(percent, minutes)
+        Announcer.speakAndWait(app, speech.english,
+            speech.tamil, Announcer.Event.CHARGING, onStarted = {
                 prefs.edit().putString("voice_last_spoken_connection", token).putLong(KEY_LAST_PLUG_ANNOUNCE, System.currentTimeMillis()).apply()
             }, requestKey = "plug:$token")
     }
