@@ -1,3 +1,8 @@
+## System App Disabler 0.5.1 — exact tested candidate
+
+- [System-App-Disabler-v0.5.1.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.5.1/System-App-Disabler-v0.5.1.apk): 11,685,141 bytes; SHA-256 `d2336e614f52cfb035a64fa3cbf739bbc823d6b67d6c5c32951ac7dde9ae230a`.
+- Published without rebuilding by run 45964801250 from candidate run 45963927491. Same-key 0.5.0 upgrade and TV navigation passed on an emulator; no real package was disabled and this exact APK has not been physically tested. [Receipt](system-app-disabler-v0.5.1-publication.json).
+
 ## Live Guard 3.04 — exact authorized candidate
 
 - [CleanSweep-v3.04.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.04/CleanSweep-v3.04.apk): 14,811,119 bytes; SHA-256 `e68d03392796fac7bee4296016e1fb87ab311a9b12799fecce8690c3e4c0610d`.

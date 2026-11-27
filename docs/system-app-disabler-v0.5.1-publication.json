@@ -1,0 +1,20 @@
+{
+  "source": "73de86daa6bf3f4357aaaaf6e3ffce8c343e8f98",
+  "run_id": 45963927491,
+  "artifact_id": 15182467335,
+  "artifact_sha256": "2c1298c4f2008df0965a19bb1d0d8ede79509ded9d6d78744d6b5987fd04af86",
+  "apk_sha256": "d2336e614f52cfb035a64fa3cbf739bbc823d6b67d6c5c32951ac7dde9ae230a",
+  "bytes": 11685141,
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "package": "com.universalrp.appdisabler",
+  "version": "0.5.1",
+  "version_code": 7,
+  "release_id": 460323447,
+  "asset_id": 799604421,
+  "published_at": "2026-11-27T08:20:05Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.5.1/System-App-Disabler-v0.5.1.apk",
+  "rebuilt": false,
+  "physical_device_tested": false,
+  "baseline": "published 0.5.0",
+  "publication_run": 45964801250
+}

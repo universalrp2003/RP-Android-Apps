@@ -161,11 +161,11 @@
       "name": "System App Disabler",
       "tamilName": "சிஸ்டம் செயலி முடக்கி",
       "packageName": "com.universalrp.appdisabler",
-      "version": "0.5.0",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.5.0/System-App-Disabler-v0.5.0.apk",
-      "size": 11685145,
-      "sha256": "1f9846d8d995520530ea1d9b2602daf16f8856c4371191c8d0561cba3d97b920",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.5.0"
+      "version": "0.5.1",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.5.1/System-App-Disabler-v0.5.1.apk",
+      "size": 11685141,
+      "sha256": "d2336e614f52cfb035a64fa3cbf739bbc823d6b67d6c5c32951ac7dde9ae230a",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.5.1"
     },
     {
       "id": "weeklymoney",

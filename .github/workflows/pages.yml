@@ -70,7 +70,7 @@ jobs:
               ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
               ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
               ("tvguard-v1.5.3", "Android-TV-Guard-v1.5.3.apk", 11900631, "1d7452ce651551c1e1fd5c4a4dcc73764a6f317ac58a1d69cb71bd9e719ac3c1"),
-              ("system-app-disabler-v0.5.0", "System-App-Disabler-v0.5.0.apk", 11685145, "1f9846d8d995520530ea1d9b2602daf16f8856c4371191c8d0561cba3d97b920"),
+              ("system-app-disabler-v0.5.1", "System-App-Disabler-v0.5.1.apk", 11685141, "d2336e614f52cfb035a64fa3cbf739bbc823d6b67d6c5c32951ac7dde9ae230a"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -110,8 +110,8 @@ jobs:
           test -s site/apks/CleanSweep-v3.04.zip
           test -s site/apks/Android-TV-Guard-v1.5.3.apk
           test -s site/apks/Android-TV-Guard-v1.5.3.zip
-          test -s site/apks/System-App-Disabler-v0.5.0.apk
-          test -s site/apks/System-App-Disabler-v0.5.0.zip
+          test -s site/apks/System-App-Disabler-v0.5.1.apk
+          test -s site/apks/System-App-Disabler-v0.5.1.zip
           test -s site/apks/Animal-Sounds-v0.22.apk
           test -s site/apks/Animal-Sounds-v0.22.zip
           test -s site/apks/Weekly-Money-v1.7.apk
