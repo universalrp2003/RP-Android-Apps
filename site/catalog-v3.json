@@ -18,11 +18,11 @@
       "name": "Live Guard",
       "tamilName": "கைபேசி காவலன்",
       "packageName": "com.universalrp.cleansweep",
-      "version": "3.02",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.02/CleanSweep-v3.02.apk",
-      "size": 14808499,
-      "sha256": "1422d1efca59f78f2a541d127d406695931b62fc7a65894010be071f2849854f",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.02"
+      "version": "3.04",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.04/CleanSweep-v3.04.apk",
+      "size": 14811119,
+      "sha256": "e68d03392796fac7bee4296016e1fb87ab311a9b12799fecce8690c3e4c0610d",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.04"
     },
     {
       "id": "radio",

@@ -1,3 +1,8 @@
+## Live Guard 3.04 — exact authorized candidate
+
+- [CleanSweep-v3.04.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.04/CleanSweep-v3.04.apk): 14,811,119 bytes; SHA-256 `e68d03392796fac7bee4296016e1fb87ab311a9b12799fecce8690c3e4c0610d`.
+- Published without rebuilding by run 45936320099 from candidate run 45934079949; same signer and 3.02-to-3.04 in-place emulator checks passed. Physical-phone install and audible playback have not been independently confirmed. [Receipt](live-guard-3.04-publication-receipt.json).
+
 ## TV Guard 1.5.3 — exact approved candidate
 
 - [Android TV Guard 1.5.3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.3): 11,900,631 bytes; SHA-256 `1d7452ce651551c1e1fd5c4a4dcc73764a6f317ac58a1d69cb71bd9e719ac3c1`. Candidate run 45558877424, publication 45562138924, release 457738965, asset 790395214; no rebuild. [Receipt](tvguard-v1.5.3-publication.json). Owner reported the candidate working on one TV; the installed hash was not independently read back.
