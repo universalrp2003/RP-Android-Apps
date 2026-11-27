@@ -17,3 +17,7 @@ Disabled and suspended states may overlap. Unknown suspension state and stale lo
 The published 0.5.0 APK passed a signed 0.4.1 upgrade and four remote focus tests on a disposable TV emulator. The owner reported an earlier candidate working on their TV and remote; this corrected APK was not retested on physical TV. No real package was disabled in these tests. Earlier 0.3.0 testing on one Redmi 13 5G covered a disposable user-app disable, delayed restart, Enable and another delayed restart. Those earlier checks do not establish behavior for this release, immediate-reboot persistence, system-package behavior, or broad OEM compatibility. Experimental synchronous-write research is debug-only and not part of the release.
 
 APK SHA-256: `1f9846d8d995520530ea1d9b2602daf16f8856c4371191c8d0561cba3d97b920`. A checksum identifies bytes, not safety. Update in place if Android accepts the signature; do not uninstall or clear app data to force an update. Do not bypass device security warnings.
+
+## In development (not in the published 0.5.0 APK)
+
+The next source build adds bilingual camera/photo, one-change-at-a-time and recovery guidance before disabling. Selected exact camera/gallery package names that UAD marks Recommended are treated as Caution (including Google Photos); unlisted apps remain Unlisted and critical apps stay blocked. This is not complete device detection, a guarantee of safety or a backup/restore tool. No app is disabled automatically.

@@ -358,6 +358,8 @@ fun ShizukuSetupWindow(
                 BiText(T.safe1)
                 BiText(T.safe2)
                 BiText(T.safe3)
+                BiText(T.safetyChecklist)
+                BiText(T.recoveryChecklist)
             }
         }
 
@@ -410,6 +412,7 @@ internal fun ratingLabel(app: AppInfo): String = when {
     app.bootloopRisk -> "Never — can stop the phone booting"
     app.category == DisableCategory.CRITICAL -> "Never disable"
     app.packageName == "com.google.android.marvin.talkback" -> "Accessibility — important; check first"
+    app.packageName == "com.google.android.apps.photos" && app.category == DisableCategory.CAUTION -> "Photos — important; check first"
     app.category == DisableCategory.CAUTION -> "Caution — asks first"
     app.category == DisableCategory.SAFE -> "UAD recommended — still check"
     else -> "Not listed — check first"
@@ -935,7 +938,7 @@ fun AppsListWindow(
             onDismissRequest = { confirmApp = null },
             title = { Text("Review before disabling / முடக்கும் முன் ஆய்வு") },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(app.label, fontWeight = FontWeight.Bold)
                     Text(app.packageName, style = MaterialTheme.typography.labelSmall)
                     Text(ratingLabel(app), style = MaterialTheme.typography.labelMedium)
@@ -945,7 +948,8 @@ fun AppsListWindow(
                         false -> Unit
                     }
                     app.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                    Text("Any app may be needed on your phone. Recovery can fail. Change one app, then test your phone. No app data backup is included.\nஎந்த செயலியும் தேவைப்படலாம். மீண்டும் இயக்க முடியாமல் போகலாம். ஒன்றை மட்டும் மாற்றி கைபேசியைச் சோதிக்கவும்.", style = MaterialTheme.typography.bodyMedium)
+                    BiText(T.safetyChecklist, style = MaterialTheme.typography.bodySmall)
+                    BiText(T.recoveryChecklist, style = MaterialTheme.typography.bodySmall)
                     if (app.category == DisableCategory.UNLISTED) {
                         Text("Opening Google sends the app name and package to Google.", style = MaterialTheme.typography.labelSmall)
                         TextButton(onClick = { openGoogleAi(context, app) }) { Text("Ask Google AI") }
@@ -1148,7 +1152,7 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 // The local suspension record reflects our last successful action, not a live check.
                 val statusText = when {
                     !app.isEnabled && app.isSuspended -> "● disabled and suspended"
-                    !app.isEnabled -> "● disabled — tap Enable to restore"
+                    !app.isEnabled -> "● disabled — Enable tries recovery"
                     app.isSuspended -> "● suspended — may still run"
                     !app.isSuspensionKnown && app.isSuspensionRemembered -> "● suspension unknown — Enable to recover"
                     !app.isSuspensionKnown -> "● suspension status unknown"

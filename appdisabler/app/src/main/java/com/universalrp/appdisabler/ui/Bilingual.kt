@@ -123,6 +123,14 @@ object T {
         "• Disabling system packages can break features or prevent boot. OTA updates and banking are not guaranteed safe.",
         "• சிஸ்டம் பேக்கேஜ்களை முடக்குவது அம்சங்களைப் பாதிக்கலாம் அல்லது பூட்டைத் தடுக்கலாம். OTA மற்றும் வங்கி பாதுகாப்புக்கு உறுதி இல்லை."
     )
+    val safetyChecklist = Bi(
+        "• Any app may be needed. Keep camera and gallery apps unless you understand their role. Change one app at a time; then check your camera, photos, calls and other functions you rely on.",
+        "• எந்தச் செயலியும் தேவைப்படலாம். கேமரா மற்றும் படத்தொகுப்பு செயலிகளின் பயன் தெரியாவிட்டால் அவற்றை வைத்திருங்கள். ஒரு செயலியை மட்டும் மாற்றி, கேமரா, படங்கள், அழைப்புகள் மற்றும் உங்களுக்குத் தேவையான அம்சங்களைச் சரிபார்க்கவும்."
+    )
+    val recoveryChecklist = Bi(
+        "• Back up important data separately; this app does not back up app data. If something breaks, start Shizuku if needed, find the changed app and try Enable. Recovery can fail; if the phone cannot start, this app cannot help.",
+        "• முக்கியத் தரவைத் தனியாகக் காப்புப் பிரதி எடுக்கவும்; இந்த ஆப் செயலித் தரவைக் காப்புப் பிரதி எடுக்காது. ஏதேனும் பாதிக்கப்பட்டால், தேவைப்பட்டால் Shizuku-வை இயக்கி, மாற்றிய செயலியைக் கண்டுபிடித்து Enable முயற்சிக்கவும். மீட்பு தோல்வியடையலாம்; போன் தொடங்காவிட்டால் இந்த ஆப்பால் உதவ முடியாது."
+    )
     val helpTitle = Bi("Not sure about an app?", "ஆப் பற்றி சந்தேகமா?")
     val help1 = Bi(
         "Tap an app → Get more info → Google or AI explains what it does and whether it is safe.",
@@ -151,18 +159,18 @@ object T {
         "இப்போது இயங்கும் ஆப்களை எண்ண Shizuku-வை இயக்குங்கள்."
     )
     // ---- refuse to turn off the keyboard in use or a live accessibility service ----
-    val blockedTitle = Bi("Not turned off — this would lock you out", "முடக்கவில்லை — இது உங்களை முடக்கிவிடும்")
+    val blockedTitle = Bi("Not turned off — protected", "முடக்கப்படவில்லை — பாதுகாக்கப்பட்டது")
     val blockedRecovery = Bi(
-        "Everything here stays reversible: if an app is already off, tap Enable to restore it.",
-        "இங்குள்ள அனைத்தும் மீளக்கூடியது: ஏற்கனவே முடக்கப்பட்ட ஆப்பை Enable தட்டி மீட்டெடுக்கலாம்."
+        "If an app is already off, Enable requests recovery; it can fail. Shizuku may need to be started again.",
+        "செயலி ஏற்கனவே முடக்கப்பட்டிருந்தால், Enable மீட்டெடுக்க முயற்சிக்கும்; அது தோல்வியடையலாம். Shizuku-வை மீண்டும் தொடங்க வேண்டியிருக்கலாம்."
     )
     val emptyList = Bi("No app matches this filter", "இந்த வடிகட்டலுக்கு ஆப் இல்லை")
     val actionDisable = Bi("Disable", "முடக்கு")
     val actionEnable = Bi("Enable", "இயக்கு")
     val actionAppInfo = Bi("App info", "ஆப் தகவல்")
     val actionGetInfo = Bi("Get more info", "மேலும் தகவல்")
-    val rowSuspended = Bi("● Suspended — stopped, tap Enable to restore", "● இடைநிறுத்தப்பட்டது — நிறுத்தப்பட்டுள்ளது, மீட்ட Enable தட்டவும்")
-    val rowDisabled = Bi("● Disabled — tap Enable to restore", "● முடக்கப்பட்டது — மீட்ட Enable தட்டவும்")
+    val rowSuspended = Bi("● Suspended — may still run; Enable tries recovery", "● இடைநிறுத்தப்பட்டது — இயங்கலாம்; Enable மீட்க முயற்சிக்கும்")
+    val rowDisabled = Bi("● Disabled — Enable tries recovery", "● முடக்கப்பட்டது — Enable மீட்க முயற்சிக்கும்")
     val rowBlocked = Bi("⊘ Never disable — blocked", "⊘ முடக்கக் கூடாது — தடுக்கப்பட்டது")
     val rowBootloop = Bi(
         "⚠ Not allowed — the database says removal can stop this phone booting",
@@ -186,8 +194,8 @@ object T {
     // ---------- confirm ----------
     val confirmTitle = Bi("Caution — may break a feature", "கவனம் — ஏதேனும் அம்சம் பாதிக்கலாம்")
     val confirmMsg = Bi(
-        "%1\$s is marked Caution — it may remove a feature (for example Game tools or Phone Manager). Disable anyway? You can Enable it back.",
-        "%1\$s ‘கவனம்’ எனக் குறிக்கப்பட்டுள்ளது — ஏதேனும் அம்சம் (உம். Game tools, Phone Manager) செயலிழக்கலாம். முடக்கவா? மீண்டும் Enable செய்யலாம்."
+        "%1\$s is marked Caution — it may remove a feature (for example Game tools or Phone Manager). Disable anyway? Enable attempts recovery, but can fail.",
+        "%1\$s ‘கவனம்’ எனக் குறிக்கப்பட்டுள்ளது — ஏதேனும் அம்சம் (உம். Game tools, Phone Manager) செயலிழக்கலாம். முடக்கவா? Enable மீட்க முயற்சிக்கும்; தோல்வியடையலாம்."
     )
     val actionDisableAnyway = Bi("Disable anyway", "இருந்தாலும் முடக்கு")
     val actionCancel = Bi("Cancel", "ரத்து")

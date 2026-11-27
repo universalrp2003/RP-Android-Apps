@@ -20,9 +20,18 @@ data class UadEntry(
     val bootloopRisk: Boolean = false,
 )
 
-/** Accessibility Suite must never be advertised as a low-risk recommendation. */
+// Exact package names only: broad words such as "gallery" also match wallpaper feeds. This
+// conservative review changes a UAD recommendation to caution; it never promotes an unlisted or
+// critical package, and does not claim to identify every camera or gallery on every device.
+private val PHOTO_REVIEW_PACKAGES = setOf(
+    "com.google.android.apps.photos", "com.miui.gallery", "com.sec.android.gallery3d",
+    "com.coloros.gallery3d", "com.huawei.photos", "com.hihonor.photos",
+    "com.android.camera2", "com.sec.android.app.camera", "org.codeaurora.snapcam"
+)
+
 internal fun reviewCategory(packageName: String, databaseCategory: DisableCategory): DisableCategory =
-    if (packageName == "com.google.android.marvin.talkback" && databaseCategory == DisableCategory.SAFE)
+    if (databaseCategory == DisableCategory.SAFE &&
+        (packageName == "com.google.android.marvin.talkback" || packageName in PHOTO_REVIEW_PACKAGES))
         DisableCategory.CAUTION else databaseCategory
 
 /**
