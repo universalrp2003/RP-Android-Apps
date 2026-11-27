@@ -3,6 +3,8 @@ on:
   push:
     branches: ["arena/30198928-rp-android-apps"]
     paths:
+      - "radio/src/main/assets/stations_seed.json"
+      - "tools/tests/test_radio_reference_catalogue.py"
       - "radio/src/main/java/com/universalrp/tamilnadufm/ui/Components.kt"
       - "radio/src/main/java/com/universalrp/tamilnadufm/ui/StationsScreens.kt"
       - "radio/src/main/java/com/universalrp/tamilnadufm/ui/StationGridLayout.kt"
@@ -26,6 +28,8 @@ jobs:
         with: {distribution: temurin, java-version: '17'}
       - uses: gradle/actions/setup-gradle@v4
         with: {gradle-version: '8.14.3'}
+      - name: Verify reference-catalogue contracts
+        run: python3 -m unittest tools.tests.test_radio_reference_catalogue -v
       - name: Compile debug and run JVM tests
         run: gradle :radio:testDebugUnitTest :radio:assembleDebug --no-daemon --stacktrace
       - name: Require gallery layout tests
