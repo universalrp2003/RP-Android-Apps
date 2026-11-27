@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["arena/30198928-rp-android-apps"]
-    paths: ["tools/radio_reference/fetch_directory.py", ".github/workflows/radio-reference-directory.yml"]
+    paths: ["tools/radio_reference/**", ".github/workflows/radio-reference-directory.yml"]
 permissions:
   contents: read
 jobs:
@@ -33,3 +33,30 @@ jobs:
           payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
           result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
           print('::notice title=Reference directory receipt::blob='+json.loads(result.stdout)['sha'])
+
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Probe selected reference candidates
+        run: python3 tools/radio_reference/probe_candidates.py tools/radio_reference/candidates.json "$RUNNER_TEMP/reference-probe"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-reference-probe
+          retention-days: 14
+          path: ${{ runner.temp }}/reference-probe/reference-probe.json
+      - name: Expose probe receipt as a blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'reference-probe'/'reference-probe.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Reference probe receipt::blob='+json.loads(result.stdout)['sha'])
