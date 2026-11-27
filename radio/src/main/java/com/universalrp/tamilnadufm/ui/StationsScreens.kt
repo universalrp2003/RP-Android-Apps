@@ -891,6 +891,10 @@ private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit)
             Triple("S. P. Balasubrahmanyam — Aravind Sivaraj", "https://commons.wikimedia.org/wiki/File:S._P._Balasubrahmanyam_in_2013.JPG", "https://creativecommons.org/licenses/by-sa/3.0/"),
             Triple("K. S. Chithra — Jayanthjwala", "https://commons.wikimedia.org/wiki/File:KS_Chithra.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
             Triple("P. Susheela — Kris Iyer; cropped by Commons", "https://commons.wikimedia.org/wiki/File:With_P_Susheela_(cropped).jpg", "https://creativecommons.org/publicdomain/zero/1.0/"),
+            Triple("K. J. Yesudas — Anees Kodiyathur", "https://commons.wikimedia.org/wiki/File:Kj_yesudas.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Anirudh — Surajram Kumaravel", "https://commons.wikimedia.org/wiki/File:Anirudh_Ravichander.jpg", "https://creativecommons.org/licenses/by/3.0/"),
+            Triple("Hariharan — E P Sajeevan", "https://commons.wikimedia.org/wiki/File:A_Hariharan.JPG", "https://creativecommons.org/licenses/by-sa/4.0/"),
+            Triple("S. Janaki — Rishabh Tatiraju", "https://commons.wikimedia.org/wiki/File:S_Janaki_in_Pune,_India_2007.JPG", "https://creativecommons.org/licenses/by-sa/3.0/"),
         )
         AlertDialog(onDismissRequest = { credits = false }, title = { Text("Photo credits") },
             text = {

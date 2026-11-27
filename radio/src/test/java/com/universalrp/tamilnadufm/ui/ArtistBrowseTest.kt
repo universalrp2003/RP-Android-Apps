@@ -9,7 +9,7 @@ class ArtistBrowseTest {
         assertEquals(artists.size, artists.map { it.name }.distinct().size)
         assertTrue(artists.size >= 40)
         assertTrue(artists.all { it.name.isNotBlank() && it.query.isNotBlank() })
-        assertTrue(listOf("Ilaiyaraaja", "A. R. Rahman", "K. S. Chithra", "P. Susheela", "S. P. Balasubrahmanyam").all { name ->
+        assertTrue(listOf("Ilaiyaraaja", "A. R. Rahman", "K. S. Chithra", "P. Susheela", "S. P. Balasubrahmanyam", "K. J. Yesudas", "Anirudh", "Hariharan", "S. Janaki").all { name ->
             artists.any { it.name == name && it.photo.startsWith("https://") }
         })
     }
