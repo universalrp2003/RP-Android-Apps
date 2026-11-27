@@ -15,6 +15,7 @@ import urllib.request
 
 PAGES = [
     'https://www.tamilradios.com/aanmeega-sudar',
+    'https://www.tamilradios.com/genre/devotional',
     'https://www.tamilradios.com/',
     'https://www.tamilradios.com/page/2',
     'https://www.tamilradios.com/page/3',

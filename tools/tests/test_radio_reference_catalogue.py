@@ -20,7 +20,7 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
         receipts = [json.loads((REFERENCE/name).read_text()) for name in ('first-probe-receipt.json', 'second-probe-receipt.json', 'artist-probe-receipt.json', 'devotional-probe-receipt.json', 'expanded-probe-receipt.json', 'further-probe-receipt.json', 'regional-probe-receipt.json', 'community-artist-probe-receipt.json')]
         results = {r['url']: r for receipt in receipts for r in receipt['results']}
         added = [s for s in seed['stations'] if s.get('source') in ('reference-directory', 'reference-manual')]
-        self.assertEqual(len(added), 82)
+        self.assertEqual(len(added), 81)
         self.assertEqual(seed['total'], len(seed['stations']))
         self.assertEqual(seed['verifiedCount'], sum(s.get('verified', True) for s in seed['stations']))
         self.assertEqual(seed['counts'], {k: sum(s['category'] == k for s in seed['stations']) for k in seed['counts']})
@@ -32,6 +32,13 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
             self.assertFalse(result['contentReviewed'])
             self.assertEqual(station['auditStatus'], 'audio_reachable')
             self.assertTrue(1 <= station['referenceScreen'] <= 38)
+
+    def test_nesaganam_keeps_original_id_without_duplicate_station(self):
+        seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())
+        stations = [s for s in seed['stations'] if s['name'] == 'Nesaganam Tamil Radio']
+        self.assertEqual(len(stations), 1)
+        self.assertEqual(stations[0]['id'], 'http://192.95.39.65:5206/;stream.mp3')
+        self.assertEqual(stations[0]['url'], 'https://usa9.fastcast4u.com/proxy/nesaganam?mp=/1')
 
     def test_discovery_excludes_generic_search_terms(self):
         spec = importlib.util.spec_from_file_location('radio_reference_fetch', REFERENCE/'fetch_directory.py')
