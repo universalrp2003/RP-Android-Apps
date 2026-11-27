@@ -1,0 +1,334 @@
+{
+  "checkedAtRunnerUtc": "2026-11-27T16:41:59.199308+00:00",
+  "candidates": [
+    {
+      "id": "ref-nesaganam-tamil-radio",
+      "name": "Nesaganam Tamil Radio",
+      "url": "http://192.95.39.65:5206/",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/3",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 23,
+      "referenceName": "Nesaganam Tamil Radio",
+      "referenceEvidence": "https://www.tamilradios.com/page/3"
+    },
+    {
+      "id": "ref-imman-radio",
+      "name": "Imman Radio",
+      "url": "https://stream.zeno.fm/6apkrxlnxudtv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/2",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 4,
+      "referenceName": "Imman Radio",
+      "referenceEvidence": "https://www.tamilradios.com/page/2"
+    },
+    {
+      "id": "ref-s-janaki-radio",
+      "name": "S Janaki Radio",
+      "url": "https://stream.zeno.fm/nnhhfe4bv1uuv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 4,
+      "referenceName": "S Janaki Radio",
+      "referenceEvidence": "https://www.tamilradios.com/"
+    },
+    {
+      "id": "ref-deva-radio",
+      "name": "Deva Radio",
+      "url": "https://stream.zeno.fm/ijpae65onobuv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 4,
+      "referenceName": "Deva Radio",
+      "referenceEvidence": "https://www.tamilradios.com/"
+    },
+    {
+      "id": "ref-yuvan-shankar-raja-ysr",
+      "name": "Yuvan Shankar Raja YSR",
+      "url": "https://stream.zeno.fm/bni50mpqxjeuv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/10",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 4,
+      "referenceName": "Yuvan Shankar Raja YSR",
+      "referenceEvidence": "https://www.tamilradios.com/page/10"
+    },
+    {
+      "id": "ref-mop-fm-chennai",
+      "name": "MOP FM Chennai",
+      "url": "https://streamasiacdn.atc-labs.com/mopfmchennai.aac",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/6",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 13,
+      "referenceName": "MOP FM Chennai",
+      "referenceEvidence": "https://www.tamilradios.com/page/6"
+    },
+    {
+      "id": "ref-nesaganam-comparison",
+      "name": "Nesaganam comparison only",
+      "url": "https://usa9.fastcast4u.com/proxy/nesaganam?mp=/1",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/3",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 23,
+      "referenceName": "Nesaganam Tamil Radio",
+      "referenceEvidence": "https://www.radio-browser.info/"
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-nesaganam-tamil-radio",
+      "name": "Nesaganam Tamil Radio",
+      "url": "http://192.95.39.65:5206/",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "NESAGANAM TAMIL RADIO",
+        "icy-genre": "NESAGANAM TAMIL RADIO",
+        "icy-br": "96",
+        "icy-sr": "44100",
+        "icy-url": "http://www.nesaganam.com",
+        "icy-pub": "1",
+        "StreamTitle": "Unknown - Oorum Blood Movie Version | Dude | Pradeep R, Mamitha | @SaiAbhyankkar| Keerthiswaran | Paal Dabba [3BXT]"
+      }
+    },
+    {
+      "id": "ref-imman-radio",
+      "name": "Imman Radio",
+      "url": "https://stream.zeno.fm/6apkrxlnxudtv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "WisoWey-D-Iman",
+        "icy-br": "128",
+        "StreamTitle": "D. Imman - Pom Pom Pom",
+        "StreamUrl": "&artist=D. Imman&album=D. Imman"
+      }
+    },
+    {
+      "id": "ref-s-janaki-radio",
+      "name": "S Janaki Radio",
+      "url": "https://stream.zeno.fm/nnhhfe4bv1uuv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "KijoficJanaki",
+        "icy-br": "128",
+        "StreamTitle": "KAMAL - PARAINTHAUM",
+        "StreamUrl": "&artist=KAMAL&album=GURU"
+      }
+    },
+    {
+      "id": "ref-deva-radio",
+      "name": "Deva Radio",
+      "url": "https://stream.zeno.fm/ijpae65onobuv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "WisoWeyDeva",
+        "icy-br": "128",
+        "StreamTitle": "AJIT HITS - APRIL MATHATHIL",
+        "StreamUrl": "&artist=AJIT HITS&album=VAALI"
+      }
+    },
+    {
+      "id": "ref-yuvan-shankar-raja-ysr",
+      "name": "Yuvan Shankar Raja YSR",
+      "url": "https://stream.zeno.fm/bni50mpqxjeuv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "YSR Hits",
+        "icy-br": "128",
+        "StreamTitle": "senthoora poove_rc"
+      }
+    },
+    {
+      "id": "ref-mop-fm-chennai",
+      "name": "MOP FM Chennai",
+      "url": "https://streamasiacdn.atc-labs.com/mopfmchennai.aac",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "128",
+        "icy-description": "Test description",
+        "icy-genre": "Various",
+        "icy-name": "ATCLABS",
+        "icy-pub": "1",
+        "StreamTitle": ""
+      }
+    },
+    {
+      "id": "ref-nesaganam-comparison",
+      "name": "Nesaganam comparison only",
+      "url": "https://usa9.fastcast4u.com/proxy/nesaganam?mp=/1",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "NESAGANAM TAMIL RADIO",
+        "icy-genre": "NESAGANAM TAMIL RADIO",
+        "icy-br": "96",
+        "icy-sr": "44100",
+        "icy-url": "http://www.nesaganam.com",
+        "icy-pub": "1",
+        "StreamTitle": "Unknown - Oorum Blood Movie Version | Dude | Pradeep R, Mamitha | @SaiAbhyankkar| Keerthiswaran | Paal Dabba [3BXT]"
+      }
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}
