@@ -1,8 +1,6 @@
 name: Live Guard 3.04 concise voice candidate (no publication)
 on:
-  push:
-    branches: ["arena/30198928-rp-android-apps"]
-    paths: ["cleaner/**", "tools/run_liveguard_304_upgrade.py", ".github/workflows/liveguard-304-candidate.yml"]
+  # Historical 3.04 identity is pinned below. Do not build it on later source changes.
   workflow_dispatch:
 permissions:
   contents: read

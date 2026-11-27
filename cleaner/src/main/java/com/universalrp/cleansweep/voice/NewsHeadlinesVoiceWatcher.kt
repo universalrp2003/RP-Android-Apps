@@ -315,7 +315,7 @@ object NewsHeadlinesVoiceWatcher {
         var completed = false
         try {
             val plan = NewsPlaybackPlan.build(batch, tamil, lead) +
-                draft?.text(tamil)?.let { text -> NewsSpeechSanitizer.splitForHd(text).map { NewsPlaybackPlan.Part(it) } }.orEmpty()
+                draft?.text(tamil)?.let { text -> NewsSpeechSanitizer.splitForHd(NewsSpeechSanitizer.forSpeech(text)).map { NewsPlaybackPlan.Part(it) } }.orEmpty()
             if (plan.isEmpty()) return@withContext false
             val spoken = Announcer.speakNewsBulletinAndWait(
                 context = app, text = plan.joinToString(" ") { it.text }, language = lang, manual = manual,

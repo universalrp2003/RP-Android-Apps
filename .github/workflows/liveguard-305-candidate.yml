@@ -1,0 +1,72 @@
+name: Live Guard 3.05 signed build (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["cleaner/**", ".github/workflows/liveguard-305-candidate.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: liveguard-305-build-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Compile signed release APK
+        run: gradle :cleaner:assembleRelease --no-daemon --stacktrace
+      - name: Verify identity, signer and permissions
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/liveguard305 /tmp/liveguard304
+          shopt -s nullglob
+          apks=(cleaner/build/outputs/apk/release/*.apk)
+          test "${#apks[@]}" = 1
+          cp "${apks[0]}" /tmp/liveguard305/candidate.apk
+          sha256sum /tmp/liveguard305/candidate.apk | awk '{print $1}' > /tmp/liveguard305/sha256.txt
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" dump badging /tmp/liveguard305/candidate.apk > /tmp/liveguard305/badging.txt
+          grep -q "package: name='com.universalrp.cleansweep' versionCode='110' versionName='3.05'" /tmp/liveguard305/badging.txt
+          ! grep -q application-debuggable /tmp/liveguard305/badging.txt
+          "$tools/apksigner" verify --print-certs /tmp/liveguard305/candidate.apk > /tmp/liveguard305/signer.txt
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          signer = Path('/tmp/liveguard305/signer.txt').read_text()
+          assert set(re.findall(r'certificate SHA-256 digest: ([a-fA-F0-9]+)', signer)) == {'7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d'}
+          PY
+          gh release download live-guard-v3.04 --pattern CleanSweep-v3.04.apk --dir /tmp/liveguard304
+          echo 'e68d03392796fac7bee4296016e1fb87ab311a9b12799fecce8690c3e4c0610d  /tmp/liveguard304/CleanSweep-v3.04.apk' | sha256sum -c -
+          "$tools/aapt" dump badging /tmp/liveguard304/CleanSweep-v3.04.apk > /tmp/liveguard305/baseline-badging.txt
+          python3 - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from verify_release_permission_delta import parse_badging
+          root = Path('/tmp/liveguard305')
+          assert parse_badging((root/'baseline-badging.txt').read_text()) == parse_badging((root/'badging.txt').read_text()), 'Permissions changed'
+          print('Candidate SHA256:', (root/'sha256.txt').read_text().strip())
+          PY
+      - name: Archive exact signed candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: Live-Guard-3.05-signed-candidate
+          path: /tmp/liveguard305/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Remove signing material
+        if: always()
+        run: rm -f ci-keystore/release.p12
