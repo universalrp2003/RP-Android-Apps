@@ -43,6 +43,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Install FFprobe if needed
+        run: |
+          if ! command -v ffprobe; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends ffmpeg
+          fi
+          command -v ffprobe
       - name: Probe selected reference candidates
         run: python3 tools/radio_reference/probe_candidates.py tools/radio_reference/candidates.json "$RUNNER_TEMP/reference-probe"
       - uses: actions/upload-artifact@v4
