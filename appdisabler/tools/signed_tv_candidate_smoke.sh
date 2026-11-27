@@ -27,7 +27,10 @@ probe seed
 adb install -r "$candidate"
 uid_after="$(adb shell cmd package list packages -U "$pkg" | tr -d '\r' | sed -n "s/^package:$pkg uid://p")"
 test "$uid_before" = "$uid_after"
-adb shell dumpsys package "$pkg" | tr -d '\r' | grep -Fq 'versionName=0.5.0'
+# Consume the complete dump before checking it: grep -q can exit on an early match and
+# SIGPIPE adb/tr under pipefail even though the version is correct (exit status 141).
+adb shell dumpsys package "$pkg" | tr -d '\r' > "$work/package-after-upgrade.txt"
+grep -Fq 'versionName=0.5.0' "$work/package-after-upgrade.txt"
 probe verify
 adb shell am instrument -w -r -e class com.universalrp.appdisabler.TvFocusTest "$runner" \
   | tr -d '\r' | tee "$work/tv-focus.log"

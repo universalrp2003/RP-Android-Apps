@@ -33,6 +33,12 @@ class DisablerRecoveryGuidanceTests(unittest.TestCase):
         self.assertIn('packageName in PHOTO_REVIEW_PACKAGES', source)
         self.assertNotIn('contains("gallery")', source)
 
+    def test_signed_smoke_checks_version_without_cutting_off_the_dump(self):
+        smoke = (ROOT / 'appdisabler/tools/signed_tv_candidate_smoke.sh').read_text()
+        self.assertIn('> "$work/package-after-upgrade.txt"', smoke)
+        self.assertIn('grep -Fq \'versionName=0.5.0\' "$work/package-after-upgrade.txt"', smoke)
+        self.assertNotIn("tr -d '\\r' | grep -Fq", smoke)
+
 
 if __name__ == '__main__':
     unittest.main()
