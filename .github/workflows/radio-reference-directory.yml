@@ -1,0 +1,32 @@
+name: Radio reference directory research (no publication)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  directory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve bounded directory metadata
+        run: python3 tools/radio_reference/fetch_directory.py "$RUNNER_TEMP/reference-directory"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-reference-directory
+          retention-days: 14
+          path: ${{ runner.temp }}/reference-directory/directory.json
+      - name: Expose data as a blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'reference-directory'/'directory.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Reference directory receipt::blob='+json.loads(result.stdout)['sha'])
