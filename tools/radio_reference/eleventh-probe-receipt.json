@@ -1,0 +1,360 @@
+{
+  "checkedAtRunnerUtc": "2026-11-28T00:26:28.736523+00:00",
+  "candidates": [
+    {
+      "id": "ref-tamilkuyil",
+      "name": "Tamil Kuyil Radio",
+      "url": "http://live.tamilkuyilradio.com:8095/tamilkuyil",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/2",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 10,
+      "referenceName": "Tamilkuyil",
+      "referenceEvidence": "https://www.tamilradios.com/page/2"
+    },
+    {
+      "id": "ref-gramiyam-plus",
+      "name": "Gramiyam Plus",
+      "url": "https://cast6.asurahosting.com/proxy/gramiyam/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/gramiyam-plus-fm",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 18,
+      "referenceName": "Gramiyam FM",
+      "referenceEvidence": "https://www.tamilradios.com/gramiyam-plus-fm"
+    },
+    {
+      "id": "ref-adithya-tunes",
+      "name": "Adithya Tunes FM",
+      "url": "https://a4.asurahosting.com:7450/radio.mp3",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/4",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 15,
+      "referenceName": "Adithya",
+      "referenceEvidence": "https://www.tamilradios.com/page/4"
+    },
+    {
+      "id": "ref-mecheri-city",
+      "name": "Mecheri City FM",
+      "url": "https://stream.zeno.fm/hdmsly3wvt9tv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/6",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 29,
+      "referenceName": "Mecheri",
+      "referenceEvidence": "https://www.tamilradios.com/page/6"
+    },
+    {
+      "id": "ref-mecheri-anbu",
+      "name": "Anbu FM existing comparison",
+      "url": "https://stream.zeno.fm/c2p4f1np4bruv",
+      "favicon": "",
+      "homepage": "https://liveonlineradio.net/anbu-fm",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 29,
+      "referenceName": "Mecheri Anbu",
+      "referenceEvidence": "https://liveonlineradio.net/anbu-fm"
+    },
+    {
+      "id": "ref-rajini-new",
+      "name": "Rajini Radio candidate",
+      "url": "https://stream.zeno.fm/g20bs7hu0uhvv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/rajini-radio",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 5,
+      "referenceName": "Rajini Hits",
+      "referenceEvidence": "https://www.tamilradios.com/rajini-radio"
+    },
+    {
+      "id": "ref-rajini-old",
+      "name": "Rajini Radio existing comparison",
+      "url": "https://stream.zeno.fm/aqp97f3z238uv",
+      "favicon": "",
+      "homepage": "https://liveradios.in/rajini-radio.html",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 5,
+      "referenceName": "Rajini Hits",
+      "referenceEvidence": "https://liveradios.in/rajini-radio.html"
+    },
+    {
+      "id": "ref-thamil-fm",
+      "name": "Thamil FM",
+      "url": "https://stream.zeno.fm/kvbr7qnwey8uv",
+      "favicon": "",
+      "homepage": "https://zeno.fm/radio/thamilfm/",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 13,
+      "referenceName": "Thamil Radio",
+      "referenceEvidence": "https://zeno.fm/radio/thamilfm/"
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-tamilkuyil",
+      "name": "Tamil Kuyil Radio",
+      "url": "http://live.tamilkuyilradio.com:8095/tamilkuyil",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.0.753<BR>",
+        "icy-name": "TamilKuyil-FM",
+        "icy-genre": "Tamil",
+        "icy-br": "128",
+        "icy-sr": "44100",
+        "icy-url": "http://tamilkuyilradio.com",
+        "icy-pub": "1",
+        "StreamTitle": "K. J. Yesudas & K. S. Chithra - Thenpandi Thamizhe[Paasa Paravaigal]@5LM",
+        "StreamUrl": "&artist=K.%20J.%20Yesudas%20%26%20K.%20S.%20Chithra&title=Thenpandi%20Thamizhe%5BPaasa%20Paravaigal%5D%405LM&album=Paasa%20Paravaigal&duration=281391&songtype=S&overlay=no&buycd=&website=&picture=az_B291289_Paasa%20Paravaigal_K.%20J.%20Yesudas%20%26%20K.%20S.%20Chithra.jpg"
+      }
+    },
+    {
+      "id": "ref-gramiyam-plus",
+      "name": "Gramiyam Plus",
+      "url": "https://cast6.asurahosting.com/proxy/gramiyam/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Gramiyam Plus",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Friendstamilmp3.com-ILaiyaraja Hits-Best of 90s - Oru Nalum Unai Maravatha"
+      }
+    },
+    {
+      "id": "ref-adithya-tunes",
+      "name": "Adithya Tunes FM",
+      "url": "https://a4.asurahosting.com:7450/radio.mp3",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Radio Piazza Armerina Xbazar",
+        "icy-genre": "Radio Generica",
+        "icy-br": "128",
+        "icy-sr": "44100",
+        "icy-url": "http://www.xbazar.it/radio",
+        "icy-pub": "0",
+        "StreamTitle": "Moonlight Whispers 26072600"
+      }
+    },
+    {
+      "id": "ref-mecheri-city",
+      "name": "Mecheri City FM",
+      "url": "https://stream.zeno.fm/hdmsly3wvt9tv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "MECHERI CITY FM",
+        "icy-br": "128",
+        "StreamTitle": "﻿இசை தெய்வம் - ﻿மேச்சேரி பத்திரகாளியம்மன் பாடல்கள்",
+        "StreamUrl": "&artist=%EF%BB%BF%E0%AE%87%E0%AE%9A%E0%AF%88 %E0%AE%A4%E0%AF%86%E0%AE%AF%E0%AF%8D%E0%AE%B5%E0%AE%AE%E0%AF%8D&album=%EF%BB%BF%E0%AE%87%E0%AE%9A%E0%AF%88 %E0%AE%A4%E0%AF%86%E0%AE%AF%E0%AF%8D%E0%AE%B5%E0%AE%AE%E0%AF%8D"
+      }
+    },
+    {
+      "id": "ref-mecheri-anbu",
+      "name": "Anbu FM existing comparison",
+      "url": "https://stream.zeno.fm/c2p4f1np4bruv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "ANBU FM",
+        "icy-br": "128",
+        "StreamTitle": "www.anbufm.com -  91 8526895841 |  91 9514495841 | anbuvaanoli@gmail.com",
+        "StreamUrl": "&artist=www.anbufm.com&album=Komban %282015%29"
+      }
+    },
+    {
+      "id": "ref-rajini-new",
+      "name": "Rajini Radio candidate",
+      "url": "https://stream.zeno.fm/g20bs7hu0uhvv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "RAJINI RADIO",
+        "icy-br": "128",
+        "StreamTitle": "Naresh Iyer, Blaaze, Raqueeb Alam - [Masstamilan.in] - The-Boss-Theme-Music-[Masstamilan.in]",
+        "StreamUrl": "&artist=Naresh Iyer%2C Blaaze%2C Raqueeb Alam - %5BMasstamilan.in%5D&album=Sivaji - %5BMasstamilan.in%5D"
+      }
+    },
+    {
+      "id": "ref-rajini-old",
+      "name": "Rajini Radio existing comparison",
+      "url": "https://stream.zeno.fm/aqp97f3z238uv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "audio": [],
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "ref-thamil-fm",
+      "name": "Thamil FM",
+      "url": "https://stream.zeno.fm/kvbr7qnwey8uv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "audio": [],
+      "detail": "probe/decode failed"
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}

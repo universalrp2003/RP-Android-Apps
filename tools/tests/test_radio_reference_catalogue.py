@@ -27,21 +27,45 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
 
     def test_candidate_receipt_and_added_seed_entries(self):
         seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())
-        receipts = [json.loads((REFERENCE/name).read_text()) for name in ('first-probe-receipt.json', 'second-probe-receipt.json', 'artist-probe-receipt.json', 'devotional-probe-receipt.json', 'expanded-probe-receipt.json', 'further-probe-receipt.json', 'regional-probe-receipt.json', 'community-artist-probe-receipt.json', 'identity-review-probe-receipt.json', 'official-probe-receipt.json', 'kadal-probe-receipt.json')]
+        receipts = [json.loads((REFERENCE/name).read_text()) for name in ('first-probe-receipt.json', 'second-probe-receipt.json', 'artist-probe-receipt.json', 'devotional-probe-receipt.json', 'expanded-probe-receipt.json', 'further-probe-receipt.json', 'regional-probe-receipt.json', 'community-artist-probe-receipt.json', 'identity-review-probe-receipt.json', 'official-probe-receipt.json', 'kadal-probe-receipt.json', 'eleventh-probe-receipt.json')]
         results = {r['url']: r for receipt in receipts for r in receipt['results']}
         added = [s for s in seed['stations'] if s.get('source') in ('reference-directory', 'reference-manual')]
-        self.assertEqual(len(added), 87)
+        self.assertEqual(len(added), 90)
         self.assertEqual(seed['total'], len(seed['stations']))
         self.assertEqual(seed['verifiedCount'], sum(s.get('verified', True) for s in seed['stations']))
         self.assertEqual(seed['counts'], {k: sum(s['category'] == k for s in seed['stations']) for k in seed['counts']})
         self.assertEqual(len({s['url'].lower() for s in added}), len(added))
-        for station in added:
+        latest = json.loads((REFERENCE/'catalogue-audit-receipt.json').read_text())
+        latest_by_index = {r['index']: r for r in latest['shippedResults']}
+        for index, station in enumerate(seed['stations']):
+            if station not in added:
+                continue
             result = results[station['url']]
             self.assertEqual(result['status'], 'audio_reachable')
             self.assertFalse(result['providerReview'])
             self.assertFalse(result['contentReviewed'])
-            self.assertEqual(station['auditStatus'], 'audio_reachable')
+            current = latest_by_index.get(index)
+            if current:
+                self.assertEqual(current['name'], station['name'])
+                expected = current['status'] == 'audio_reachable' and not current['providerReview']
+                self.assertEqual(station['verified'], expected)
+                self.assertEqual(station['auditStatus'], current['status'])
+            else:
+                self.assertTrue(station['verified'])
+                self.assertEqual(station['auditStatus'], 'audio_reachable')
             self.assertTrue(1 <= station['referenceScreen'] <= 38)
+
+    def test_latest_full_audit_matches_shipped_statuses(self):
+        seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())['stations']
+        receipt = json.loads((REFERENCE/'catalogue-audit-receipt.json').read_text())
+        rows = receipt['shippedResults']
+        self.assertEqual(receipt['shippedChecked'], 600)
+        self.assertEqual([r['index'] for r in rows], list(range(600)))
+        for row in rows:
+            station = seed[row['index']]
+            self.assertEqual(row['name'], station['name'])
+            expected = row['status'] == 'audio_reachable' and not row['providerReview']
+            self.assertEqual(station.get('verified', True), expected, station['name'])
 
     def test_added_endpoints_do_not_duplicate_common_url_forms(self):
         self.assertEqual(endpoint_key('http://example.test:5206/;stream.mp3'),
