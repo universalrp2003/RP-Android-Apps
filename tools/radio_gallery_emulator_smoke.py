@@ -131,6 +131,7 @@ def navigate(*labels):
 # Back dismisses the drawer without changing destination.
 open_menu()
 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+wait_for('Open navigation menu', 'பட்டியலைத் திற')
 assert find(tree(), 'Settings & more') is None, 'Back did not close drawer'
 navigate('News', 'செய்திகள்')
 wait_for('News radio', 'செய்தி வானொலி')

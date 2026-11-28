@@ -1,6 +1,7 @@
 package com.universalrp.tamilnadufm.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -118,6 +119,9 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             }
         }
     }
+
+    // Register after the screen handlers so Back dismisses the drawer first.
+    BackHandler(enabled = drawer.isOpen) { scope.launch { drawer.close() } }
 
     if (state.showNowPlaying) {
         NowPlayingSheet(vm, state)
