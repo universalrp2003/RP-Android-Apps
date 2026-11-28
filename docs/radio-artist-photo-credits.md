@@ -11,3 +11,16 @@ These photos are loaded from Wikimedia Commons; if unavailable the app displays 
 - Anirudh: Surajram Kumaravel. [Source](https://commons.wikimedia.org/wiki/File:Anirudh_Ravichander.jpg), [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 - Hariharan: E P Sajeevan. [Source](https://commons.wikimedia.org/wiki/File:A_Hariharan.JPG), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 - S. Janaki: Rishabh Tatiraju. [Source](https://commons.wikimedia.org/wiki/File:S_Janaki_in_Pune,_India_2007.JPG), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+
+- Mano — subhadra devan. [Source](https://commons.wikimedia.org/wiki/File:Playback_singer_Mano.JPG), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- Harris Jayaraj — Wikipraveennew. [Source](https://commons.wikimedia.org/wiki/File:Harris_Jayaraj.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- D. Imman — Silverscreen Media Inc.. [Source](https://commons.wikimedia.org/wiki/File:D_Imman_at_Panjumittai_Audio_Launch.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Vijay Antony — Kumarcd. [Source](https://commons.wikimedia.org/wiki/File:VijayAntony.JPG), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Deva — Silverscreen Media Inc.; watermark removed by Commons. [Source](https://commons.wikimedia.org/wiki/File:Music_Director_Deva_at_KJ_Yesudas_50_Concert_Press_Meet.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Vidyasagar — Prajeesh Raj; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Vidyasagar_at_Anarkali_celebration.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- Sujatha — Lijesh K; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Sujatha_(cropped).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Vani Jayaram — Bollywood Hungama; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Vani_Jairam_2014_FF_(cropped).jpg), [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
+- Kamal Haasan — Bollywood Hungama; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Kamal_at_61st_FF_(cropped).jpg), [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
+- Rajinikanth — Dani Charles / Silverscreen; watermark removed by Commons. [Source](https://commons.wikimedia.org/wiki/File:Rajinikanth_Felicitates_Writer_Kalaignanam.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Dhanush — Dani Charles / Silverscreen. [Source](https://commons.wikimedia.org/wiki/File:Dhanush_at_the_%E2%80%98Asuran%E2%80%99_Success_Meet.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Suriya — Epsajeevan. [Source](https://commons.wikimedia.org/wiki/File:Soorya_sivakumar.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

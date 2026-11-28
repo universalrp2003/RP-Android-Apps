@@ -895,6 +895,18 @@ private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit)
             Triple("Anirudh — Surajram Kumaravel", "https://commons.wikimedia.org/wiki/File:Anirudh_Ravichander.jpg", "https://creativecommons.org/licenses/by/3.0/"),
             Triple("Hariharan — E P Sajeevan", "https://commons.wikimedia.org/wiki/File:A_Hariharan.JPG", "https://creativecommons.org/licenses/by-sa/4.0/"),
             Triple("S. Janaki — Rishabh Tatiraju", "https://commons.wikimedia.org/wiki/File:S_Janaki_in_Pune,_India_2007.JPG", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Mano — subhadra devan", "https://commons.wikimedia.org/wiki/File:Playback_singer_Mano.JPG", "https://creativecommons.org/licenses/by-sa/4.0/"),
+            Triple("Harris Jayaraj — Wikipraveennew", "https://commons.wikimedia.org/wiki/File:Harris_Jayaraj.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("D. Imman — Silverscreen Media Inc.", "https://commons.wikimedia.org/wiki/File:D_Imman_at_Panjumittai_Audio_Launch.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Vijay Antony — Kumarcd", "https://commons.wikimedia.org/wiki/File:VijayAntony.JPG", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Deva — Silverscreen Media Inc.; watermark removed by Commons", "https://commons.wikimedia.org/wiki/File:Music_Director_Deva_at_KJ_Yesudas_50_Concert_Press_Meet.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Vidyasagar — Prajeesh Raj; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Vidyasagar_at_Anarkali_celebration.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
+            Triple("Sujatha — Lijesh K; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Sujatha_(cropped).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Vani Jayaram — Bollywood Hungama; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Vani_Jairam_2014_FF_(cropped).jpg", "https://creativecommons.org/licenses/by/3.0/"),
+            Triple("Kamal Haasan — Bollywood Hungama; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Kamal_at_61st_FF_(cropped).jpg", "https://creativecommons.org/licenses/by/3.0/"),
+            Triple("Rajinikanth — Dani Charles / Silverscreen; watermark removed by Commons", "https://commons.wikimedia.org/wiki/File:Rajinikanth_Felicitates_Writer_Kalaignanam.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Dhanush — Dani Charles / Silverscreen", "https://commons.wikimedia.org/wiki/File:Dhanush_at_the_%E2%80%98Asuran%E2%80%99_Success_Meet.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Suriya — Epsajeevan", "https://commons.wikimedia.org/wiki/File:Soorya_sivakumar.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
         )
         AlertDialog(onDismissRequest = { credits = false }, title = { Text("Photo credits") },
             text = {
