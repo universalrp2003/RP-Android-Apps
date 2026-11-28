@@ -4,6 +4,18 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class RadioTabOrderTest {
+    @Test fun artistCategoriesAreHiddenWithoutChangingSavedOrder() {
+        val saved = RadioTabOrder.categories.reversed()
+        val visible = RadioTabOrder.stationCategories(saved)
+        val hidden = setOf(Category.TAMIL_ILAYARAJA, Category.TAMIL_MSV, Category.TAMIL_AR_RAHMAN)
+        assertEquals(saved.filterNot { it in hidden }, visible)
+        assertEquals(RadioTabOrder.categories.size, saved.size)
+        assertEquals(saved, RadioTabOrder.normalize(saved, RadioTabOrder.categories))
+        val reordered = RadioTabOrder.place(saved, RadioTabOrder.categories, visible.first(), visible.last(), true)
+        assertEquals(saved.toSet(), reordered.toSet())
+        assertEquals(saved.filter { it in hidden }, reordered.filter { it in hidden })
+    }
+
     @Test fun emptyOrBrokenSavedOrderFallsBackWithoutLosingAnyTab() {
         assertEquals(RadioTabOrder.navigation, RadioTabOrder.normalize(emptyList(), RadioTabOrder.navigation))
         val saved = listOf("MORE", "UNKNOWN", "MORE", "RADIO")

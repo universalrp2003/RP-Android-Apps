@@ -116,17 +116,29 @@ wait_for('not confirmed', 'உறுதி செய்யப்படவில�
 wait_for('Stream not verified', 'சரிபார்க்கப்படாத ஒலிபரப்பு')
 # News must start in a news category, without inheriting the radio search.
 tap(wait_for('Cancel', 'ரத்து'))
-def exact_nav(*labels):
+def open_menu():
+    tap(wait_for('Open navigation menu', 'பட்டியலைத் திற'))
+    wait_for('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
+
+
+def navigate(*labels):
+    open_menu()
     root = tree()
-    return next((n for n in root.iter('node') if n.get('content-desc', '') in labels), None)
-news = exact_nav('News', 'செய்திகள்')
-assert news is not None, 'News navigation missing'
-tap(news)
+    node = next((n for n in root.iter('node') if n.get('text', '') in labels), None)
+    assert node is not None, 'Drawer navigation missing: ' + str(labels)
+    tap(node)
+
+# Back dismisses the drawer without changing destination.
+open_menu()
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+assert find(tree(), 'Settings & more') is None, 'Back did not close drawer'
+navigate('News', 'செய்திகள்')
 wait_for('News radio', 'செய்தி வானொலி')
 assert find(tree(), 'Nattrinai') is None, 'Radio search leaked into news'
-radio = exact_nav('Radio', 'வானொலி')
-assert radio is not None, 'Radio navigation missing'
-tap(radio)
+navigate('Local music', 'உள்ளூர் பாடல்கள்')
+navigate('Equalizer', 'ஒலி சமநிலை')
+navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
+navigate('Radio', 'வானொலி')
 wait_for('Nattrinai')
-print('PASS: light gallery, persistent artist tab, full-list scrolling, news filters and retained radio search on emulator.')
+print('PASS: gallery, artist shortcuts, drawer navigation and retained radio search on emulator.')
 print('No audible playback, phone, sustained stream, identity or rights test was performed.')

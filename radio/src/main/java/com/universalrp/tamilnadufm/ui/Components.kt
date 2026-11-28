@@ -72,18 +72,19 @@ fun Chip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Text(
-        label,
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-        color = if (selected) Color.White else TextPrimary,
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(if (selected) Saffron else SurfaceHigh)
-            .border(1.dp, if (selected) Saffron else OutlineC, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    )
+            .border(1.dp, if (selected) Saffron else OutlineC, RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) Color.White else TextPrimary,
+            maxLines = 1, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+    }
 }
 
 @Composable

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.universalrp.tamilnadufm.MainViewModel
 import com.universalrp.tamilnadufm.UiState
 import com.universalrp.tamilnadufm.data.Category
+import com.universalrp.tamilnadufm.data.RadioTabOrder
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
 
@@ -22,16 +23,16 @@ import com.universalrp.updates.AppLanguageState
 fun TabOrderEditor(vm: MainViewModel, state: UiState, onDismiss: () -> Unit) {
     val tamil = AppLanguageState.current == AppLanguage.TAMIL
     var navigation by remember { mutableStateOf(true) }
-    val order = if (navigation) state.navigationOrder else state.categoryOrder
+    val order = if (navigation) state.navigationOrder else RadioTabOrder.stationCategories(state.categoryOrder)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (tamil) "முழுத் தாவல்களின் வரிசை" else "Arrange whole tabs") },
+        title = { Text(if (tamil) "பட்டியல் மற்றும் வகைகளின் வரிசை" else "Arrange menu and categories") },
         text = {
             Column {
                 Text(if (tamil) "அம்புகளால் வரிசையை மாற்றுங்கள். இந்தப் போனில் தானாகச் சேமிக்கப்படும்; நடக்கும் ஒலிபரப்பு மாறாது."
                     else "Move tabs with the arrows. Saved automatically on this phone; playback and selected tab stay unchanged.")
                 Row {
-                    TextButton(onClick = { navigation = true }) { Text(if (tamil) "கீழ்த் தாவல்கள்" else "Navigation", color = if (navigation) Saffron else TextSecondary) }
+                    TextButton(onClick = { navigation = true }) { Text(if (tamil) "பக்கப் பட்டியல்" else "Side menu", color = if (navigation) Saffron else TextSecondary) }
                     TextButton(onClick = { navigation = false }) { Text(if (tamil) "வானொலி வகைகள்" else "Categories", color = if (!navigation) Saffron else TextSecondary) }
                 }
                 Column(Modifier.heightIn(max = 350.dp).verticalScroll(rememberScrollState())) {
@@ -46,11 +47,17 @@ fun TabOrderEditor(vm: MainViewModel, state: UiState, onDismiss: () -> Unit) {
                             } else Category.label(id, tamil)
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Text("${index + 1}. $label", modifier = Modifier.weight(1f))
-                                TextButton(onClick = { vm.moveTab(navigation, id, -1) }, enabled = index > 0,
+                                TextButton(onClick = {
+                                    if (navigation) vm.moveTab(true, id, -1)
+                                    else order.getOrNull(index - 1)?.let { vm.dropCategoryTab(id, it, false) }
+                                }, enabled = index > 0,
                                     modifier = Modifier.size(48.dp).semantics {
                                         contentDescription = if (tamil) "$label முன்னே நகர்த்து" else "Move $label earlier"
                                     }) { Text("↑") }
-                                TextButton(onClick = { vm.moveTab(navigation, id, 1) }, enabled = index < order.lastIndex,
+                                TextButton(onClick = {
+                                    if (navigation) vm.moveTab(true, id, 1)
+                                    else order.getOrNull(index + 1)?.let { vm.dropCategoryTab(id, it, true) }
+                                }, enabled = index < order.lastIndex,
                                     modifier = Modifier.size(48.dp).semantics {
                                         contentDescription = if (tamil) "$label பின்னே நகர்த்து" else "Move $label later"
                                     }) { Text("↓") }

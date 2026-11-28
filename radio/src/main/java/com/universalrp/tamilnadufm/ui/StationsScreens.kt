@@ -40,7 +40,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -80,6 +79,7 @@ import com.universalrp.tamilnadufm.MainViewModel
 import com.universalrp.tamilnadufm.UiState
 import com.universalrp.tamilnadufm.data.Category
 import com.universalrp.tamilnadufm.data.RadioStation
+import com.universalrp.tamilnadufm.data.RadioTabOrder
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
 import com.universalrp.updates.AppStrings
@@ -88,20 +88,17 @@ import kotlinx.coroutines.launch
 // --------------------------------------------------------------------- radio
 
 @Composable
-fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
-    // v1.14 — the owner asked for a calmer first screen: the search box and the sorting
-    // explanation now take one line each and open when tapped, instead of pushing the
-    // station list down before the user has chosen anything.
+fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onOpenMenu: () -> Unit, drawerOpen: Boolean) {
+    // Keep the search compact until editing, leaving room for station cards.
     var searchOpen by rememberSaveable { mutableStateOf(state.query.isNotBlank()) }
-    var showSortInfo by rememberSaveable { mutableStateOf(false) }
     var iconView by rememberSaveable { mutableStateOf(true) }
     var selectedIconStation by remember { mutableStateOf<RadioStation?>(null) }
     var showGuide by rememberSaveable { mutableStateOf(false) }
     val screenScope = rememberCoroutineScope()
     var showArtists by rememberSaveable { mutableStateOf(false) }
-    if (showArtists) BackHandler { showArtists = false }
+    if (showArtists && !drawerOpen) BackHandler { showArtists = false }
     if (showGuide) {
-        BackHandler { showGuide = false }
+        BackHandler(enabled = !drawerOpen) { showGuide = false }
         com.universalrp.updates.GuideScreen(
             content = com.universalrp.updates.AppGuides.rameshRadio,
             tamil = AppLanguageState.current == AppLanguage.TAMIL,
@@ -114,14 +111,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     // The artist entries are search shortcuts, not extra playable stations.
     val tamil = AppLanguageState.current == AppLanguage.TAMIL
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier.fillMaxWidth().background(HeaderGreen).padding(start = 16.dp, end = 8.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Text(if (tamil) "ரமேஷ் ரேடியோ" else "Ramesh Radio", modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.SemiBold)
-            IconButton(onClick = { showGuide = true }) {
-                Icon(Icons.Filled.HelpOutline, contentDescription = AppStrings.translate("Guide"), tint = Color.White)
-            }
-        }
+        RadioTopBar(onOpenMenu = onOpenMenu, onHelp = { showGuide = true })
         TabRow(selectedTabIndex = if (showArtists) 1 else 0, containerColor = HeaderGreen, contentColor = Color.White,
             indicator = { positions -> TabRowDefaults.Indicator(Modifier.tabIndicatorOffset(positions[if (showArtists) 1 else 0]), color = Color.White) }) {
             Tab(selected = !showArtists, onClick = { showArtists = false }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
@@ -159,8 +149,9 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                                     .clip(RoundedCornerShape(14.dp))
                                     .background(SurfaceHigh)
                                     .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
+                                    .heightIn(min = 48.dp)
                                     .clickable { searchOpen = true }
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    .padding(start = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
@@ -173,31 +164,30 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.weight(1f),
                                 )
-                                Icon(
-                                    Icons.Filled.Language,
-                                    contentDescription = AppStrings.translate("Directory"),
-                                    tint = Teal,
-                                    modifier = Modifier
-                                        .size(22.dp)
-                                        .clickable { vm.searchDirectory() },
-                                )
+                                IconButton(onClick = { vm.searchDirectory() }) {
+                                    Icon(Icons.Filled.Language, contentDescription = AppStrings.translate("Directory"), tint = Teal)
+                                }
                             }
                         }
                     }
 
                     item {
                         DraggableCategoryTabs(
-                            ids = state.categoryOrder,
+                            ids = RadioTabOrder.stationCategories(state.categoryOrder),
                             selected = state.category,
                             onSelect = vm::setCategory,
                             onDrop = vm::dropCategoryTab,
-                            onMove = { id, delta -> vm.moveTab(false, id, delta) },
+                            onMove = { id, delta ->
+                                val visible = RadioTabOrder.stationCategories(state.categoryOrder)
+                                val target = visible.getOrNull(visible.indexOf(id) + delta)
+                                if (target != null) vm.dropCategoryTab(id, target, delta > 0)
+                            },
                         )
                     }
 
                     // Continue where you left off
                     val last = vm.lastPlayed()
-                    if (last != null && state.query.isBlank() &&
+                    if (last != null && state.nowPlaying == null && state.playingLocalTitle == null && state.query.isBlank() &&
                         (state.category == Category.ALL || state.category == Category.TAMIL)
                     ) {
                         item {
@@ -268,40 +258,6 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                                     contentDescription = AppStrings.translate("Live directory"),
                                     tint = Teal,
                                 )
-                            }
-                        }
-                    }
-
-                    if (state.query.isBlank() && state.category in setOf(Category.ALL, Category.TAMIL, Category.TAMIL_FM)) {
-                        item {
-                            // One line, opened only when wanted — the same pattern the owner asked for on
-                            // the Oor Arivippu screens instead of a paragraph above every list.
-                            Column {
-                                Row(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .clickable { showSortInfo = !showSortInfo }
-                                        .padding(vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        "How this list is sorted",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Saffron,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    Text(if (showSortInfo) "  ▴" else "  ▾",
-                                        style = MaterialTheme.typography.labelSmall, color = Saffron)
-                                }
-                                if (showSortInfo) {
-                                    Text(
-                                        "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group.",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextSecondary,
-                                    )
-                                }
                             }
                         }
                     }

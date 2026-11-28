@@ -8,6 +8,13 @@ object RadioTabOrder {
         Category.TAMIL_AR_RAHMAN, Category.TAMIL_80S_90S, Category.TAMIL_DEVOTIONAL,
         Category.ALL, Category.ENGLISH, Category.CUSTOM, Category.ALL_NEWS, Category.WORLD_NEWS, Category.INDIA_NEWS)
 
+    // Artist searches live in the Artists gallery; keep their saved IDs intact so
+    // existing orders and artist-specific station matching are not discarded.
+    private val artistCategories = setOf(Category.TAMIL_ILAYARAJA, Category.TAMIL_MSV, Category.TAMIL_AR_RAHMAN)
+
+    fun stationCategories(saved: List<String>): List<String> =
+        saved.filterNot { it in artistCategories }
+
     fun normalize(saved: List<String>, defaults: List<String>): List<String> =
         (saved.filter { it in defaults } + defaults).distinct()
 

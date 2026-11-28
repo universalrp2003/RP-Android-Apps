@@ -266,13 +266,13 @@ object AppGuides {
             topic(
                 "Playing a file from your phone",
                 "உங்கள் போனிலிருந்து கோப்பு இயக்குதல்",
-                "Open Local at the bottom. Choose a folder once to list only audio in that folder and its " +
+                "Open the side menu and select Local music. Choose a folder once to list only audio in that folder and its " +
                     "subfolders, or choose Open a file for one item. Tap a song to play it. While a local file is " +
                     "playing, the Local screen and Now Playing sheet show elapsed time, total length and a seek bar; " +
                     "drag it to any point in the recording. Live stations have no total duration and can seek only " +
                     "inside the short buffered window. Folder access is granted by Android's picker; the app does " +
                     "not scan the whole phone.",
-                "கீழே உள்ள பாடல்கள் (Local) தாவலைத் திறக்கவும். ஒரு கோப்புறையைத் தேர்ந்தெடுத்தால் அதிலும் அதன் துணைக் " +
+                "பக்கப் பட்டியலில் உள்ளூர் பாடல்களைத் தேர்ந்தெடுக்கவும். ஒரு கோப்புறையைத் தேர்ந்தெடுத்தால் அதிலும் அதன் துணைக் " +
                     "கோப்புறைகளிலும் உள்ள ஒலி மட்டும் பட்டியலாகும்; அல்லது ஒரு கோப்பிற்கு கோப்பைத் திற (Open a file)-ஐத் " +
                     "தேர்ந்தெடுக்கவும். பாடலைத் தொட்டு இயக்குங்கள். உள்ளூர் கோப்பு இயங்கும்போது பாடல்கள் (Local) திரையிலும் " +
                     "Now Playing திரையிலும் கடந்த நேரம், மொத்த நீளம், சீக் பட்டை தெரியும்; பதிவின் எந்த இடத்திற்கும் " +

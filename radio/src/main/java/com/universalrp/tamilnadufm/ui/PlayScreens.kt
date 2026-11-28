@@ -733,9 +733,9 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
         item {
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().clickable { showTabOrder = true }.padding(14.dp)) {
-                    Text(if (tamil) "முழுத் தாவல்களின் வரிசையை மாற்று" else "Arrange whole tabs", color = Saffron, fontWeight = FontWeight.SemiBold)
-                    Text(if (tamil) "கீழ்த் தாவல்கள் மற்றும் வானொலி வகைகள் — உங்கள் விருப்ப வரிசையில்."
-                        else "Put navigation tabs and station categories in your preferred order.", color = TextSecondary)
+                    Text(if (tamil) "பக்கப் பட்டியல் மற்றும் வகைகளை வரிசைப்படுத்து" else "Arrange menu and categories", color = Saffron, fontWeight = FontWeight.SemiBold)
+                    Text(if (tamil) "பக்கப் பட்டியல் மற்றும் வானொலி வகைகள் — உங்கள் விருப்ப வரிசையில்."
+                        else "Put menu items and station categories in your preferred order.", color = TextSecondary)
                 }
             }
         }

@@ -44,7 +44,7 @@ class RadioIconStationModeTest(unittest.TestCase):
         theme = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/Theme.kt").read_text()
         self.assertIn("lightColorScheme(", theme)
         self.assertIn("Color(0xFFF4F6F1)", theme)
-        self.assertIn("background(HeaderGreen)", SCREEN)
+        self.assertIn("background(HeaderGreen)", (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/AppRoot.kt").read_text())
 
     def test_station_toolbar_uses_compact_accessible_directory_action(self):
         self.assertNotIn('IconChip(Icons.Filled.Language, "Live directory")', SCREEN)

@@ -5,11 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,8 +23,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Equalizer
-import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Pause
@@ -35,6 +36,12 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -43,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +64,9 @@ import com.universalrp.tamilnadufm.MainViewModel
 import com.universalrp.tamilnadufm.Tab
 import com.universalrp.tamilnadufm.player.PlayerBus
 import com.universalrp.updates.AppStrings
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppRoot(vm: MainViewModel, controller: MediaController?) {
@@ -74,37 +85,38 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
     val state by vm.state.collectAsState()
     val playback by PlayerBus.state.collectAsState()
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Bg)
-            // Android 15+ draws apps edge to edge. Without this the title sat under the
-            // status bar and the tab bar was covered by the 3-button navigation, which
-            // made the tabs impossible to tap.
-            .windowInsetsPadding(WindowInsets.safeDrawing)
+    val drawer = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val openMenu = { scope.launch { drawer.open() }; Unit }
+    ModalNavigationDrawer(
+        drawerState = drawer,
+        drawerContent = {
+            RadioDrawer(state.tab, state.navigationOrder) { tab ->
+                vm.selectTab(tab)
+                scope.launch { drawer.close() }
+            }
+        },
     ) {
-        Box(Modifier.weight(1f)) {
-            when (state.tab) {
-                // v1.3: list states live in the ViewModel, so a tab switch keeps your place.
-                Tab.RADIO -> RadioScreen(vm, state, vm.radioListState)
-                Tab.NEWS -> NewsScreen(vm, state, vm.newsListState)
-                Tab.LOCAL -> LocalScreen(vm, state)
-                Tab.EQUALIZER -> EqualizerScreen(vm, state)
-                Tab.MORE -> MoreScreen(vm, state)
+        Column(
+            Modifier.fillMaxSize().background(Bg).windowInsetsPadding(WindowInsets.safeDrawing)
+        ) {
+            if (state.tab != Tab.RADIO) RadioTopBar(onOpenMenu = openMenu)
+            Box(Modifier.weight(1f)) {
+                when (state.tab) {
+                    Tab.RADIO -> RadioScreen(vm, state, vm.radioListState, onOpenMenu = openMenu, drawerOpen = drawer.isOpen)
+                    Tab.NEWS -> NewsScreen(vm, state, vm.newsListState)
+                    Tab.LOCAL -> LocalScreen(vm, state)
+                    Tab.EQUALIZER -> EqualizerScreen(vm, state)
+                    Tab.MORE -> MoreScreen(vm, state)
+                }
+            }
+            AnimatedVisibility(visible = state.message != null) {
+                state.message?.let { text -> MessageBar(text) { vm.dismissMessage() } }
+            }
+            if (state.tab != Tab.MORE || state.nowPlaying != null || state.playingLocalTitle != null) {
+                TransportBar(vm, state, playback.isPlaying, playback.isBuffering)
             }
         }
-
-        AnimatedVisibility(visible = state.message != null) {
-            state.message?.let { text ->
-                MessageBar(text) { vm.dismissMessage() }
-            }
-        }
-
-        if (state.tab != Tab.MORE || state.nowPlaying != null || state.playingLocalTitle != null) {
-            TransportBar(vm, state, playback.isPlaying, playback.isBuffering)
-        }
-
-        BottomNav(state.tab, state.navigationOrder) { vm.selectTab(it) }
     }
 
     if (state.showNowPlaying) {
@@ -271,52 +283,51 @@ private fun TransportBar(
     }
 }
 
+/** The menu stays reachable on every page, without covering the station grid. */
 @Composable
-private fun BottomNav(current: Tab, order: List<String>, onSelect: (Tab) -> Unit) {
-    Surface(color = SurfaceHigh, modifier = Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            order.forEach { id ->
-                val tab = Tab.valueOf(id)
-                val (label, icon) = when (tab) {
-                    Tab.RADIO -> "Radio" to Icons.Filled.Radio
-                    Tab.NEWS -> "News" to Icons.Filled.Newspaper
-                    Tab.LOCAL -> "Local" to Icons.Filled.LibraryMusic
-                    Tab.EQUALIZER -> "EQ" to Icons.Filled.Equalizer
-                    Tab.MORE -> "More" to Icons.Filled.MoreHoriz
-                }
-                NavItem(label, icon, current == tab) { onSelect(tab) }
+fun RadioTopBar(onOpenMenu: () -> Unit, onHelp: (() -> Unit)? = null) {
+    val tamil = AppLanguageState.current == AppLanguage.TAMIL
+    Row(Modifier.fillMaxWidth().background(HeaderGreen).padding(end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onOpenMenu) {
+            Icon(Icons.Filled.Menu, contentDescription = if (tamil) "பட்டியலைத் திற" else "Open navigation menu", tint = Color.White)
+        }
+        Text(if (tamil) "ரமேஷ் ரேடியோ" else "Ramesh Radio", modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.SemiBold,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (onHelp != null) {
+            IconButton(onClick = onHelp) {
+                Icon(Icons.Filled.HelpOutline, contentDescription = AppStrings.translate("Guide"), tint = Color.White)
             }
         }
     }
 }
 
 @Composable
-private fun RowScope.NavItem(label: String, icon: ImageVector, selected: Boolean, onClick: () -> Unit) {
-    Column(
-        Modifier
-            .weight(1f)
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            icon,
-            contentDescription = AppStrings.translate(label),
-            tint = if (selected) Saffron else TextSecondary,
-            modifier = Modifier.size(24.dp),
-        )
-        Spacer(Modifier.height(3.dp))
-        // Tamil glyphs are taller and wider than Latin ones. One line, no wrapping and a
-        // centred alignment keep "செய்திகள்" from being clipped or pushed off the bar.
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (selected) Saffron else TextSecondary,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            maxLines = 1,
-            softWrap = false,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 2.dp),
-        )
+private fun RadioDrawer(current: Tab, order: List<String>, onSelect: (Tab) -> Unit) {
+    val tamil = AppLanguageState.current == AppLanguage.TAMIL
+    ModalDrawerSheet(drawerContainerColor = SurfaceC) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(vertical = 12.dp)) {
+            Text(if (tamil) "ரமேஷ் ரேடியோ" else "Ramesh Radio",
+                style = MaterialTheme.typography.titleLarge, color = Saffron,
+                fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp))
+            order.forEach { id ->
+                val tab = Tab.valueOf(id)
+                val (label, icon) = when (tab) {
+                    Tab.RADIO -> (if (tamil) "வானொலி" else "Radio") to Icons.Filled.Radio
+                    Tab.NEWS -> (if (tamil) "செய்திகள்" else "News") to Icons.Filled.Newspaper
+                    Tab.LOCAL -> (if (tamil) "உள்ளூர் பாடல்கள்" else "Local music") to Icons.Filled.LibraryMusic
+                    Tab.EQUALIZER -> (if (tamil) "ஒலி சமநிலை" else "Equalizer") to Icons.Filled.Equalizer
+                    Tab.MORE -> (if (tamil) "அமைப்புகள் மற்றும் மேலும்" else "Settings & more") to Icons.Filled.MoreHoriz
+                }
+                NavigationDrawerItem(
+                    label = { androidx.compose.material3.Text(label) },
+                    icon = { Icon(icon, contentDescription = null) },
+                    selected = current == tab,
+                    onClick = { onSelect(tab) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+            }
+        }
     }
 }
