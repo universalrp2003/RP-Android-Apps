@@ -1,6 +1,6 @@
 # Artist photo credits
 
-These photos are loaded from Wikimedia Commons; if unavailable the app displays initials. The app does not modify the files. Resizing is performed by Wikimedia or by the device when displaying them. Credits and licences are also shown in the artist screen.
+These images are loaded from Wikimedia Commons; if unavailable the app displays initials. The app does not modify the files. Resizing is performed by Wikimedia or by the device when displaying them. Credits and licences are also shown in the artist screen.
 
 - Ilaiyaraaja: Sriram Narasimhan / Silverscreen Media Inc. [Source](https://commons.wikimedia.org/wiki/File:Ilaiyaraaja_at_Merku_Thodarchi_Malai_Press_Meet.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Commons version cropped from original.
 - A. R. Rahman: Dani Charles / Silverscreen Media Inc. [Source](https://commons.wikimedia.org/wiki/File:AR_Rahman_At_The_%E2%80%98Marvel_Anthem%E2%80%99_Launch.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
@@ -36,3 +36,6 @@ The 21 externally hosted portraits were checked from a CI runner in runs 4608635
 - Vadivelu: Silverscreen Media Inc.; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Vadivelu_1_at_Trailer_%26_HD_Songs_Launch_of_Kaththi_Sandai_(cropped).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 - Vivek: Dani Charles / Silverscreen; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Vivek_at_the_Ezhumin_Press_Meet_(headshot).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 - Santhanam: Dani Charles / Silverscreen; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Santhanam_at_the_%E2%80%98A1%E2%80%99_Press_Meet_(cropped).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+
+- Na. Muthukumar — Dani Charles / Silverscreen; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Na_Muthukumar_at_Touring_Talkies_Audio_Launch_(cropped).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- M. G. Ramachandran — oil painting by Rajasekharan Parameswaran. [Source](https://commons.wikimedia.org/wiki/File:MGR_-OIL_PAINTING_BY_RAJASEKHARAN.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).

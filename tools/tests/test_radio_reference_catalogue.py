@@ -31,7 +31,7 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
         receipts = [json.loads((REFERENCE/name).read_text()) for name in ('first-probe-receipt.json', 'second-probe-receipt.json', 'artist-probe-receipt.json', 'devotional-probe-receipt.json', 'expanded-probe-receipt.json', 'further-probe-receipt.json', 'regional-probe-receipt.json', 'community-artist-probe-receipt.json', 'identity-review-probe-receipt.json', 'official-probe-receipt.json', 'kadal-probe-receipt.json', 'eleventh-probe-receipt.json', 'twelfth-probe-receipt.json')]
         results = {r['url']: r for receipt in receipts for r in receipt['results']}
         added = [s for s in seed['stations'] if s.get('source') in ('reference-directory', 'reference-manual')]
-        self.assertEqual(len(added), 100)
+        self.assertEqual(len(added), 101)
         self.assertEqual(seed['total'], len(seed['stations']))
         self.assertEqual(seed['verifiedCount'], sum(s.get('verified', True) for s in seed['stations']))
         self.assertEqual(seed['counts'], {k: sum(s['category'] == k for s in seed['stations']) for k in seed['counts']})
@@ -62,7 +62,7 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
         screen = (base/'StationsScreens.kt').read_text()
         credits = (ROOT/'docs/radio-artist-photo-credits.md').read_text()
         photos = re.findall(r'ArtistShortcut\("([^"]+)", "[^"]+", "(https://[^"]+)"\)', artist)
-        self.assertGreaterEqual(len(photos), 30)
+        self.assertGreaterEqual(len(photos), 32)
         for name, _ in photos:
             self.assertIn('Triple("' + name + ' — ', screen)
             self.assertRegex(credits, r'(?m)^- ' + re.escape(name) + r'[: —]')

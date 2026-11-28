@@ -931,12 +931,14 @@ private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit)
             Triple("Sivaji Ganesan — Mohan V Raman; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Sivaji_Ganesan_1.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
             Triple("Vadivelu — Silverscreen Media Inc.; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Vadivelu_1_at_Trailer_%26_HD_Songs_Launch_of_Kaththi_Sandai_(cropped).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
             Triple("Vivek — Dani Charles / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Vivek_at_the_Ezhumin_Press_Meet_(headshot).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Na. Muthukumar — Dani Charles / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Na_Muthukumar_at_Touring_Talkies_Audio_Launch_(cropped).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("M. G. Ramachandran — oil painting by Rajasekharan Parameswaran", "https://commons.wikimedia.org/wiki/File:MGR_-OIL_PAINTING_BY_RAJASEKHARAN.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
             Triple("Santhanam — Dani Charles / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Santhanam_at_the_%E2%80%98A1%E2%80%99_Press_Meet_(cropped).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
         )
         AlertDialog(onDismissRequest = { credits = false }, title = { Text(if (tamil) "பட உதவி" else "Photo credits") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text(if (tamil) "படங்கள் விக்கிமீடியா காமன்ஸிலிருந்து பெறப்படுகின்றன; காட்டுவதற்காக அளவு மாற்றப்படுகிறது, செயலி கோப்புகளை மாற்றாது." else "Photos from Wikimedia Commons; display is resized, files are not modified by the app.")
+                    Text(if (tamil) "படங்கள் விக்கிமீடியா காமன்ஸிலிருந்து பெறப்படுகின்றன; காட்டுவதற்காக அளவு மாற்றப்படுகிறது, செயலி கோப்புகளை மாற்றாது." else "Images from Wikimedia Commons; display is resized, files are not modified by the app.")
                     creditRows.forEach { (label, source, licence) ->
                         Text(label, style = MaterialTheme.typography.bodySmall)
                         Row {

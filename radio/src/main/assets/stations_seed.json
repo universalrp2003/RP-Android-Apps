@@ -4,7 +4,7 @@
 "note": "Seed list shipped with the app. 'verified' reflects a bounded CI audio-metadata observation, not content, station identity, rights or current availability; a failed check is not proof a station is permanently offline. The app can also search the live directory.",
 "counts": {
 "tamil": 186,
-"tamil_fm": 107,
+"tamil_fm": 108,
 "world_news": 149,
 "india_news": 21,
 "tamil_devotional": 34,
@@ -12,7 +12,7 @@
 "english": 110
 },
 "verifiedCount": 530,
-"total": 613,
+"total": 614,
 "debug": [
 {
 "stage": "curated",
@@ -14327,6 +14327,30 @@
 "referenceScreen": 38,
 "referenceName": "Nagoor Hanifa",
 "referenceEvidence": "https://github.com/sundaramkumar/Live-Radio/blob/master/radio_stations_reference.txt",
+"auditStatus": "unavailable"
+},
+{
+"id": "ref-nithish-online-radio",
+"name": "Nithish Online Radio",
+"url": "https://cast6.asurahosting.com/proxy/nithishradio/stream",
+"favicon": "",
+"homepage": "https://www.tamilradios.com/page/3",
+"tags": "",
+"country": "",
+"countryCode": "",
+"state": "",
+"language": "tamil",
+"codec": "",
+"bitrate": 0,
+"votes": 0,
+"category": "tamil_fm",
+"isCustom": false,
+"verified": false,
+"source": "reference-manual",
+"order": 0,
+"referenceScreen": 29,
+"referenceName": "Nithish",
+"referenceEvidence": "https://www.tamilradios.com/page/3",
 "auditStatus": "unavailable"
 }
 ]

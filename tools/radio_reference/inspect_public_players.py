@@ -36,6 +36,11 @@ PAGES = {
     'Thoni directory': 'https://tamilmuthu.com/radio/thoni-fm-91-2',
     'Melur Ragam directory': 'https://liveradios.in/ragam-fm-melur.html',
     'Raagameena directory': 'https://tamilmuthu.com/radio/raagameena-fm',
+    'Thadam official': 'https://thadamfm.live/',
+    'Thadam directory': 'https://radiosindia.com/thadamfm.html',
+    'Sivan Isai directory': 'https://www.radioindialive.com/sivan-isai',
+    'Aran directory': 'https://listenonlineradio.com/kw/aran-fm',
+    'Nithish directory': 'https://www.tamilradios.com/nithish-online-radio',
 }
 
 
