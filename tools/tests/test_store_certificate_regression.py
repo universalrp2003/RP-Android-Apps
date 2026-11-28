@@ -16,13 +16,19 @@ class StoreCertificateRegression(unittest.TestCase):
     def test_bundled_fallback_uses_verified_current_release_receipts(self):
         bundled = json.loads((ROOT/"tamilanstore/src/main/assets/catalog.json").read_text())
         published = json.loads((ROOT/"site/catalog-v5.json").read_text())
-        # The bundled fallback now carries the promoted public releases too: an offline Store
-        # install must offer the same archives the website pins, not a silent older build.
+        # Store 0.18's shipped fallback is frozen; the live feed can advance after a sibling release.
         old = {a['id']: a for a in bundled['apps']}
         live = {a['id']: a for a in published['apps']}
         self.assertEqual(set(old), set(live))
         for app in old:
-            self.assertEqual(old[app], live[app], app)
+            if app != 'radio':
+                self.assertEqual(old[app], live[app], app)
+        self.assertEqual((old['radio']['version'], old['radio']['sha256']),
+                         ('1.31', 'fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22'))
+        self.assertEqual((live['radio']['version'], live['radio']['sha256']),
+                         ('1.33', '2be7401b03f054fd985a39d791713c09fa56b207dcbd6747b0a604148c574290'))
+        for key in ('id', 'name', 'tamilName', 'packageName'):
+            self.assertEqual(old['radio'][key], live['radio'][key])
         self.assertEqual((old['liveguard']['version'], old['liveguard']['sha256']),
             ('3.05', '304c31b778b4020b136dbb24ba2c96fb6f6172c921ba0da268a69585e4e2c42b'))
         receipt = json.loads((ROOT/'docs/live-guard-3.05-publication-receipt.json').read_text())
