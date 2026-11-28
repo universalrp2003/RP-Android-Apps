@@ -62,6 +62,67 @@ for prompt in ('Not now', 'பிறகு'):
         tap(node)
         break
 wait_for('Ramesh Radio', 'ரமேஷ் ரேடியோ')
+
+def open_menu():
+    tap(wait_for('Open navigation menu', 'பட்டியலைத் திற'))
+    wait_for('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
+
+
+def navigate(*labels):
+    open_menu()
+    root = tree()
+    node = next((n for n in root.iter('node') if n.get('text', '') in labels), None)
+    assert node is not None, 'Drawer navigation missing: ' + str(labels)
+    tap(node)
+
+navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
+# Weather settings must be accessible, and an explicit off choice must survive restart.
+def open_weather():
+    tap(wait_for('Weather alert settings', 'வானிலை எச்சரிக்கை அமைப்புகள்'))
+    wait_for('Rain & cyclone voice alert', 'மழை & புயல் குரல் எச்சரிக்கை')
+
+
+def weather_switch():
+    for _ in range(6):
+        root = tree()
+        switches = [n for n in root.iter('node') if n.get('checkable') == 'true']
+        if len(switches) == 1:
+            print('Weather switch:', switches[0].attrib)
+            return switches[0]
+        print('Looking for weather switch:', ' | '.join(str(n.attrib) for n in root.iter('node') if n.get('text') or n.get('checkable') == 'true'))
+        # The weather sheet's long description can put the switch below the fold.
+        adb('shell', 'input', 'swipe', '500', '1000', '500', '800', '400')
+        time.sleep(0.5)
+    print('Weather UI:', ' | '.join(str(n.attrib) for n in root.iter('node') if n.get('text') or n.get('checkable') == 'true'))
+    raise AssertionError('Expected one visible weather switch in the dialog')
+
+
+def wait_switch(value):
+    deadline = time.monotonic() + 12
+    while time.monotonic() < deadline:
+        switch = weather_switch()
+        if switch.get('checked') == str(value).lower():
+            return switch
+        time.sleep(0.5)
+    raise AssertionError('Weather switch did not become ' + str(value))
+
+open_weather()
+if weather_switch().get('checked') != 'true':
+    tap(weather_switch())
+wait_switch(True)
+tap(weather_switch())
+wait_switch(False)
+adb('shell', 'am', 'force-stop', PACKAGE)
+adb('shell', 'am', 'start', '-W', '-n', PACKAGE + '/.MainActivity')
+time.sleep(4)
+navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
+open_weather()
+wait_switch(False)
+prefs = adb('shell', 'run-as', PACKAGE, 'cat', 'shared_prefs/rp_shared_weather_watch.xml')
+assert 'name="weather_enabled" value="false"' in prefs, 'Disabled weather preference was not saved'
+assert 'name="weather_user_explicit" value="true"' in prefs, 'Explicit weather choice was not saved'
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+navigate('Radio', 'வானொலி')
 # The all-artists tab remains visible even deep in the stations list.
 wait_for('Kalai Fm-TAMIL')
 for _ in range(3):
@@ -133,18 +194,6 @@ tap(wait_for('Directory', 'பட்டியல்'))
 wait_for('Live directory', 'நேரடி நிலையப் பட்டியல்')
 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
 wait_for('Stations', 'நிலையங்கள்')
-def open_menu():
-    tap(wait_for('Open navigation menu', 'பட்டியலைத் திற'))
-    wait_for('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
-
-
-def navigate(*labels):
-    open_menu()
-    root = tree()
-    node = next((n for n in root.iter('node') if n.get('text', '') in labels), None)
-    assert node is not None, 'Drawer navigation missing: ' + str(labels)
-    tap(node)
-
 # Back dismisses the drawer without changing destination.
 open_menu()
 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
@@ -160,50 +209,6 @@ assert find(tree(), 'Nattrinai') is None, 'Radio search leaked into news'
 navigate('Local music', 'உள்ளூர் பாடல்கள்')
 navigate('Equalizer', 'ஒலி சமநிலை')
 navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
-# Weather settings must be accessible, and an explicit off choice must survive restart.
-def open_weather():
-    tap(wait_for('Weather alert settings', 'வானிலை எச்சரிக்கை அமைப்புகள்'))
-    wait_for('Rain & cyclone voice alert', 'மழை & புயல் குரல் எச்சரிக்கை')
-
-
-def weather_switch():
-    for _ in range(6):
-        root = tree()
-        switches = [n for n in root.iter('node') if n.get('class') == 'android.widget.Switch']
-        if len(switches) == 1:
-            return switches[0]
-        # The weather sheet's long description can put the switch below the fold.
-        adb('shell', 'input', 'swipe', '500', '1000', '500', '550', '400')
-        time.sleep(0.5)
-    print('Weather UI:', ' | '.join(str(n.attrib) for n in root.iter('node') if n.get('text') or n.get('checkable') == 'true'))
-    raise AssertionError('Expected one visible weather switch in the dialog')
-
-
-def wait_switch(value):
-    deadline = time.monotonic() + 12
-    while time.monotonic() < deadline:
-        switch = weather_switch()
-        if switch.get('checked') == str(value).lower():
-            return switch
-        time.sleep(0.5)
-    raise AssertionError('Weather switch did not become ' + str(value))
-
-open_weather()
-if weather_switch().get('checked') != 'true':
-    tap(weather_switch())
-wait_switch(True)
-tap(weather_switch())
-wait_switch(False)
-adb('shell', 'am', 'force-stop', PACKAGE)
-adb('shell', 'am', 'start', '-W', '-n', PACKAGE + '/.MainActivity')
-time.sleep(4)
-navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
-open_weather()
-wait_switch(False)
-prefs = adb('shell', 'run-as', PACKAGE, 'cat', 'shared_prefs/rp_shared_weather_watch.xml')
-assert 'name="weather_enabled" value="false"' in prefs, 'Disabled weather preference was not saved'
-assert 'name="weather_user_explicit" value="true"' in prefs, 'Explicit weather choice was not saved'
-adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
 navigate('Radio', 'வானொலி')
 wait_for('Station, city or language', 'நிலையம்')
 assert find(tree(), 'Nattrinai') is None, 'Old search remained after switching screens'
