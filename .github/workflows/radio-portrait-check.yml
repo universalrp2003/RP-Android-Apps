@@ -1,0 +1,35 @@
+name: Radio artist portrait reachability (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: [".github/workflows/radio-portrait-check.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check bounded photo responses
+        run: |
+          python3 - <<'PY'
+          import concurrent.futures, re, urllib.request
+          from pathlib import Path
+          source = Path('radio/src/main/java/com/universalrp/tamilnadufm/ui/ArtistBrowse.kt').read_text()
+          photos = re.findall(r'ArtistShortcut\("([^"]+)", "[^"]+", "(https://[^"]+)"\)', source)
+          def check(entry):
+              name, url = entry
+              try:
+                  req = urllib.request.Request(url, headers={'User-Agent': 'RameshRadio/1.1'})
+                  with urllib.request.urlopen(req, timeout=20) as response:
+                      data = response.read(2 * 1024 * 1024 + 1)
+                      valid = len(data) <= 2 * 1024 * 1024 and data.startswith(b'\xff\xd8\xff')
+                      return name, response.status, len(data), 'jpeg' if valid else 'invalid or over limit'
+              except Exception as e:
+                  return name, type(e).__name__
+          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+              for result in pool.map(check, photos): print(*result, flush=True)
+          print('Reachability is one observation, not proof of mobile availability or identity.')
+          PY
