@@ -48,6 +48,11 @@ fun DraggableCategoryTabs(
     val list = rememberLazyListState()
     val latestDrop by rememberUpdatedState(onDrop)
     val latestIds by rememberUpdatedState(ids)
+    // Reveal the selected chip after artist searches or category changes.
+    LaunchedEffect(selected) {
+        val index = ids.indexOf(selected)
+        if (index >= 0) list.animateScrollToItem(index)
+    }
     val haptic = LocalHapticFeedback.current
     val density = LocalDensity.current
     val edge = with(density) { 48.dp.toPx() }

@@ -89,6 +89,10 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val openMenu = { scope.launch { drawer.open() }; Unit }
+    // A destination selected from the side menu returns to Radio, not Android home.
+    BackHandler(enabled = state.tab != Tab.RADIO && !drawer.isOpen && !state.showDirectory && !state.showNowPlaying) {
+        vm.selectTab(Tab.RADIO)
+    }
     ModalNavigationDrawer(
         drawerState = drawer,
         drawerContent = {
@@ -128,7 +132,10 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
     }
 
     if (state.showDirectory) {
+        BackHandler { vm.closeDirectory() }
         DirectorySheet(vm, state)
+    } else if (state.showNowPlaying) {
+        BackHandler { vm.openNowPlaying(false) }
     }
 
 

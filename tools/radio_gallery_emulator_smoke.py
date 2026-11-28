@@ -100,6 +100,10 @@ wait_for('Sriram Narasimhan')
 tap(wait_for('OK', 'சரி'))
 tap(wait_for('Ilaiyaraaja'))
 wait_for('ilayaraja')
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+wait_for('Photo credits', 'பட உதவி')
+tap(wait_for('Ilaiyaraaja'))
+wait_for('ilayaraja')
 # The screenshot spelling differs from the seed name. It must find the retained
 # unverified record without falsely presenting the reference as a confirmed identity.
 search = next((node for node in tree().iter('node') if node.get('class') == 'android.widget.EditText'), None)
@@ -116,6 +120,14 @@ wait_for('not confirmed', 'உறுதி செய்யப்படவில�
 wait_for('Stream not verified', 'சரிபார்க்கப்படாத ஒலிபரப்பு')
 # News must start in a news category, without inheriting the radio search.
 tap(wait_for('Cancel', 'ரத்து'))
+# A category tap clears the artist/search filter without requiring deletion.
+for _ in range(5):
+    if find(tree(), 'Tamil FM') or find(tree(), 'தமிழ் FM'):
+        break
+    adb('shell', 'input', 'swipe', '100', '390', '650', '390', '400')
+tap(wait_for('Tamil FM', 'தமிழ் FM'))
+search = next((n for n in tree().iter('node') if n.get('class') == 'android.widget.EditText'), None)
+assert search is not None and search.get('text', '') != 'Nattrinai', 'Category kept the old search'
 def open_menu():
     tap(wait_for('Open navigation menu', 'பட்டியலைத் திற'))
     wait_for('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
@@ -135,11 +147,16 @@ wait_for('Open navigation menu', 'பட்டியலைத் திற')
 assert find(tree(), 'Settings & more') is None, 'Back did not close drawer'
 navigate('News', 'செய்திகள்')
 wait_for('News radio', 'செய்தி வானொலி')
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+wait_for('Stations', 'நிலையங்கள்')
+navigate('News', 'செய்திகள்')
+wait_for('News radio', 'செய்தி வானொலி')
 assert find(tree(), 'Nattrinai') is None, 'Radio search leaked into news'
 navigate('Local music', 'உள்ளூர் பாடல்கள்')
 navigate('Equalizer', 'ஒலி சமநிலை')
 navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
 navigate('Radio', 'வானொலி')
-wait_for('Nattrinai')
+wait_for('Station, city or language', 'நிலையம்')
+assert find(tree(), 'Nattrinai') is None, 'Old search remained after switching screens'
 print('PASS: gallery, artist shortcuts, drawer navigation and retained radio search on emulator.')
 print('No audible playback, phone, sustained stream, identity or rights test was performed.')

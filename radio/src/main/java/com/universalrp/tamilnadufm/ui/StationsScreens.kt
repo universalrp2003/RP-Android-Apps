@@ -96,6 +96,14 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onO
     var showGuide by rememberSaveable { mutableStateOf(false) }
     val screenScope = rememberCoroutineScope()
     var showArtists by rememberSaveable { mutableStateOf(false) }
+    var artistSearch by rememberSaveable { mutableStateOf(false) }
+    if (!showArtists && !showGuide && !drawerOpen && state.query.isNotBlank()) {
+        BackHandler {
+            vm.setQuery("")
+            if (artistSearch) showArtists = true
+            artistSearch = false
+        }
+    }
     if (showArtists && !drawerOpen) BackHandler { showArtists = false }
     if (showGuide) {
         BackHandler(enabled = !drawerOpen) { showGuide = false }
@@ -114,7 +122,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onO
         RadioTopBar(onOpenMenu = onOpenMenu, onHelp = { showGuide = true })
         TabRow(selectedTabIndex = if (showArtists) 1 else 0, containerColor = HeaderGreen, contentColor = Color.White,
             indicator = { positions -> TabRowDefaults.Indicator(Modifier.tabIndicatorOffset(positions[if (showArtists) 1 else 0]), color = Color.White) }) {
-            Tab(selected = !showArtists, onClick = { showArtists = false }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
+            Tab(selected = !showArtists, onClick = { showArtists = false; artistSearch = false; vm.setQuery(""); screenScope.launch { listState.scrollToItem(0) } }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
                 text = { androidx.compose.material3.Text(if (tamil) "நிலையங்கள்" else "Stations", maxLines = 1) })
             Tab(selected = showArtists, onClick = { showArtists = true }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
                 text = { androidx.compose.material3.Text(if (tamil) "கலைஞர்கள் (${ArtistBrowse.artists.size})" else "Artists (${ArtistBrowse.artists.size})", maxLines = 1) })
@@ -124,6 +132,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onO
                 ArtistScreen(onBack = { showArtists = false }, onSelect = { artist ->
                     vm.setCategory(Category.ALL)
                     vm.setQuery(artist.query)
+                    artistSearch = true
                     searchOpen = true
                     showArtists = false
                     screenScope.launch { listState.scrollToItem(0) }
@@ -141,7 +150,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onO
                 ) {
                     item {
                         if (searchOpen) {
-                            SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() })
+                            SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() }, onSearchEdited = { artistSearch = false })
                         } else {
                             Row(
                                 Modifier
@@ -175,7 +184,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onO
                         DraggableCategoryTabs(
                             ids = RadioTabOrder.stationCategories(state.categoryOrder),
                             selected = state.category,
-                            onSelect = vm::setCategory,
+                            onSelect = { category -> artistSearch = false; vm.setCategory(category) },
                             onDrop = vm::dropCategoryTab,
                             onMove = { id, delta ->
                                 val visible = RadioTabOrder.stationCategories(state.categoryOrder)
@@ -400,7 +409,7 @@ private fun StationGalleryCard(station: RadioStation, playing: Boolean, modifier
  * pinned to a single ellipsised line so no language can stretch the field again.
  */
 @Composable
-fun SearchBar(vm: MainViewModel, state: UiState, onSearchDirectory: () -> Unit) {
+fun SearchBar(vm: MainViewModel, state: UiState, onSearchDirectory: () -> Unit, onSearchEdited: () -> Unit) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -408,7 +417,7 @@ fun SearchBar(vm: MainViewModel, state: UiState, onSearchDirectory: () -> Unit) 
     ) {
         OutlinedTextField(
             value = state.query,
-            onValueChange = { vm.setQuery(it) },
+            onValueChange = { onSearchEdited(); vm.setQuery(it) },
             placeholder = {
                 Text(
                     "Station, city or language",
@@ -419,6 +428,11 @@ fun SearchBar(vm: MainViewModel, state: UiState, onSearchDirectory: () -> Unit) 
             },
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
             singleLine = true,
+            trailingIcon = {
+                if (state.query.isNotEmpty()) IconButton(onClick = { onSearchEdited(); vm.setQuery("") }) {
+                    Icon(Icons.Filled.Close, contentDescription = if (AppLanguageState.current == AppLanguage.TAMIL) "தேடலை அழி" else "Clear search", tint = TextSecondary)
+                }
+            },
             modifier = Modifier.weight(1f),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Saffron,
@@ -584,7 +598,7 @@ fun NewsScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    "World news in English and Tamil news, around the clock.",
+                    "News sources and directory results; live availability can change.",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                 )
@@ -617,9 +631,8 @@ fun NewsScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        "The shipped list has world and English news channels. Ask the directory " +
-                            "for more — it is community maintained and much larger than any list " +
-                            "an app can carry.",
+                        "Directory results are community tagged and may include music stations. " +
+                            "Check each station; tags do not guarantee news programming.",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                     )
@@ -641,6 +654,20 @@ fun NewsScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                             vm.discoverNews("hindi")
                         }
                     }
+                }
+            }
+        }
+
+        item {
+            val uri = LocalUriHandler.current
+            val tamil = AppLanguageState.current == AppLanguage.TAMIL
+            Column(Modifier.padding(vertical = 4.dp)) {
+                Text(if (tamil) "தமிழ்ச் செய்தி இணையதளங்கள் (உலாவியில் திறக்கும்)" else "Tamil news websites (open in browser)",
+                    style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { uri.openUri("https://tamil.news18.com/live-tv/") }) { Text("News18 Tamil") }
+                    TextButton(onClick = { uri.openUri("https://www.polimernews.com/dlive-tv") }) { Text("Polimer News") }
+                    TextButton(onClick = { uri.openUri("https://www.bbc.com/tamil") }) { Text("BBC தமிழ்") }
                 }
             }
         }
@@ -726,6 +753,13 @@ fun DirectorySheet(vm: MainViewModel, state: UiState) {
                 }
             }
 
+            if (!state.directoryBusy && state.directoryResults.isEmpty()) {
+                val tamil = AppLanguageState.current == AppLanguage.TAMIL
+                Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+                    Text(if (tamil) "முடிவுகள் இல்லை அல்லது பட்டியலைத் தொடர்புகொள்ள முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
+                        else "No results, or the directory could not be reached. Try again.", color = TextSecondary)
+                }
+            }
             LazyColumn(
                 Modifier
                     .fillMaxSize()

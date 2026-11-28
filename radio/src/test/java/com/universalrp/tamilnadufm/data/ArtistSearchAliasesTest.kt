@@ -10,6 +10,7 @@ class ArtistSearchAliasesTest {
         assertTrue(ArtistSearchAliases.terms("  Chithra  ").contains("chitra"))
         assertTrue(ArtistSearchAliases.terms("susheela").contains("suseela"))
         assertTrue(ArtistSearchAliases.terms("spb").contains("balasubrahmanyam"))
+        assertTrue(ArtistSearchAliases.terms("vidyasagar").contains("vidhyasagar"))
     }
 
     @Test fun unrelatedAndEmptyQueriesStayPredictable() {

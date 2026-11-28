@@ -1,8 +1,10 @@
 package com.universalrp.tamilnadufm.data
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -60,25 +62,28 @@ object DirectoryClient {
             }
 
             for (mirror in mirrors) {
-                val result = try {
-                    fetch("$mirror/json/stations/search?$queryString")
-                } catch (t: Throwable) {
-                    null
+                try {
+                    // An empty successful answer is not a connection error; don't wait for
+                    // every mirror when the directory simply has no matching station.
+                    return@withContext fetch("$mirror/json/stations/search?$queryString")
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    // Try another mirror only after a failed request.
                 }
-                if (!result.isNullOrEmpty()) return@withContext result
             }
             emptyList()
         }
 
     private fun fetch(url: String): List<RadioStation> {
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 12_000
-            readTimeout = 20_000
+            connectTimeout = 5_000
+            readTimeout = 8_000
             setRequestProperty("User-Agent", "RameshRadio/1.1 (Android)")
             setRequestProperty("Accept", "application/json")
         }
         try {
-            if (connection.responseCode !in 200..299) return emptyList()
+            if (connection.responseCode !in 200..299) throw IOException("Directory HTTP ${connection.responseCode}")
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             val array = JSONArray(body)
             val stations = ArrayList<RadioStation>(array.length())
@@ -110,10 +115,12 @@ object DirectoryClient {
     fun categoryFor(station: RadioStation, fallback: String): String {
         val text = (station.name + " " + station.tags).lowercase()
         val tamil = station.language.lowercase().contains("tamil")
+        // A generic community "news" tag is not evidence of a news-focused station.
+        val newsName = station.name.lowercase().contains("news")
         return when {
-            text.contains("news") && tamil -> Category.TAMIL_NEWS
-            text.contains("news") && station.countryCode == "IN" -> Category.INDIA_NEWS
-            text.contains("news") -> Category.WORLD_NEWS
+            newsName && tamil -> Category.TAMIL_NEWS
+            newsName && station.countryCode == "IN" -> Category.INDIA_NEWS
+            newsName -> Category.WORLD_NEWS
             tamil && (text.contains("bakthi") || text.contains("devotional") ||
                 text.contains("bhakti") || text.contains("temple")) -> Category.TAMIL_DEVOTIONAL
             tamil && station.countryCode in listOf("LK", "MY", "SG") -> Category.TAMIL_FM

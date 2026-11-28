@@ -327,7 +327,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setCategory(category: String) {
-        mutate { it.copy(category = category) }
+        mutate { it.copy(category = category, query = "") }
         applyFilter()
     }
 
@@ -398,7 +398,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     station.language.lowercase().contains("english")
                 else -> station.category == s.category
             }
-            matchesQuery && matchesCategory
+            matchesQuery && matchesCategory && (s.tab != Tab.NEWS || Category.isNews(station.category))
         }
         val ordered = when {
             s.category == Category.ALL || s.category == Category.ALL_NEWS ->
@@ -426,7 +426,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun searchDirectory() {
         val query = _state.value.query.trim()
         directoryJob?.cancel()
-        mutate { it.copy(directoryBusy = true, showDirectory = true) }
+        mutate { it.copy(directoryBusy = true, showDirectory = true, directoryResults = emptyList(), message = null) }
         directoryJob = viewModelScope.launch {
             val results = if (query.isBlank()) {
                 directoryOrEmpty { DirectoryClient.popularTamil() }
@@ -454,7 +454,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun discoverNews(language: String) {
         directoryJob?.cancel()
-        mutate { it.copy(directoryBusy = true, showDirectory = true) }
+        mutate { it.copy(directoryBusy = true, showDirectory = true, directoryResults = emptyList(), message = null) }
         directoryJob = viewModelScope.launch {
             val results = directoryOrEmpty { DirectoryClient.news(language) }
             mutate {

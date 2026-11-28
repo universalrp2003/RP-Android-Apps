@@ -9,6 +9,7 @@ object ArtistSearchAliases {
         listOf("spb", "balasubrahmanyam", "balasubramaniam"),
         listOf("viswanathan", "vishwanathan", "msv"),
         listOf("sreenivas", "srinivas"),
+        listOf("vidyasagar", "vidhyasagar"),
     )
 
     fun terms(query: String): List<String> {

@@ -12,8 +12,8 @@ internal class BrowseNavigation {
     fun switch(from: Tab, to: Tab, current: BrowseSelection): BrowseSelection? {
         if (from == to) return null
         when (from) {
-            Tab.RADIO -> radio = current
-            Tab.NEWS -> news = current
+            Tab.RADIO -> radio = current.copy(query = "")
+            Tab.NEWS -> news = current.copy(query = "")
             else -> Unit
         }
         return when (to) {
