@@ -52,6 +52,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,17 +96,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     var showGuide by rememberSaveable { mutableStateOf(false) }
     val screenScope = rememberCoroutineScope()
     var showArtists by rememberSaveable { mutableStateOf(false) }
-    if (showArtists) {
-        BackHandler { showArtists = false }
-        ArtistScreen(onBack = { showArtists = false }, onSelect = { artist ->
-            vm.setCategory(Category.ALL)
-            vm.setQuery(artist.query)
-            searchOpen = true
-            showArtists = false
-            screenScope.launch { listState.scrollToItem(0) }
-        })
-        return
-    }
+    if (showArtists) BackHandler { showArtists = false }
     if (showGuide) {
         BackHandler { showGuide = false }
         com.universalrp.updates.GuideScreen(
@@ -115,345 +107,362 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         )
         return
     }
-    // Cache rows in composition, not in the non-composable LazyListScope builder.
-    val gridColumns = StationGridLayout.columns(LocalConfiguration.current.screenWidthDp, LocalDensity.current.fontScale)
-    val iconRows = remember(state.visible, gridColumns) { state.visible.chunked(gridColumns) }
-    LazyColumn(
-        Modifier
-            .fillMaxSize()
-            .padding(horizontal = 14.dp),
-        state = listState,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        item {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        "Ramesh Radio",
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = Saffron,
-                        fontWeight = FontWeight.Bold,
-                    )
-
-                }
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = SurfaceHigh,
-                ) {
-                    // v1.15 — this pill used to print "இன்று" in English too. The word now
-                    // follows the chosen language; the number never does.
-                    val dataMb = state.todayDataUsageMb
-                    val todayWord = AppStrings.translate("Today")
-                    val text = if (dataMb >= 1024.0) {
-                        "%.2f GB %s".format(dataMb / 1024.0, todayWord)
-                    } else {
-                        "%.1f MB %s".format(dataMb, todayWord)
-                    }
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Saffron,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                    )
-                }
-                val radioHeaderContext = androidx.compose.ui.platform.LocalContext.current
-                IconButton(
-                    onClick = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(radioHeaderContext) },
-                    modifier = Modifier.size(34.dp),
-                ) {
-                    Icon(
-                        Icons.Filled.Cloud,
-                        contentDescription = AppStrings.translate("Rain & cyclone voice alert"),
-                        tint = Saffron,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-                IconButton(onClick = { showGuide = true }, modifier = Modifier.size(34.dp)) {
-                    Icon(
-                        Icons.Filled.HelpOutline,
-                        contentDescription = AppStrings.translate("Guide"),
-                        tint = Saffron,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
+    // Keep the two browse tabs visible even when the station list is scrolled.
+    // The artist entries are search shortcuts, not extra playable stations.
+    val tamil = AppLanguageState.current == AppLanguage.TAMIL
+    Column(Modifier.fillMaxSize()) {
+        TabRow(selectedTabIndex = if (showArtists) 1 else 0, containerColor = SurfaceHigh, contentColor = Saffron) {
+            Tab(selected = !showArtists, onClick = { showArtists = false },
+                text = { Text(if (tamil) "நிலையங்கள்" else "Stations", maxLines = 1) })
+            Tab(selected = showArtists, onClick = { showArtists = true },
+                text = { Text(if (tamil) "அனைத்து கலைஞர்கள் (${ArtistBrowse.artists.size})" else "All artists (${ArtistBrowse.artists.size})", maxLines = 1) })
         }
-
-        item {
-            if (searchOpen) {
-                SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() })
+        Box(Modifier.weight(1f)) {
+            if (showArtists) {
+                ArtistScreen(onBack = { showArtists = false }, onSelect = { artist ->
+                    vm.setCategory(Category.ALL)
+                    vm.setQuery(artist.query)
+                    searchOpen = true
+                    showArtists = false
+                    screenScope.launch { listState.scrollToItem(0) }
+                })
             } else {
-                Row(
+                // Cache rows in composition, not in the non-composable LazyListScope builder.
+                val gridColumns = StationGridLayout.columns(LocalConfiguration.current.screenWidthDp, LocalDensity.current.fontScale)
+                val iconRows = remember(state.visible, gridColumns) { state.visible.chunked(gridColumns) }
+                LazyColumn(
                     Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(SurfaceHigh)
-                        .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
-                        .clickable { searchOpen = true }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .fillMaxSize()
+                        .padding(horizontal = 14.dp),
+                    state = listState,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Search stations, city or language",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Icon(
-                        Icons.Filled.Language,
-                        contentDescription = AppStrings.translate("Directory"),
-                        tint = Teal,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clickable { vm.searchDirectory() },
-                    )
-                }
-            }
-        }
+                    item {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    "Ramesh Radio",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = Saffron,
+                                    fontWeight = FontWeight.Bold,
+                                )
 
-        item {
-            DraggableCategoryTabs(
-                ids = state.categoryOrder,
-                selected = state.category,
-                onSelect = vm::setCategory,
-                onDrop = vm::dropCategoryTab,
-                onMove = { id, delta -> vm.moveTab(false, id, delta) },
-            )
-        }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = SurfaceHigh,
+                            ) {
+                                // v1.15 — this pill used to print "இன்று" in English too. The word now
+                                // follows the chosen language; the number never does.
+                                val dataMb = state.todayDataUsageMb
+                                val todayWord = AppStrings.translate("Today")
+                                val text = if (dataMb >= 1024.0) {
+                                    "%.2f GB %s".format(dataMb / 1024.0, todayWord)
+                                } else {
+                                    "%.1f MB %s".format(dataMb, todayWord)
+                                }
+                                Text(
+                                    text = text,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Saffron,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                )
+                            }
+                            val radioHeaderContext = androidx.compose.ui.platform.LocalContext.current
+                            IconButton(
+                                onClick = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(radioHeaderContext) },
+                                modifier = Modifier.size(34.dp),
+                            ) {
+                                Icon(
+                                    Icons.Filled.Cloud,
+                                    contentDescription = AppStrings.translate("Rain & cyclone voice alert"),
+                                    tint = Saffron,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                            IconButton(onClick = { showGuide = true }, modifier = Modifier.size(34.dp)) {
+                                Icon(
+                                    Icons.Filled.HelpOutline,
+                                    contentDescription = AppStrings.translate("Guide"),
+                                    tint = Saffron,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
+                    }
 
-        item {
-            TextButton(onClick = { showArtists = true }) {
-                Text(if (AppLanguageState.current == AppLanguage.TAMIL) "கலைஞர்கள் & பிரபலமான பாடல்கள் →" else "Artists & popular songs →", color = Saffron)
-            }
-        }
+                    item {
+                        if (searchOpen) {
+                            SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() })
+                        } else {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(SurfaceHigh)
+                                    .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
+                                    .clickable { searchOpen = true }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    "Search stations, city or language",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Icon(
+                                    Icons.Filled.Language,
+                                    contentDescription = AppStrings.translate("Directory"),
+                                    tint = Teal,
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .clickable { vm.searchDirectory() },
+                                )
+                            }
+                        }
+                    }
 
-        // Continue where you left off
-        val last = vm.lastPlayed()
-        if (last != null && state.query.isBlank() &&
-            (state.category == Category.ALL || state.category == Category.TAMIL)
-        ) {
-            item {
-                PanelCard(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { vm.play(last) },
-                    color = SurfaceHigh,
-                ) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Filled.PlayArrow,
-                            contentDescription = null,
-                            tint = Saffron,
-                            modifier = Modifier.size(22.dp),
+                    item {
+                        DraggableCategoryTabs(
+                            ids = state.categoryOrder,
+                            selected = state.category,
+                            onSelect = vm::setCategory,
+                            onDrop = vm::dropCategoryTab,
+                            onMove = { id, delta -> vm.moveTab(false, id, delta) },
                         )
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f)) {
+                    }
+
+                    // Continue where you left off
+                    val last = vm.lastPlayed()
+                    if (last != null && state.query.isBlank() &&
+                        (state.category == Category.ALL || state.category == Category.TAMIL)
+                    ) {
+                        item {
+                            PanelCard(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { vm.play(last) },
+                                color = SurfaceHigh,
+                            ) {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        Icons.Filled.PlayArrow,
+                                        contentDescription = null,
+                                        tint = Saffron,
+                                        modifier = Modifier.size(22.dp),
+                                    )
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            "Continue listening",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = TextSecondary,
+                                        )
+                                        Text(
+                                            last.name,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Continue listening",
-                                style = MaterialTheme.typography.labelSmall,
+                                if (state.query.isBlank()) "${state.visible.size} stations"
+                                else "${state.visible.size} matches",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.labelMedium,
                                 color = TextSecondary,
-                            )
-                            Text(
-                                last.name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextPrimary,
-                                fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            IconButton(
+                                onClick = { iconView = !iconView },
+                                modifier = Modifier.size(40.dp),
+                            ) {
+                                Icon(
+                                    imageVector = if (iconView) Icons.Filled.ViewList else Icons.Filled.GridView,
+                                    contentDescription = AppStrings.translate(
+                                        if (iconView) "Switch to list view" else "Switch to icon view",
+                                    ),
+                                    tint = Saffron,
+                                )
+                            }
+                            IconButton(onClick = { vm.searchDirectory() }) {
+                                Icon(
+                                    Icons.Filled.Language,
+                                    contentDescription = AppStrings.translate("Live directory"),
+                                    tint = Teal,
+                                )
+                            }
+                        }
+                    }
+
+                    if (state.query.isBlank() && state.category in setOf(Category.ALL, Category.TAMIL, Category.TAMIL_FM)) {
+                        item {
+                            // One line, opened only when wanted — the same pattern the owner asked for on
+                            // the Oor Arivippu screens instead of a paragraph above every list.
+                            Column {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable { showSortInfo = !showSortInfo }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        "How this list is sorted",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Saffron,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Text(if (showSortInfo) "  ▴" else "  ▾",
+                                        style = MaterialTheme.typography.labelSmall, color = Saffron)
+                                }
+                                if (showSortInfo) {
+                                    Text(
+                                        "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (state.visible.isEmpty()) {
+                        item {
+                            PanelCard(Modifier.fillMaxWidth()) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text(
+                                        "Nothing here yet.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    IconChip(Icons.Filled.Refresh, "Search the directory") {
+                                        vm.searchDirectory()
+                                    }
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        "Try another category or clear the search box. The live directory has " +
+                                            "far more stations than the shipped list, including town and city stations.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (iconView) {
+                        items(iconRows, key = { row -> row.first().url }) { row ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                row.forEach { station ->
+                                    StationGalleryCard(
+                                        station = station,
+                                        playing = state.nowPlaying?.url == station.url,
+                                        modifier = Modifier.weight(1f),
+                                        onOpen = { selectedIconStation = station },
+                                    )
+                                }
+                                repeat(gridColumns - row.size) { Spacer(Modifier.weight(1f)) }
+                            }
+                        }
+                    } else {
+                        items(state.visible, key = { it.url }) { station ->
+                            StationRow(
+                                station = station,
+                                playing = state.nowPlaying?.url == station.url,
+                                favourite = state.favourites.contains(station.url.lowercase()),
+                                onPlay = { vm.play(station) },
+                                onFavourite = { vm.toggleFavourite(station) },
+                                onShare = { vm.shareStation(station) },
+                                onSave = { vm.saveDirectoryStation(station) },
+                                onDelete = { vm.removeStation(station) },
                             )
                         }
                     }
-                }
-            }
-        }
 
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (state.query.isBlank()) "${state.visible.size} stations"
-                    else "${state.visible.size} matches",
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                IconButton(
-                    onClick = { iconView = !iconView },
-                    modifier = Modifier.size(40.dp),
-                ) {
-                    Icon(
-                        imageVector = if (iconView) Icons.Filled.ViewList else Icons.Filled.GridView,
-                        contentDescription = AppStrings.translate(
-                            if (iconView) "Switch to list view" else "Switch to icon view",
-                        ),
-                        tint = Saffron,
+                    item { Spacer(Modifier.height(16.dp)) }
+                }
+
+                selectedIconStation?.let { station ->
+                    AlertDialog(
+                        onDismissRequest = { selectedIconStation = null },
+                        title = { Text(station.name, color = TextPrimary) },
+                        text = {
+                            Column {
+                                Text(station.subtitle.ifBlank { AppStrings.translate("Live stream") }, color = TextSecondary)
+                                if (station.referenceName.isNotBlank() && !station.referenceName.equals(station.name, ignoreCase = true)) {
+                                    Text(
+                                        if (AppLanguageState.current == AppLanguage.TAMIL)
+                                            "படத்தில் இருக்கக்கூடிய பெயர்: ${station.referenceName} (உறுதி செய்யப்படவில்லை)"
+                                        else "Possible reference name: ${station.referenceName} (not confirmed)",
+                                        color = TextSecondary, style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                if (com.universalrp.tamilnadufm.data.RadioStreamPolicy.heldForReview(station.url)) {
+                                    Text(if (AppLanguageState.current == AppLanguage.TAMIL) "வழங்குநர் ஒலிபரப்பு பரிசீலனையில்" else "Provider stream held for review", color = Warn)
+                                } else if (!station.verified) {
+                                    Text(if (AppLanguageState.current == AppLanguage.TAMIL) "சரிபார்க்கப்படாத ஒலிபரப்பு" else "Stream not verified", color = Warn)
+                                }
+                                val favourite = state.favourites.contains(station.url.lowercase())
+                                Row {
+                                    IconButton(onClick = { vm.toggleFavourite(station) }) {
+                                        Icon(if (favourite) Icons.Filled.Star else Icons.Filled.StarBorder,
+                                            contentDescription = AppStrings.translate(if (favourite) "Remove favourite" else "Add favourite"),
+                                            tint = if (favourite) Gold else TextSecondary)
+                                    }
+                                    IconButton(onClick = { vm.shareStation(station) }) {
+                                        Icon(Icons.Filled.Share, contentDescription = AppStrings.translate("Share"), tint = TextSecondary)
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                selectedIconStation = null
+                                vm.play(station)
+                            }) { Text(AppStrings.translate("Play"), color = Saffron) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { selectedIconStation = null }) {
+                                Text(AppStrings.translate("Cancel"), color = TextSecondary)
+                            }
+                        },
                     )
                 }
-                IconButton(onClick = { vm.searchDirectory() }) {
-                    Icon(
-                        Icons.Filled.Language,
-                        contentDescription = AppStrings.translate("Live directory"),
-                        tint = Teal,
-                    )
-                }
             }
         }
-
-        if (state.query.isBlank() && state.category in setOf(Category.ALL, Category.TAMIL, Category.TAMIL_FM)) {
-            item {
-                // One line, opened only when wanted — the same pattern the owner asked for on
-                // the Oor Arivippu screens instead of a paragraph above every list.
-                Column {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable { showSortInfo = !showSortInfo }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            "How this list is sorted",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Saffron,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1f),
-                        )
-                        Text(if (showSortInfo) "  ▴" else "  ▾",
-                            style = MaterialTheme.typography.labelSmall, color = Saffron)
-                    }
-                    if (showSortInfo) {
-                        Text(
-                            "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                        )
-                    }
-                }
-            }
-        }
-
-        if (state.visible.isEmpty()) {
-            item {
-                PanelCard(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Nothing here yet.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        IconChip(Icons.Filled.Refresh, "Search the directory") {
-                            vm.searchDirectory()
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "Try another category or clear the search box. The live directory has " +
-                                "far more stations than the shipped list, including town and city stations.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                        )
-                    }
-                }
-            }
-        }
-
-        if (iconView) {
-            items(iconRows, key = { row -> row.first().url }) { row ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    row.forEach { station ->
-                        StationGalleryCard(
-                            station = station,
-                            playing = state.nowPlaying?.url == station.url,
-                            modifier = Modifier.weight(1f),
-                            onOpen = { selectedIconStation = station },
-                        )
-                    }
-                    repeat(gridColumns - row.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        } else {
-            items(state.visible, key = { it.url }) { station ->
-                StationRow(
-                    station = station,
-                    playing = state.nowPlaying?.url == station.url,
-                    favourite = state.favourites.contains(station.url.lowercase()),
-                    onPlay = { vm.play(station) },
-                    onFavourite = { vm.toggleFavourite(station) },
-                    onShare = { vm.shareStation(station) },
-                    onSave = { vm.saveDirectoryStation(station) },
-                    onDelete = { vm.removeStation(station) },
-                )
-            }
-        }
-
-        item { Spacer(Modifier.height(16.dp)) }
-    }
-
-    selectedIconStation?.let { station ->
-        AlertDialog(
-            onDismissRequest = { selectedIconStation = null },
-            title = { Text(station.name, color = TextPrimary) },
-            text = {
-                Column {
-                    Text(station.subtitle.ifBlank { AppStrings.translate("Live stream") }, color = TextSecondary)
-                    if (station.referenceName.isNotBlank() && !station.referenceName.equals(station.name, ignoreCase = true)) {
-                        Text(
-                            if (AppLanguageState.current == AppLanguage.TAMIL)
-                                "படத்தில் இருக்கக்கூடிய பெயர்: ${station.referenceName} (உறுதி செய்யப்படவில்லை)"
-                            else "Possible reference name: ${station.referenceName} (not confirmed)",
-                            color = TextSecondary, style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    if (com.universalrp.tamilnadufm.data.RadioStreamPolicy.heldForReview(station.url)) {
-                        Text(if (AppLanguageState.current == AppLanguage.TAMIL) "வழங்குநர் ஒலிபரப்பு பரிசீலனையில்" else "Provider stream held for review", color = Warn)
-                    } else if (!station.verified) {
-                        Text(if (AppLanguageState.current == AppLanguage.TAMIL) "சரிபார்க்கப்படாத ஒலிபரப்பு" else "Stream not verified", color = Warn)
-                    }
-                    val favourite = state.favourites.contains(station.url.lowercase())
-                    Row {
-                        IconButton(onClick = { vm.toggleFavourite(station) }) {
-                            Icon(if (favourite) Icons.Filled.Star else Icons.Filled.StarBorder,
-                                contentDescription = AppStrings.translate(if (favourite) "Remove favourite" else "Add favourite"),
-                                tint = if (favourite) Gold else TextSecondary)
-                        }
-                        IconButton(onClick = { vm.shareStation(station) }) {
-                            Icon(Icons.Filled.Share, contentDescription = AppStrings.translate("Share"), tint = TextSecondary)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    selectedIconStation = null
-                    vm.play(station)
-                }) { Text(AppStrings.translate("Play"), color = Saffron) }
-            },
-            dismissButton = {
-                TextButton(onClick = { selectedIconStation = null }) {
-                    Text(AppStrings.translate("Cancel"), color = TextSecondary)
-                }
-            },
-        )
     }
 }
 

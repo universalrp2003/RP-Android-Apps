@@ -62,9 +62,36 @@ for prompt in ('Not now', 'பிறகு'):
         tap(node)
         break
 wait_for('Ramesh Radio', 'ரமேஷ் ரேடியோ')
-node = wait_for('Artists & popular songs', 'கலைஞர்கள் & பிரபலமான பாடல்கள்')
-tap(node)
+# The all-artists tab remains visible even deep in the stations list.
+for _ in range(3):
+    adb('shell', 'input', 'swipe', '350', '1100', '350', '450', '450')
+    time.sleep(0.5)
+assert find(tree(), 'Ramesh Radio') is None, 'Station list did not scroll'
+artists_tab = ('All artists (', 'அனைத்து கலைஞர்கள் (')
+tap(wait_for(*artists_tab))
 wait_for('Photo credits', 'பட உதவி')
+wait_for('Ilaiyaraaja')
+# Switching tabs preserves the station list position; system Back also returns.
+tap(wait_for('Stations', 'நிலையங்கள்'))
+assert find(tree(), 'Ramesh Radio') is None, 'Station position was not preserved'
+tap(wait_for(*artists_tab))
+wait_for('Ilaiyaraaja')
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+assert find(tree(), 'Ramesh Radio') is None, 'Back did not return to the scrolled stations list'
+tap(wait_for(*artists_tab))
+wait_for('Ilaiyaraaja')
+# Reach the end of the full, scrollable artist list, then return to its top.
+for _ in range(12):
+    if find(tree(), 'Santhanam') is not None:
+        break
+    adb('shell', 'input', 'swipe', '350', '1100', '350', '400', '400')
+    time.sleep(0.4)
+wait_for('Santhanam')
+for _ in range(12):
+    if find(tree(), 'Ilaiyaraaja') is not None:
+        break
+    adb('shell', 'input', 'swipe', '350', '400', '350', '1100', '400')
+    time.sleep(0.4)
 wait_for('Ilaiyaraaja')
 tap(wait_for('Photo credits', 'பட உதவி'))
 wait_for('Sriram Narasimhan')
@@ -85,5 +112,5 @@ tap(wait_for('Natrinai FM'))
 wait_for('Nattrinai')
 wait_for('not confirmed', 'உறுதி செய்யப்படவில்லை')
 wait_for('Stream not verified', 'சரிபார்க்கப்படாத ஒலிபரப்பு')
-print('PASS: gallery, credits, artist navigation and unverified screenshot-name lookup on emulator.')
+print('PASS: persistent artist tab, full-list scrolling, return navigation, credits and unverified screenshot-name lookup on emulator.')
 print('No audible playback, phone, sustained stream, identity or rights test was performed.')

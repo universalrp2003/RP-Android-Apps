@@ -20,6 +20,17 @@ class RadioIconStationModeTest(unittest.TestCase):
         self.assertLess(radio_screen.index(rows), radio_screen.index("LazyColumn("))
         self.assertIn("import androidx.compose.material3.TextButton", SCREEN)
 
+    def test_artist_tab_is_persistent_bilingual_and_outside_station_list(self):
+        screen = SCREEN.split("fun RadioScreen(", 1)[1].split("fun ", 1)[0]
+        tabs, station_list = screen.split("// Cache rows in composition", 1)
+        self.assertIn('TabRow(selectedTabIndex = if (showArtists) 1 else 0', tabs)
+        self.assertIn('"நிலையங்கள்" else "Stations"', tabs)
+        self.assertIn('"அனைத்து கலைஞர்கள் (${ArtistBrowse.artists.size})"', tabs)
+        self.assertIn('"All artists (${ArtistBrowse.artists.size})"', tabs)
+        self.assertIn('ArtistScreen(onBack = { showArtists = false }', tabs)
+        self.assertIn('LazyColumn(', station_list)
+        self.assertNotIn('TabRow(', station_list)
+
     def test_weather_places_are_inside_dialog_not_above_station_browser(self):
         root = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/AppRoot.kt").read_text()
         main_content, dialog = root.split("if (showWeatherDialog)", 1)
