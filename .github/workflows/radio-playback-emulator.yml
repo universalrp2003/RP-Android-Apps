@@ -30,6 +30,19 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: bash -o pipefail -c 'gradle :radio:connectedDebugAndroidTest --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.tamilnadufm.LiveStreamSmokeTest 2>&1 | tee "$RUNNER_TEMP/radio-playback-smoke.log"'
+      - name: Require both playback observations
+        shell: python
+        run: |
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          cases = []
+          for p in Path('radio/build/outputs/androidTest-results').rglob('*.xml'):
+              cases.extend(ET.parse(p).getroot().iter('testcase'))
+          expected = {'thoniMp3ReachesPlayingState', 'kadalOsaiHlsReachesPlayingState'}
+          selected = [c for c in cases if c.get('name') in expected]
+          assert {c.get('name') for c in selected} == expected, [c.get('name') for c in cases]
+          assert all(not any(c.find(tag) is not None for tag in ('failure', 'error', 'skipped')) for c in selected)
+          print('Both selected streams reached playing state; audio was not heard or content reviewed.')
       - name: Surface failure diagnostics
         if: failure()
         shell: python
