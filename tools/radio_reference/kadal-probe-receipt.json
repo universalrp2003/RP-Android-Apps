@@ -1,0 +1,94 @@
+{
+  "checkedAtRunnerUtc": "2026-11-27T23:59:48.718535+00:00",
+  "candidates": [
+    {
+      "id": "ref-kadal-osai-fm",
+      "name": "Kadal Osai FM 90.4",
+      "url": "http://streamasiacdn.atc-labs.com/kadalosaifm.aac",
+      "favicon": "",
+      "homepage": "https://kadalosaifm.in/",
+      "tags": "community",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "Tamil Nadu",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 13,
+      "referenceName": "Kadal Osai",
+      "referenceEvidence": "https://nesakkarangalcharitabletrust.com/player/player.html"
+    },
+    {
+      "id": "ref-kadal-osai-hls-comparison",
+      "name": "Kadal Osai FM HLS comparison",
+      "url": "https://d3lbpn4ocx96ou.cloudfront.net/kadalosaifm.m3u8",
+      "favicon": "",
+      "homepage": "https://kadalosaifm.in/",
+      "tags": "community",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "Tamil Nadu",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 13,
+      "referenceName": "Kadal Osai",
+      "referenceEvidence": "https://nesakkarangalcharitabletrust.com/player/player.html"
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-kadal-osai-fm",
+      "name": "Kadal Osai FM 90.4",
+      "url": "http://streamasiacdn.atc-labs.com/kadalosaifm.aac",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "64",
+        "icy-genre": "Various",
+        "icy-name": "Q10-1101-10084",
+        "icy-pub": "1",
+        "StreamTitle": ""
+      }
+    },
+    {
+      "id": "ref-kadal-osai-hls-comparison",
+      "name": "Kadal Osai FM HLS comparison",
+      "url": "https://d3lbpn4ocx96ou.cloudfront.net/kadalosaifm.m3u8",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "48000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {}
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}

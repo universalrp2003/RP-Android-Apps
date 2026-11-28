@@ -4,15 +4,15 @@
 "note": "Seed list shipped with the app. 'verified' means the stream answered a health check or a build-time probe; the app marks the rest as unchecked. The app can also search the live directory for thousands more stations.",
 "counts": {
 "tamil": 183,
-"tamil_fm": 99,
+"tamil_fm": 100,
 "world_news": 149,
 "india_news": 21,
 "tamil_devotional": 31,
 "tamil_news": 6,
 "english": 110
 },
-"verifiedCount": 578,
-"total": 599,
+"verifiedCount": 579,
+"total": 600,
 "debug": [
 {
 "stage": "curated",
@@ -13989,6 +13989,29 @@
 "order": 0,
 "referenceScreen": 16,
 "referenceEvidence": "https://etr.fm/",
+"auditStatus": "audio_reachable"
+},
+{
+"id": "ref-kadal-osai-fm",
+"name": "Kadal Osai FM 90.4",
+"url": "https://d3lbpn4ocx96ou.cloudfront.net/kadalosaifm.m3u8",
+"favicon": "",
+"homepage": "https://kadalosaifm.in/",
+"tags": "community",
+"country": "India",
+"countryCode": "IN",
+"state": "Tamil Nadu",
+"language": "tamil",
+"codec": "",
+"bitrate": 0,
+"votes": 0,
+"category": "tamil_fm",
+"isCustom": false,
+"verified": true,
+"source": "reference-manual",
+"order": 0,
+"referenceScreen": 13,
+"referenceEvidence": "https://nesakkarangalcharitabletrust.com/player/player.html",
 "auditStatus": "audio_reachable"
 }
 ]
