@@ -76,7 +76,7 @@ fun Chip(
         label,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-        color = if (selected) Color(0xFF2A1200) else TextPrimary,
+        color = if (selected) Color.White else TextPrimary,
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) Saffron else SurfaceHigh)
@@ -184,13 +184,13 @@ private object LogoCache {
 }
 
 private val MONOGRAM_COLORS = listOf(
-    Color(0xFFFF8A3D), Color(0xFFFFD166), Color(0xFF2FD8C4),
-    Color(0xFF8B5CF6), Color(0xFFF472B6), Color(0xFF60A5FA),
+    Color(0xFF356B21), Color(0xFF72570B), Color(0xFF006D68),
+    Color(0xFF5B4E88), Color(0xFF9A3F5C), Color(0xFF275F8A),
 )
 
 /** Large, uncropped logos for the station gallery; missing or failed logos get a monogram. */
 @Composable
-fun StationArtwork(station: RadioStation, modifier: Modifier = Modifier, decorative: Boolean = false) {
+fun StationArtwork(station: RadioStation, modifier: Modifier = Modifier, decorative: Boolean = false, crop: Boolean = false) {
     val bitmap by produceState<Bitmap?>(null, station.favicon) {
         value = null // Never show the previous station while a new URL is loading.
         value = LogoCache.load(station.favicon)
@@ -201,7 +201,8 @@ fun StationArtwork(station: RadioStation, modifier: Modifier = Modifier, decorat
         val picture = bitmap
         if (picture != null) {
             Image(bitmap = picture.asImageBitmap(), contentDescription = if (decorative) null else station.name,
-                contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+                contentScale = if (crop) ContentScale.Crop else ContentScale.Fit,
+                alignment = if (crop) Alignment.TopCenter else Alignment.Center, modifier = Modifier.fillMaxSize())
         } else {
             Text(station.monogram, style = MaterialTheme.typography.headlineSmall,
                 color = color, fontWeight = FontWeight.Bold)

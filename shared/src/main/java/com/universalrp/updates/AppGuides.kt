@@ -316,23 +316,6 @@ object AppGuides {
                     "அமைப்புகளும் இந்தப் போனிலேயே இருக்கும்.",
             ),
             topic(
-                "Rain & cyclone voice alerts while listening (PIN or Optional Mobile Tower)",
-                "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு (PIN அல்லது விருப்ப மொபைல் டவர்)",
-                "Tap the cloud icon at the top of Radio (or open More). Ramesh Radio NEVER asks for Location " +
-                    "permission automatically — enter your 6-digit PIN code or village/town once (e.g. 622301) " +
-                    "for 100% accurate rain alerts with zero Location permission! Because Android places Mobile " +
-                    "Signal Tower lookup inside the 'Location' permission group, an optional 'Enable Mobile Tower' " +
-                    "button is available inside Rain Settings only if you explicitly want automatic mobile-tower " +
-                    "town detection (0% GPS drain, never tracks or stores movements). Every alert shows and speaks " +
-                    "your exact village/town and district, only while Ramesh Radio is open or playing.",
-                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறக்கவும். ரமேஷ் ரேடியோ ஒருபோதும் தானாக Location " +
-                    "அனுமதி கேட்காது — எந்த அனுமதியும் இன்றி உங்கள் 6-இலக்க PIN எண் அல்லது ஊர்ப் பெயரை (உதா: 622301) " +
-                    "ஒருமுறை சேமித்தாலே 100% துல்லிய மழை எச்சரிக்கை கிடைக்கும்! மொபைல் சிக்னல் டவர் ஊர் அறிதலை " +
-                    "Android 'Location' அனுமதிக்குள் வைத்திருப்பதால், தானியங்கி டவர் கண்டறிதல் தேவைப்பட்டால் மட்டும் " +
-                    "உள்ளே உள்ள 'மொபைல் டவர் இயக்கு (விருப்பம்)' பொத்தானை நீங்களாக அழுத்தலாம் (0% GPS செலவு; " +
-                    "பயணத்தைக் கண்காணிக்காது). ரேடியோ இயங்கும்போது மட்டும் உங்கள் ஊர் மற்றும் மாவட்டப் பெயருடன் அறிவிக்கும்.",
-            ),
-            topic(
                 "Updating Ramesh Radio",
                 "ரமேஷ் ரேடியோவைப் புதுப்பித்தல்",
                 "A read-only check reads public stable-release metadata at most once per rolling 24 hours when the app opens or resumes. If a newer stable version is found, an in-app notice appears. Tap it to open this app’s section of the official website in your browser, then download there and follow Android’s normal confirmation. This app never downloads or installs APKs. Checks depend on opening the app, connectivity and available release metadata, so they are not guaranteed. Stop if a security warning appears.",

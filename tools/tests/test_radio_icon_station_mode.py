@@ -25,20 +25,26 @@ class RadioIconStationModeTest(unittest.TestCase):
         tabs, station_list = screen.split("// Cache rows in composition", 1)
         self.assertIn('TabRow(selectedTabIndex = if (showArtists) 1 else 0', tabs)
         self.assertIn('"நிலையங்கள்" else "Stations"', tabs)
-        self.assertIn('"அனைத்து கலைஞர்கள் (${ArtistBrowse.artists.size})"', tabs)
-        self.assertIn('"All artists (${ArtistBrowse.artists.size})"', tabs)
+        self.assertIn('"கலைஞர்கள் (${ArtistBrowse.artists.size})"', tabs)
+        self.assertIn('"Artists (${ArtistBrowse.artists.size})"', tabs)
         self.assertIn('ArtistScreen(onBack = { showArtists = false }', tabs)
         self.assertIn('LazyColumn(', station_list)
         self.assertNotIn('TabRow(', station_list)
 
-    def test_weather_places_are_inside_dialog_not_above_station_browser(self):
+    def test_weather_monitor_is_not_started_by_radio_app(self):
         root = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/AppRoot.kt").read_text()
-        main_content, dialog = root.split("if (showWeatherDialog)", 1)
-        self.assertNotIn("WeatherMiniAlertBanner(", main_content)
-        self.assertNotIn('"Saved places"', main_content)
-        self.assertIn("placesContent = {", dialog)
-        self.assertIn("selectSavedPlace(rootContext, place)", dialog)
-        self.assertIn("removeSavedPlace(", dialog)
+        main = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/MainActivity.kt").read_text()
+        service = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/player/PlaybackService.kt").read_text()
+        more = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/PlayScreens.kt").read_text()
+        for source in (root, main, service, more, SCREEN):
+            self.assertNotIn("RadioWeatherMonitor.", source)
+        self.assertIn("clearWeatherNotification(this)", main)
+
+    def test_light_theme_and_green_header(self):
+        theme = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/Theme.kt").read_text()
+        self.assertIn("lightColorScheme(", theme)
+        self.assertIn("Color(0xFFF4F6F1)", theme)
+        self.assertIn("background(HeaderGreen)", SCREEN)
 
     def test_station_toolbar_uses_compact_accessible_directory_action(self):
         self.assertNotIn('IconChip(Icons.Filled.Language, "Live directory")', SCREEN)
@@ -50,8 +56,8 @@ class RadioIconStationModeTest(unittest.TestCase):
         self.assertIn("onOpen = { selectedIconStation = station }", SCREEN)
         self.assertIn("title = { Text(station.name, color = TextPrimary) }", SCREEN)
         self.assertIn("vm.play(station)", SCREEN)
-        self.assertIn("StationArtwork(station, Modifier.fillMaxWidth().aspectRatio(1.55f), decorative = true)", SCREEN)
-        self.assertIn("Text(station.name", SCREEN)
+        self.assertIn("StationArtwork(station, Modifier.fillMaxWidth().aspectRatio(1.55f), decorative = true, crop = cropArtwork)", SCREEN)
+        self.assertIn("Text(label", SCREEN)
         self.assertIn("IconButton(onClick = { vm.toggleFavourite(station) })", SCREEN)
         self.assertIn("IconButton(onClick = { vm.shareStation(station) })", SCREEN)
         self.assertIn("heldForReview(station.url)", SCREEN)

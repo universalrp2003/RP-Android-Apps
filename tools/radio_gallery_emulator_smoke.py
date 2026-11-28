@@ -63,21 +63,22 @@ for prompt in ('Not now', 'பிறகு'):
         break
 wait_for('Ramesh Radio', 'ரமேஷ் ரேடியோ')
 # The all-artists tab remains visible even deep in the stations list.
+wait_for('Kalai Fm-TAMIL')
 for _ in range(3):
     adb('shell', 'input', 'swipe', '350', '1100', '350', '450', '450')
     time.sleep(0.5)
-assert find(tree(), 'Ramesh Radio') is None, 'Station list did not scroll'
-artists_tab = ('All artists (', 'அனைத்து கலைஞர்கள் (')
+assert find(tree(), 'Kalai Fm-TAMIL') is None, 'Station list did not scroll'
+artists_tab = ('Artists (', 'கலைஞர்கள் (')
 tap(wait_for(*artists_tab))
 wait_for('Photo credits', 'பட உதவி')
 wait_for('Ilaiyaraaja')
 # Switching tabs preserves the station list position; system Back also returns.
 tap(wait_for('Stations', 'நிலையங்கள்'))
-assert find(tree(), 'Ramesh Radio') is None, 'Station position was not preserved'
+assert find(tree(), 'Kalai Fm-TAMIL') is None, 'Station position was not preserved'
 tap(wait_for(*artists_tab))
 wait_for('Ilaiyaraaja')
 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
-assert find(tree(), 'Ramesh Radio') is None, 'Back did not return to the scrolled stations list'
+assert find(tree(), 'Kalai Fm-TAMIL') is None, 'Back did not return to the scrolled stations list'
 tap(wait_for(*artists_tab))
 wait_for('Ilaiyaraaja')
 # Reach the end of the full, scrollable artist list, then return to its top.
@@ -113,5 +114,19 @@ tap(wait_for('Natrinai FM'))
 wait_for('Nattrinai')
 wait_for('not confirmed', 'உறுதி செய்யப்படவில்லை')
 wait_for('Stream not verified', 'சரிபார்க்கப்படாத ஒலிபரப்பு')
-print('PASS: persistent artist tab, full-list scrolling, return navigation, credits and unverified screenshot-name lookup on emulator.')
+# News must start in a news category, without inheriting the radio search.
+tap(wait_for('Cancel', 'ரத்து'))
+def exact_nav(*labels):
+    root = tree()
+    return next((n for n in root.iter('node') if n.get('content-desc', '') in labels), None)
+news = exact_nav('News', 'செய்திகள்')
+assert news is not None, 'News navigation missing'
+tap(news)
+wait_for('News radio', 'செய்தி வானொலி')
+assert find(tree(), 'Nattrinai') is None, 'Radio search leaked into news'
+radio = exact_nav('Radio', 'வானொலி')
+assert radio is not None, 'Radio navigation missing'
+tap(radio)
+wait_for('Nattrinai')
+print('PASS: light gallery, persistent artist tab, full-list scrolling, news filters and retained radio search on emulator.')
 print('No audible playback, phone, sustained stream, identity or rights test was performed.')

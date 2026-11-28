@@ -39,3 +39,5 @@ The 21 externally hosted portraits were checked from a CI runner in runs 4608635
 
 - Na. Muthukumar — Dani Charles / Silverscreen; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Na_Muthukumar_at_Touring_Talkies_Audio_Launch_(cropped).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 - M. G. Ramachandran — oil painting by Rajasekharan Parameswaran. [Source](https://commons.wikimedia.org/wiki/File:MGR_-OIL_PAINTING_BY_RAJASEKHARAN.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+
+In the artist gallery, portraits may be cropped at display time; the source files are not modified by the app.

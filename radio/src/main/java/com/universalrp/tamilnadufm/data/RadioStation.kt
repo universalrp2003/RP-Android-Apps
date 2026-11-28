@@ -185,7 +185,26 @@ object Category {
     fun isNews(id: String): Boolean =
         id == TAMIL_NEWS || id == WORLD_NEWS || id == INDIA_NEWS
 
-    fun label(id: String): String = when (id) {
+    fun label(id: String, tamil: Boolean = true): String = if (!tamil) when (id) {
+        ALL -> "All stations"
+        ALL_NEWS -> "All news"
+        FAVOURITES -> "Favourites"
+        CUSTOM -> "My stations"
+        RECENT -> "Recent"
+        TOWNS -> "Towns & FM"
+        TAMIL -> "Tamil FM"
+        TAMIL_ILAYARAJA -> "Ilaiyaraaja"
+        TAMIL_MSV -> "M. S. Viswanathan"
+        TAMIL_AR_RAHMAN -> "A. R. Rahman"
+        TAMIL_80S_90S -> "80s & 90s hits"
+        TAMIL_DEVOTIONAL -> "Devotional"
+        TAMIL_NEWS -> "Tamil news"
+        TAMIL_FM -> "World Tamil"
+        WORLD_NEWS -> "World news"
+        INDIA_NEWS -> "Indian news"
+        ENGLISH -> "English"
+        else -> id.replaceFirstChar { it.uppercase() }
+    } else when (id) {
         ALL -> "அனைத்தும்"
         ALL_NEWS -> "செய்திகள்"
         FAVOURITES -> "விருப்பமானவை"

@@ -43,7 +43,7 @@ fun TabOrderEditor(vm: MainViewModel, state: UiState, onDismiss: () -> Unit) {
                                 "LOCAL" -> if (tamil) "உள்ளூர் இசை" else "Local music"
                                 "EQUALIZER" -> if (tamil) "ஒலி சமநிலை" else "Equalizer"
                                 else -> if (tamil) "மேலும்" else "More"
-                            } else com.universalrp.updates.AppStrings.translate(Category.label(id))
+                            } else Category.label(id, tamil)
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Text("${index + 1}. $label", modifier = Modifier.weight(1f))
                                 TextButton(onClick = { vm.moveTab(navigation, id, -1) }, enabled = index > 0,

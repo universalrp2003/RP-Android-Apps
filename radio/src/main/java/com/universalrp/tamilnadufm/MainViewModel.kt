@@ -100,6 +100,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState(navigationOrder = repo.tabOrder(true), categoryOrder = repo.tabOrder(false)))
     val state: StateFlow<UiState> = _state
 
+    private val browseNavigation = BrowseNavigation()
     private var controller: MediaController? = null
     private var pendingLocalTrack: LocalTrack? = null
     private var sleepJob: Job? = null
@@ -848,7 +849,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // ------------------------------------------------------------------- misc
 
-    fun selectTab(tab: Tab) = mutate { it.copy(tab = tab) }
+    fun selectTab(tab: Tab) {
+        val current = _state.value
+        val browse = browseNavigation.switch(current.tab, tab, BrowseSelection(current.category, current.query))
+        mutate { it.copy(tab = tab, category = browse?.category ?: it.category, query = browse?.query ?: it.query) }
+        if (browse != null) applyFilter()
+    }
 
     fun dismissMessage() = mutate { it.copy(message = null) }
 

@@ -29,7 +29,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.GridView
@@ -54,6 +53,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,6 +70,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -111,11 +114,20 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     // The artist entries are search shortcuts, not extra playable stations.
     val tamil = AppLanguageState.current == AppLanguage.TAMIL
     Column(Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = if (showArtists) 1 else 0, containerColor = SurfaceHigh, contentColor = Saffron) {
-            Tab(selected = !showArtists, onClick = { showArtists = false },
-                text = { Text(if (tamil) "நிலையங்கள்" else "Stations", maxLines = 1) })
-            Tab(selected = showArtists, onClick = { showArtists = true },
-                text = { Text(if (tamil) "அனைத்து கலைஞர்கள் (${ArtistBrowse.artists.size})" else "All artists (${ArtistBrowse.artists.size})", maxLines = 1) })
+        Row(Modifier.fillMaxWidth().background(HeaderGreen).padding(start = 16.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Text(if (tamil) "ரமேஷ் ரேடியோ" else "Ramesh Radio", modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.SemiBold)
+            IconButton(onClick = { showGuide = true }) {
+                Icon(Icons.Filled.HelpOutline, contentDescription = AppStrings.translate("Guide"), tint = Color.White)
+            }
+        }
+        TabRow(selectedTabIndex = if (showArtists) 1 else 0, containerColor = HeaderGreen, contentColor = Color.White,
+            indicator = { positions -> TabRowDefaults.Indicator(Modifier.tabIndicatorOffset(positions[if (showArtists) 1 else 0]), color = Color.White) }) {
+            Tab(selected = !showArtists, onClick = { showArtists = false }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
+                text = { androidx.compose.material3.Text(if (tamil) "நிலையங்கள்" else "Stations", maxLines = 1) })
+            Tab(selected = showArtists, onClick = { showArtists = true }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
+                text = { androidx.compose.material3.Text(if (tamil) "கலைஞர்கள் (${ArtistBrowse.artists.size})" else "Artists (${ArtistBrowse.artists.size})", maxLines = 1) })
         }
         Box(Modifier.weight(1f)) {
             if (showArtists) {
@@ -137,69 +149,6 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                     state = listState,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    item {
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    "Ramesh Radio",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = Saffron,
-                                    fontWeight = FontWeight.Bold,
-                                )
-
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = SurfaceHigh,
-                            ) {
-                                // v1.15 — this pill used to print "இன்று" in English too. The word now
-                                // follows the chosen language; the number never does.
-                                val dataMb = state.todayDataUsageMb
-                                val todayWord = AppStrings.translate("Today")
-                                val text = if (dataMb >= 1024.0) {
-                                    "%.2f GB %s".format(dataMb / 1024.0, todayWord)
-                                } else {
-                                    "%.1f MB %s".format(dataMb, todayWord)
-                                }
-                                Text(
-                                    text = text,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Saffron,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                                )
-                            }
-                            val radioHeaderContext = androidx.compose.ui.platform.LocalContext.current
-                            IconButton(
-                                onClick = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(radioHeaderContext) },
-                                modifier = Modifier.size(34.dp),
-                            ) {
-                                Icon(
-                                    Icons.Filled.Cloud,
-                                    contentDescription = AppStrings.translate("Rain & cyclone voice alert"),
-                                    tint = Saffron,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                            IconButton(onClick = { showGuide = true }, modifier = Modifier.size(34.dp)) {
-                                Icon(
-                                    Icons.Filled.HelpOutline,
-                                    contentDescription = AppStrings.translate("Guide"),
-                                    tint = Saffron,
-                                    modifier = Modifier.size(20.dp),
-                                )
-                            }
-                        }
-                    }
-
                     item {
                         if (searchOpen) {
                             SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() })
@@ -468,18 +417,20 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
 
 /** Picture above a readable name, inspired by the owner's reference, without copying its artwork. */
 @Composable
-private fun StationGalleryCard(station: RadioStation, playing: Boolean, modifier: Modifier = Modifier, onOpen: () -> Unit) {
-    val shape = RoundedCornerShape(10.dp)
+private fun StationGalleryCard(station: RadioStation, playing: Boolean, modifier: Modifier = Modifier,
+    cropArtwork: Boolean = false, label: String = station.name, onOpen: () -> Unit) {
+    val shape = RoundedCornerShape(3.dp)
     Column(
         modifier.clip(shape).background(Color.White)
             .border(if (playing) 2.dp else 1.dp, if (playing) Saffron else OutlineC, shape)
+            .then(if (label != station.name) Modifier.semantics { contentDescription = station.name } else Modifier)
             .clickable(role = Role.Button, onClick = onOpen),
     ) {
-        StationArtwork(station, Modifier.fillMaxWidth().aspectRatio(1.55f), decorative = true)
+        StationArtwork(station, Modifier.fillMaxWidth().aspectRatio(1.55f), decorative = true, crop = cropArtwork)
         Box(Modifier.fillMaxWidth().heightIn(min = 50.dp).padding(horizontal = 5.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center) {
-            Text(station.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF18151C), textAlign = TextAlign.Center, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium,
+                color = Color(0xFF18151C), textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -893,15 +844,17 @@ private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit)
             }
         }
         item {
-            Text(if (tamil) "ஒரு படத்தைத் தட்டினால் நிலையப் பெயர்களில் தேடும். பாடல்கள் அல்லது நேரடி ஒலிபரப்பு இருப்பது உறுதி அல்ல. மேலும் தேட வானொலி பட்டியல் பொத்தானைப் பயன்படுத்தவும்."
-                 else "Tap an artist to search station names. A card does not guarantee a live station or a particular song. Use the directory button to search further.",
+            Text(if (tamil) "கலைஞரைத் தேர்ந்தெடுத்து நிலையங்களைத் தேடுங்கள். நேரடி ஒலிபரப்பு உறுதி அல்ல."
+                 else "Choose an artist to search stations. Live streams are not guaranteed.",
                 style = MaterialTheme.typography.bodySmall, color = TextSecondary)
         }
         items(rows, key = { it.first().name }) { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { artist ->
                     val artwork = remember(artist) { RadioStation(id = artist.name, name = artist.name, url = "", favicon = artist.photo) }
-                    StationGalleryCard(artwork, playing = false, modifier = Modifier.weight(1f), onOpen = { onSelect(artist) })
+                    StationGalleryCard(artwork, playing = false, modifier = Modifier.weight(1f), cropArtwork = true,
+                        label = if (artist.name == "S. P. Balasubrahmanyam") "S. P. B. (SPB)" else artist.name,
+                        onOpen = { onSelect(artist) })
                 }
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
             }
@@ -947,7 +900,7 @@ private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit)
         AlertDialog(onDismissRequest = { credits = false }, title = { Text(if (tamil) "பட உதவி" else "Photo credits") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text(if (tamil) "படங்கள் விக்கிமீடியா காமன்ஸிலிருந்து பெறப்படுகின்றன; காட்டுவதற்காக அளவு மாற்றப்படுகிறது, செயலி கோப்புகளை மாற்றாது." else "Images from Wikimedia Commons; display is resized, files are not modified by the app.")
+                    Text(if (tamil) "படங்கள் விக்கிமீடியா காமன்ஸிலிருந்து பெறப்படுகின்றன; காட்டும்போது விளிம்புகள் வெட்டப்படலாம், செயலி கோப்புகளை மாற்றாது." else "Images from Wikimedia Commons; portraits are cropped for display, files are not modified by the app.")
                     creditRows.forEach { (label, source, licence) ->
                         Text(label, style = MaterialTheme.typography.bodySmall)
                         Row {
