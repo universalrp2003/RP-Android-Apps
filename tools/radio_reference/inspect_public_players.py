@@ -31,6 +31,11 @@ PAGES = {
     'Durham Tamil official': 'https://durhamtamilradio.com/',
     'ETR official': 'https://etr.fm/',
     'Shaivam official': 'https://shaivam.org/radio/',
+    'Kavinilavu official': 'https://kavinilavufm.com/',
+    'Kavinilavu directory': 'https://www.radioindialive.com/tamil-radios/kavinilavu-fm',
+    'Thoni directory': 'https://tamilmuthu.com/radio/thoni-fm-91-2',
+    'Melur Ragam directory': 'https://liveradios.in/ragam-fm-melur.html',
+    'Raagameena directory': 'https://tamilmuthu.com/radio/raagameena-fm',
 }
 
 
