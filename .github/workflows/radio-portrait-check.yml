@@ -5,7 +5,7 @@ on:
     paths: [".github/workflows/radio-portrait-check.yml"]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   inspect:
     runs-on: ubuntu-24.04
@@ -15,7 +15,7 @@ jobs:
       - name: Check bounded photo responses
         run: |
           python3 - <<'PY'
-          import concurrent.futures, re, urllib.request
+          import concurrent.futures, json, os, re, urllib.request
           from pathlib import Path
           source = Path('radio/src/main/java/com/universalrp/tamilnadufm/ui/ArtistBrowse.kt').read_text()
           photos = re.findall(r'ArtistShortcut\("([^"]+)", "[^"]+", "(https://[^"]+)"\)', source)
@@ -30,6 +30,18 @@ jobs:
               except Exception as e:
                   return name, type(e).__name__
           with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
-              for result in pool.map(check, photos): print(*result, flush=True)
+              results = list(pool.map(check, photos))
+          for result in results: print(*result, flush=True)
+          Path(os.environ["RUNNER_TEMP"], "portraits.json").write_text(json.dumps(results))
           print('Reachability is one observation, not proof of mobile availability or identity.')
           PY
+      - name: Expose receipt as a blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'portraits.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Portrait diagnostic receipt::blob='+json.loads(result.stdout)['sha'])
