@@ -1,7 +1,7 @@
 {
-  "runnerReportedUtc": "2026-11-28T00:27:53.199333+00:00",
-  "seedSha256": "d6de64abc09879b0eb9c3da3812ec3762d9b361b82474b49c97df15e93489c36",
-  "shippedChecked": 600,
+  "runnerReportedUtc": "2026-11-28T07:52:42.385387+00:00",
+  "seedSha256": "db7412bcf7852ad27604c8509c69211bfc6deec5b6c4bf0840102bb9b309e929",
+  "shippedChecked": 616,
   "newCandidatesChecked": 33,
   "directoryErrors": [],
   "shippedResults": [
@@ -393,9 +393,9 @@
     {
       "index": 55,
       "name": "Mohan Radio",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": true,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 56,
@@ -596,9 +596,9 @@
     {
       "index": 84,
       "name": "Radio Digital Malayali",
-      "status": "audio_reachable",
+      "status": "unavailable",
       "providerReview": false,
-      "detail": "audio metadata parsed"
+      "detail": "probe/decode failed"
     },
     {
       "index": 85,
@@ -813,9 +813,9 @@
     {
       "index": 115,
       "name": "akaramradio",
-      "status": "audio_reachable",
+      "status": "unavailable",
       "providerReview": false,
-      "detail": "audio metadata parsed"
+      "detail": "probe/decode failed"
     },
     {
       "index": 116,
@@ -981,9 +981,9 @@
     {
       "index": 139,
       "name": "Radio City chennai",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 140,
@@ -1037,16 +1037,16 @@
     {
       "index": 147,
       "name": "Hello FM 106.4",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 148,
       "name": "Suryan FM 93.5",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 149,
@@ -1583,9 +1583,9 @@
     {
       "index": 225,
       "name": "mmi catholic media St. Xavier Province",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 226,
@@ -1688,9 +1688,9 @@
     {
       "index": 240,
       "name": "AIR Alwar",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 241,
@@ -1737,9 +1737,9 @@
     {
       "index": 247,
       "name": "Akashvani Markapur",
-      "status": "audio_reachable",
+      "status": "unavailable",
       "providerReview": false,
-      "detail": "audio metadata parsed"
+      "detail": "probe/decode failed"
     },
     {
       "index": 248,
@@ -1779,9 +1779,9 @@
     {
       "index": 253,
       "name": "Radio Mirchi News (Mumbai)",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 254,
@@ -1933,9 +1933,9 @@
     {
       "index": 275,
       "name": "Radio Jamaica 94FM",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 276,
@@ -2983,9 +2983,9 @@
     {
       "index": 425,
       "name": "Classic Vinyl HD Opus",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 426,
@@ -3158,9 +3158,9 @@
     {
       "index": 450,
       "name": "WALM - Old Time Radio Opus",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "probe/decode failed"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 451,
@@ -3606,9 +3606,9 @@
     {
       "index": 514,
       "name": "AIR Karaikal",
-      "status": "unavailable",
+      "status": "audio_reachable",
       "providerReview": false,
-      "detail": "TimeoutExpired"
+      "detail": "audio metadata parsed"
     },
     {
       "index": 515,
@@ -3774,9 +3774,9 @@
     {
       "index": 538,
       "name": "Mano Hits Radio",
-      "status": "audio_reachable",
+      "status": "unavailable",
       "providerReview": false,
-      "detail": "audio metadata parsed"
+      "detail": "probe/decode failed"
     },
     {
       "index": 539,
@@ -4005,9 +4005,9 @@
     {
       "index": 571,
       "name": "Radio Blacksheep",
-      "status": "audio_reachable",
+      "status": "unavailable",
       "providerReview": false,
-      "detail": "audio metadata parsed"
+      "detail": "probe/decode failed"
     },
     {
       "index": 572,
@@ -4068,9 +4068,9 @@
     {
       "index": 580,
       "name": "Pirai FM 102.3 Tamil FM Radio – SLBC",
-      "status": "audio_reachable",
+      "status": "unavailable",
       "providerReview": false,
-      "detail": "audio metadata parsed"
+      "detail": "probe/decode failed"
     },
     {
       "index": 581,
@@ -4201,6 +4201,118 @@
     {
       "index": 599,
       "name": "Kadal Osai FM 90.4",
+      "status": "audio_reachable",
+      "providerReview": false,
+      "detail": "audio metadata parsed"
+    },
+    {
+      "index": 600,
+      "name": "Tamil Kuyil Radio",
+      "status": "audio_reachable",
+      "providerReview": false,
+      "detail": "audio metadata parsed"
+    },
+    {
+      "index": 601,
+      "name": "Gramiyam Plus",
+      "status": "audio_reachable",
+      "providerReview": false,
+      "detail": "audio metadata parsed"
+    },
+    {
+      "index": 602,
+      "name": "Mecheri City FM",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 603,
+      "name": "Kavinilavu FM",
+      "status": "audio_reachable",
+      "providerReview": false,
+      "detail": "audio metadata parsed"
+    },
+    {
+      "index": 604,
+      "name": "Thoni FM 91.2",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 605,
+      "name": "Natrinai FM",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 606,
+      "name": "Naga FM",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 607,
+      "name": "Pudhugai FM 91.2",
+      "status": "audio_reachable",
+      "providerReview": false,
+      "detail": "audio metadata parsed"
+    },
+    {
+      "index": 608,
+      "name": "Shyamalavani Tamil Radio 904",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 609,
+      "name": "Thuli FM",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 610,
+      "name": "Wisdom Radio",
+      "status": "audio_reachable",
+      "providerReview": false,
+      "detail": "audio metadata parsed"
+    },
+    {
+      "index": 611,
+      "name": "Sivan Kovil Bakthi FM",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 612,
+      "name": "Nagore E. M. Hanifa Radio",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 613,
+      "name": "Nithish Online Radio",
+      "status": "unavailable",
+      "providerReview": false,
+      "detail": "probe/decode failed"
+    },
+    {
+      "index": 614,
+      "name": "Thadam FM",
+      "status": "audio_reachable",
+      "providerReview": false,
+      "detail": "audio metadata parsed"
+    },
+    {
+      "index": 615,
+      "name": "Sivan Isai",
       "status": "audio_reachable",
       "providerReview": false,
       "detail": "audio metadata parsed"

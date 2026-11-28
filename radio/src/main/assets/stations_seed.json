@@ -1,7 +1,7 @@
 {
 "source": "radio-browser.info + curated, probed list",
-"generatedAt": "2026-11-01T10:31:13Z",
-"note": "Seed list shipped with the app. 'verified' reflects a bounded CI audio-metadata observation, not content, station identity, rights or current availability; a failed check is not proof a station is permanently offline. The app can also search the live directory.",
+"generatedAt": "2026-11-28T07:52:42.385387+00:00",
+"note": "Seed list shipped with the app. 'verified' reflects a bounded single-runner audio-metadata observation, not content, station identity, rights or current availability; a failed check is not proof a station is permanently offline. Reported-provider streams remain held for review. The app can also search the live directory.",
 "counts": {
 "tamil": 188,
 "tamil_fm": 113,
@@ -11,7 +11,7 @@
 "tamil_news": 0,
 "english": 110
 },
-"verifiedCount": 532,
+"verifiedCount": 536,
 "total": 616,
 "debug": [
 {
@@ -3470,7 +3470,7 @@
 "votes": 204,
 "category": "tamil",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "directory",
 "order": 0
 },
@@ -4090,7 +4090,7 @@
 "votes": 137,
 "category": "tamil",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "directory",
 "order": 0
 },
@@ -4570,7 +4570,7 @@
 "votes": 56,
 "category": "tamil",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "directory",
 "order": 0
 },
@@ -4730,7 +4730,7 @@
 "votes": 0,
 "category": "tamil",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "curated",
 "order": 1000
 },
@@ -4750,7 +4750,7 @@
 "votes": 0,
 "category": "tamil",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "curated",
 "order": 998
 },
@@ -6290,7 +6290,7 @@
 "votes": 0,
 "category": "tamil_devotional",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "directory",
 "order": 0
 },
@@ -6593,7 +6593,7 @@
 "votes": 122,
 "category": "india_news",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "directory",
 "order": 0
 },
@@ -6733,7 +6733,7 @@
 "votes": 4,
 "category": "india_news",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "directory-probe",
 "order": 0
 },
@@ -6853,7 +6853,7 @@
 "votes": 0,
 "category": "india_news",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "curated",
 "order": 926
 },
@@ -7293,7 +7293,7 @@
 "votes": 4621,
 "category": "world_news",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "directory",
 "order": 0
 },
@@ -10293,7 +10293,7 @@
 "votes": 53906,
 "category": "english",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "directory",
 "order": 0
 },
@@ -10793,7 +10793,7 @@
 "votes": 22163,
 "category": "english",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "directory",
 "order": 0
 },
@@ -12075,11 +12075,11 @@
 "votes": 65,
 "category": "tamil",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "reference-directory",
 "order": 0,
 "referenceScreen": 31,
-"auditStatus": "unavailable"
+"auditStatus": "audio_reachable"
 },
 {
 "id": "1f1699ec-7628-430d-904a-49ce65042519",
@@ -12607,12 +12607,12 @@
 "votes": 0,
 "category": "tamil",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "reference-manual",
 "order": 0,
 "referenceScreen": 3,
 "referenceEvidence": "http://coolaf.com/run/snippets/gd6mdshxv6",
-"auditStatus": "audio_reachable"
+"auditStatus": "unavailable"
 },
 {
 "id": "ref-jp-chandrababu-hits",
@@ -13366,12 +13366,12 @@
 "votes": 0,
 "category": "tamil_fm",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "reference-manual",
 "order": 0,
 "referenceScreen": 16,
 "referenceEvidence": "https://www.tamilradios.com/page/7",
-"auditStatus": "audio_reachable"
+"auditStatus": "unavailable"
 },
 {
 "id": "ref-radio-lime",
@@ -13573,12 +13573,12 @@
 "votes": 0,
 "category": "tamil_fm",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "reference-manual",
 "order": 0,
 "referenceScreen": 21,
 "referenceEvidence": "https://www.tamilradios.com/page/7",
-"auditStatus": "audio_reachable"
+"auditStatus": "unavailable"
 },
 {
 "id": "ref-yaal-fm",
@@ -14081,13 +14081,13 @@
 "votes": 0,
 "category": "tamil",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "reference-manual",
 "order": 0,
 "referenceScreen": 34,
 "referenceName": "Mecheri",
 "referenceEvidence": "https://www.tamilradios.com/page/6",
-"auditStatus": "audio_reachable"
+"auditStatus": "unavailable"
 },
 {
 "id": "ref-kavinilavu-fm",
@@ -14129,13 +14129,13 @@
 "votes": 0,
 "category": "tamil_fm",
 "isCustom": false,
-"verified": true,
+"verified": false,
 "source": "reference-manual",
 "order": 0,
 "referenceScreen": 14,
 "referenceName": "Thoani FM",
 "referenceEvidence": "https://tamilmuthu.com/radio/thoni-fm-91-2",
-"auditStatus": "audio_reachable"
+"auditStatus": "unavailable"
 },
 {
 "id": "ref-natrinai-fm",
@@ -14201,13 +14201,13 @@
 "votes": 0,
 "category": "tamil_fm",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "reference-manual",
 "order": 0,
 "referenceScreen": 9,
 "referenceName": "Pudugai FM",
 "referenceEvidence": "https://www.tamilradios.com/page/7",
-"auditStatus": "unavailable"
+"auditStatus": "audio_reachable"
 },
 {
 "id": "ref-shyamalavani-tamil-radio-904",
@@ -14273,13 +14273,13 @@
 "votes": 0,
 "category": "tamil_devotional",
 "isCustom": false,
-"verified": false,
+"verified": true,
 "source": "reference-manual",
 "order": 0,
 "referenceScreen": 35,
 "referenceName": "Wisdom",
 "referenceEvidence": "https://www.tamilradios.com/page/10",
-"auditStatus": "unavailable"
+"auditStatus": "audio_reachable"
 },
 {
 "id": "ref-sivan-kovil-bakthi-fm",

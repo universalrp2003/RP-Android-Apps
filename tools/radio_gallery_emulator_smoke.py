@@ -121,11 +121,7 @@ wait_for('Stream not verified', 'சரிபார்க்கப்படா�
 # News must start in a news category, without inheriting the radio search.
 tap(wait_for('Cancel', 'ரத்து'))
 # A category tap clears the artist/search filter without requiring deletion.
-for _ in range(5):
-    if find(tree(), 'Tamil FM') or find(tree(), 'தமிழ் FM'):
-        break
-    adb('shell', 'input', 'swipe', '100', '390', '650', '390', '400')
-tap(wait_for('Tamil FM', 'தமிழ் FM'))
+tap(wait_for('All stations', 'அனைத்தும்'))
 search = next((n for n in tree().iter('node') if n.get('class') == 'android.widget.EditText'), None)
 assert search is not None and search.get('text', '') != 'Nattrinai', 'Category kept the old search'
 # Back from the directory returns to the app, even while a request is running.

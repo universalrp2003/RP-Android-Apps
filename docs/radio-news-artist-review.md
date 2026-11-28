@@ -61,3 +61,7 @@ Static match counts use the same name, provisional reference name, tags, country
 | Goundamani | goundamani | 0 | 0 |
 | Vivek | vivek | 0 | 0 |
 | Santhanam | santhanam | 0 | 0 |
+
+## Full catalogue reachability audit
+
+The nonpublishing [audit run](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46122970792) probed all 616 shipped entries from one CI location (runner timestamp 2026-11-28 07:52 UTC). It observed audio metadata for 536 unheld entries, while 67 unheld probes failed; of 13 held-provider entries, 12 failed and one returned audio metadata. Such a snapshot cannot establish what is playing, rights, or availability on a particular phone. Failed entries remain in the catalogue and can be tried; the reported provider remains held. The audit also observed 32 audio-reachable directory candidates, but they were not imported without identity/content review. Vadivelu comedy returned audio metadata; Yuvan Shankar Raja was held and its probe failed.

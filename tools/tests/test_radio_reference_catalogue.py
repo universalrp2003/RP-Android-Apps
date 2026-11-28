@@ -78,8 +78,8 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
         seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())['stations']
         receipt = json.loads((REFERENCE/'catalogue-audit-receipt.json').read_text())
         rows = receipt['shippedResults']
-        self.assertEqual(receipt['shippedChecked'], 600)
-        self.assertEqual([r['index'] for r in rows], list(range(600)))
+        self.assertEqual(receipt['shippedChecked'], 616)
+        self.assertEqual([r['index'] for r in rows], list(range(616)))
         for row in rows:
             station = seed[row['index']]
             self.assertEqual(row['name'], station['name'])
