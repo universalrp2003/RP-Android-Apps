@@ -20,6 +20,7 @@ android {
         targetSdk = 36
         versionCode = 31
         versionName = "1.31"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -61,6 +62,8 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

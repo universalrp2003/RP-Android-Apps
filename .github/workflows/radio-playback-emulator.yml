@@ -1,0 +1,41 @@
+name: Radio live playback emulator observation (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: [".github/workflows/radio-playback-emulator.yml", "radio/src/androidTest/**", "radio/build.gradle.kts"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Build test and debug APKs
+        run: gradle :radio:assembleDebug :radio:assembleDebugAndroidTest --no-daemon --stacktrace
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Test selected live MP3 and HLS streams in Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: bash -o pipefail -c 'gradle :radio:connectedDebugAndroidTest --no-daemon --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.tamilnadufm.LiveStreamSmokeTest 2>&1 | tee "$RUNNER_TEMP/radio-playback-smoke.log"'
+      - name: Surface failure diagnostics
+        if: failure()
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP']) / 'radio-playback-smoke.log'
+          text = p.read_text(errors='replace')[-6000:] if p.exists() else 'Playback test did not start.'
+          print('::error title=Radio playback emulator smoke::' + text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))

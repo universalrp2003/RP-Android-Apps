@@ -13,8 +13,18 @@ def adb(*args):
 
 
 def tree():
-    adb('shell', 'uiautomator', 'dump', '/sdcard/radio-window.xml')
-    return ET.fromstring(adb('exec-out', 'cat', '/sdcard/radio-window.xml'))
+    # The window can be between frames or covered by a system dialog at boot.
+    # Never parse a stale dump from a previous screen.
+    error = None
+    for _ in range(8):
+        try:
+            adb('shell', 'rm', '-f', '/sdcard/radio-window.xml')
+            adb('shell', 'uiautomator', 'dump', '/sdcard/radio-window.xml')
+            return ET.fromstring(adb('exec-out', 'cat', '/sdcard/radio-window.xml'))
+        except (subprocess.CalledProcessError, ET.ParseError) as exc:
+            error = exc
+            time.sleep(1)
+    raise AssertionError('Could not retrieve emulator UI hierarchy') from error
 
 
 def find(root, text):
