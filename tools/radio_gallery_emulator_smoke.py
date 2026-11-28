@@ -88,7 +88,8 @@ for _ in range(12):
     adb('shell', 'input', 'swipe', '350', '1100', '350', '400', '400')
     time.sleep(0.4)
 tap(wait_for('Santhanam'))
-wait_for('Open collection in Spotify', 'Spotify-இல் தொகுப்பைத் திற')
+wait_for('Station-name matches for this artist', 'கலைஞர் பெயருடன் பொருந்தும்')
+assert find(tree(), 'Spotify') is None, 'Artist search exposed an external Spotify link'
 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
 wait_for('Photo credits', 'பட உதவி')
 for _ in range(12):

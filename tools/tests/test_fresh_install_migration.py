@@ -75,7 +75,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
         modules = {
             # Candidate 3.02 builds on the published 3.01 migration note.
             'cleaner': ('3.05', '110', 'live-guard-v3.05'),
-            'radio': ('1.31', '31', 'ramesh-radio-v1.31'),
+            'radio': ('1.32', '32', 'ramesh-radio-v1.32'),
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),
             'oorarivippu': ('1.1.26', '31', 'oor-arivippu-v1.1.26'),

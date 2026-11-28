@@ -4,18 +4,6 @@ package com.universalrp.tamilnadufm.ui
 data class ArtistShortcut(val name: String, val query: String, val photo: String = "")
 
 object ArtistBrowse {
-    /** Explicit, third-party on-demand pages; these are not Media3 stream URLs.
-     * Availability, subscription and playback are controlled by Spotify. */
-    val externalCollections: Map<String, String> = mapOf(
-        "vijay antony" to "https://open.spotify.com/artist/6CtYzQvENTdGq5LPPsePdV",
-        "sivaji" to "https://open.spotify.com/album/2n2qfLKzVKYuiTP6xNGxkI",
-        "santhanam" to "https://open.spotify.com/album/5iy7VICB9uVJue3tdSRnoD",
-        "susheela" to "https://open.spotify.com/artist/15i8ZpQP4ZTWUXNo7VA2OE",
-        "vidyasagar" to "https://open.spotify.com/artist/5TB837uKG65w8Jnz5D0bS5",
-        "vivek" to "https://open.spotify.com/album/1sbHi5Osl4tIpv12uJ82Cw",
-        "goundamani" to "https://open.spotify.com/album/2YTVteE18wKXpWIU9Eyg0I",
-    )
-
     val artists = listOf(
         ArtistShortcut("Ilaiyaraaja", "ilayaraja", "https://upload.wikimedia.org/wikipedia/commons/2/26/Ilaiyaraaja_at_Merku_Thodarchi_Malai_Press_Meet.jpg"),
         ArtistShortcut("A. R. Rahman", "rahman", "https://upload.wikimedia.org/wikipedia/commons/f/f7/AR_Rahman_At_The_%E2%80%98Marvel_Anthem%E2%80%99_Launch.jpg"),
