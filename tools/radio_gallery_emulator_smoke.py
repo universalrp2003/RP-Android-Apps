@@ -88,7 +88,8 @@ for _ in range(12):
     time.sleep(0.4)
 wait_for('Santhanam')
 for _ in range(12):
-    if find(tree(), 'Ilaiyaraaja') is not None:
+    root = tree()
+    if find(root, 'Photo credits') is not None or find(root, 'பட உதவி') is not None:
         break
     adb('shell', 'input', 'swipe', '350', '400', '350', '1100', '400')
     time.sleep(0.4)
