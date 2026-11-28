@@ -1,0 +1,99 @@
+name: Publish verified Ramesh Radio 1.32
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: [".github/workflows/promote-radio-1-32.yml"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-radio-1-32
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE: 17dae9d7d54841bef01634cb68c87c175d7aacc3
+      APK_SHA: 3f0973d1fa56c322171d4e34908624f41e68688d1f81cc1dde972faf23c70033
+      ZIP_SHA: 21b7bd86f8c442b6fb30de2013b1f2827bbb9b74ad184bf24b49c72f15390bd9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify source and all required gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$SOURCE" HEAD
+          test -z "$(git ls-remote --tags origin refs/tags/ramesh-radio-v1.32)"
+          python3 - <<'PY'
+          import json, os, subprocess
+          repo=os.environ['GH_REPO']; source=os.environ['SOURCE']
+          def api(path):
+              return json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/{path}'],text=True))
+          for run_id, path in [(46135353151,'.github/workflows/radio-candidate.yml'),(46135353145,'.github/workflows/radio-gallery-check.yml'),(46135353166,'.github/workflows/radio-gallery-emulator.yml')]:
+              run=api(f'actions/runs/{run_id}')
+              assert (run['head_sha'],run['status'],run['conclusion'],run['path']) == (source,'completed','success',path),run
+          job=api('actions/jobs/140949318012')
+          assert job['run_id']==46135353151 and job['conclusion']=='success'
+          for name in ('Source, localization and regressions','Both JVM variants, release lint and signed APK','Verify immutable phone-test artifact'):
+              assert any(s['name']==name and s['conclusion']=='success' for s in job['steps']), name
+          artifact=api('actions/artifacts/15259298866')
+          assert artifact['workflow_run']['id']==46135353151 and artifact['workflow_run']['head_sha']==source
+          assert artifact['name']=='Ramesh-Radio-1.32-signed-candidate' and not artifact['expired']
+          assert artifact['digest']=='sha256:'+os.environ['ZIP_SHA']
+          releases=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/releases?per_page=100'],text=True))
+          assert not [r for page in releases for r in page if r['tag_name']=='ramesh-radio-v1.32']
+          PY
+      - name: Verify exact signed APK and permissions
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/artifacts/15259298866/zip" > /tmp/radio-candidate.zip
+          echo "$ZIP_SHA  /tmp/radio-candidate.zip" | sha256sum --check
+          python3 - <<'PY'
+          import hashlib, os, pathlib, zipfile
+          with zipfile.ZipFile('/tmp/radio-candidate.zip') as z:
+              assert z.namelist()==['Ramesh-Radio-v1.32.apk']
+              data=z.read('Ramesh-Radio-v1.32.apk')
+          assert len(data)==15231296 and hashlib.sha256(data).hexdigest()==os.environ['APK_SHA']
+          pathlib.Path('/tmp/Ramesh-Radio-v1.32.apk').write_bytes(data)
+          PY
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" dump badging /tmp/Ramesh-Radio-v1.32.apk > /tmp/candidate-badging
+          grep -Fq "package: name='com.universalrp.tamilnadufm' versionCode='32' versionName='1.32'" /tmp/candidate-badging
+          grep -Fq "sdkVersion:'26'" /tmp/candidate-badging
+          ! grep -q application-debuggable /tmp/candidate-badging
+          "$tools/apksigner" verify --print-certs /tmp/Ramesh-Radio-v1.32.apk > /tmp/candidate-signer
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/candidate-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          mkdir /tmp/old-radio
+          gh release download ramesh-radio-v1.31 --pattern Ramesh-Radio-v1.31.apk --dir /tmp/old-radio
+          echo 'fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22  /tmp/old-radio/Ramesh-Radio-v1.31.apk' | sha256sum --check
+          "$tools/apksigner" verify --print-certs /tmp/old-radio/Ramesh-Radio-v1.31.apk > /tmp/old-signer
+          grep -Fq "$signer" /tmp/old-signer
+          "$tools/aapt" dump badging /tmp/old-radio/Ramesh-Radio-v1.31.apk > /tmp/old-badging
+          python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/old-badging | tee /tmp/permission-delta
+          grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
+      - name: Publish the verified artifact and confirm public bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show "$SOURCE:releases/ramesh-radio-v1.32.md" > /tmp/radio-notes.md
+          printf '%s  Ramesh-Radio-v1.32.apk\n' "$APK_SHA" > /tmp/Ramesh-Radio-v1.32.sha256
+          gh release create ramesh-radio-v1.32 /tmp/Ramesh-Radio-v1.32.apk /tmp/Ramesh-Radio-v1.32.sha256 --draft --latest=false --target "$SOURCE" --title 'Ramesh Radio 1.32' --notes-file /tmp/radio-notes.md
+          mkdir /tmp/release-check
+          gh release download ramesh-radio-v1.32 --pattern Ramesh-Radio-v1.32.apk --dir /tmp/release-check
+          echo "$APK_SHA  /tmp/release-check/Ramesh-Radio-v1.32.apk" | sha256sum --check
+          gh release edit ramesh-radio-v1.32 --draft=false --latest=false
+          python3 - <<'PY'
+          import json,os,subprocess
+          r=json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GH_REPO']}/releases/tags/ramesh-radio-v1.32"],text=True))
+          a=[a for a in r['assets'] if a['name']=='Ramesh-Radio-v1.32.apk']
+          assert not r['draft'] and not r['prerelease'] and len(a)==1
+          assert a[0]['size']==15231296 and a[0]['digest']=='sha256:'+os.environ['APK_SHA']
+          print('::notice title=Radio public release::release='+str(r['id'])+' asset='+str(a[0]['id'])+' sha256='+os.environ['APK_SHA'])
+          PY
