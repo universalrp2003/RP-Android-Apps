@@ -316,6 +316,12 @@ object AppGuides {
                     "அமைப்புகளும் இந்தப் போனிலேயே இருக்கும்.",
             ),
             topic(
+                "Weather alert settings",
+                "வானிலை எச்சரிக்கை அமைப்புகள்",
+                "Open the side menu, choose Settings & more, then Weather alert settings. Turn alerts on or off and manage your saved places. When enabled, forecast checks can send saved coordinates to a weather provider. If device location is on and you have not made an explicit choice, weather may be enabled automatically; switching it off saves your choice.",
+                "பக்கப் பட்டியலில் அமைப்புகள் மற்றும் மேலும், பிறகு வானிலை எச்சரிக்கை அமைப்புகளைத் திறக்கவும். எச்சரிக்கைகளை இயக்கலாம் அல்லது நிறுத்தலாம்; சேமித்த ஊர்களை நிர்வகிக்கலாம். இயக்கத்தில் இருந்தால் ஊரின் ஆயத்தொலைகள் வானிலைச் சேவைக்கு அனுப்பப்படலாம். முன்பு தேர்வு செய்யாத நிலையில் கைபேசியின் இருப்பிடம் இயக்கத்தில் இருந்தால் வானிலை தானாக இயங்கலாம்; அதை நிறுத்தினால் உங்கள் தேர்வு சேமிக்கப்படும்.",
+            ),
+            topic(
                 "Updating Ramesh Radio",
                 "ரமேஷ் ரேடியோவைப் புதுப்பித்தல்",
                 "A read-only check reads public stable-release metadata at most once per rolling 24 hours when the app opens or resumes. If a newer stable version is found, an in-app notice appears. Tap it to open this app’s section of the official website in your browser, then download there and follow Android’s normal confirmation. This app never downloads or installs APKs. Checks depend on opening the app, connectivity and available release metadata, so they are not guaranteed. Stop if a security warning appears.",

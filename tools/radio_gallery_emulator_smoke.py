@@ -160,8 +160,46 @@ assert find(tree(), 'Nattrinai') is None, 'Radio search leaked into news'
 navigate('Local music', 'உள்ளூர் பாடல்கள்')
 navigate('Equalizer', 'ஒலி சமநிலை')
 navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
+# Weather settings must be accessible, and an explicit off choice must survive restart.
+def open_weather():
+    tap(wait_for('Weather alert settings', 'வானிலை எச்சரிக்கை அமைப்புகள்'))
+    wait_for('Rain & cyclone voice alert', 'மழை & புயல் குரல் எச்சரிக்கை')
+
+
+def weather_switch():
+    root = tree()
+    switches = [n for n in root.iter('node') if n.get('class') == 'android.widget.Switch']
+    assert len(switches) == 1, 'Expected one weather switch in the dialog'
+    return switches[0]
+
+
+def wait_switch(value):
+    deadline = time.monotonic() + 12
+    while time.monotonic() < deadline:
+        switch = weather_switch()
+        if switch.get('checked') == str(value).lower():
+            return switch
+        time.sleep(0.5)
+    raise AssertionError('Weather switch did not become ' + str(value))
+
+open_weather()
+if weather_switch().get('checked') != 'true':
+    tap(weather_switch())
+wait_switch(True)
+tap(weather_switch())
+wait_switch(False)
+adb('shell', 'am', 'force-stop', PACKAGE)
+adb('shell', 'am', 'start', '-W', '-n', PACKAGE + '/.MainActivity')
+time.sleep(4)
+navigate('Settings & more', 'அமைப்புகள் மற்றும் மேலும்')
+open_weather()
+wait_switch(False)
+prefs = adb('shell', 'run-as', PACKAGE, 'cat', 'shared_prefs/rp_shared_weather_watch.xml')
+assert 'name="weather_enabled" value="false"' in prefs, 'Disabled weather preference was not saved'
+assert 'name="weather_user_explicit" value="true"' in prefs, 'Explicit weather choice was not saved'
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
 navigate('Radio', 'வானொலி')
 wait_for('Station, city or language', 'நிலையம்')
 assert find(tree(), 'Nattrinai') is None, 'Old search remained after switching screens'
-print('PASS: gallery, artist shortcuts, drawer navigation and retained radio search on emulator.')
+print('PASS: gallery, artist shortcuts, drawer navigation, search clearing and persistent weather off switch on emulator.')
 print('No audible playback, phone, sustained stream, identity or rights test was performed.')

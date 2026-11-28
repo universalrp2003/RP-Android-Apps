@@ -658,7 +658,7 @@ private fun Fader(
 // ----------------------------------------------------------------------- more
 
 @Composable
-fun MoreScreen(vm: MainViewModel, state: UiState) {
+fun MoreScreen(vm: MainViewModel, state: UiState, onOpenWeather: () -> Unit) {
     val aboutContext = androidx.compose.ui.platform.LocalContext.current
     // Guide: the owner asked for the same compact, expandable Tamil+English guide in every app.
     var showGuide by remember { mutableStateOf(false) }
@@ -736,6 +736,16 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                     Text(if (tamil) "பக்கப் பட்டியல் மற்றும் வகைகளை வரிசைப்படுத்து" else "Arrange menu and categories", color = Saffron, fontWeight = FontWeight.SemiBold)
                     Text(if (tamil) "பக்கப் பட்டியல் மற்றும் வானொலி வகைகள் — உங்கள் விருப்ப வரிசையில்."
                         else "Put menu items and station categories in your preferred order.", color = TextSecondary)
+                }
+            }
+        }
+
+        item {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().clickable(onClick = onOpenWeather).padding(14.dp)) {
+                    Text(if (tamil) "வானிலை எச்சரிக்கை அமைப்புகள்" else "Weather alert settings", color = Saffron, fontWeight = FontWeight.SemiBold)
+                    Text(if (tamil) "மழை எச்சரிக்கையை இயக்கவும் அல்லது நிறுத்தவும்; சேமித்த ஊரை மாற்றவும். வானிலைச் சோதனை ஊரின் ஆயத்தொலைகளைச் சேவைக்கு அனுப்பலாம். முன்பு தேர்வு செய்யாத நிலையில் கைபேசி இருப்பிடம் இயக்கத்தில் இருந்தால் வானிலை தானாக இயங்கலாம்."
+                        else "Turn alerts on or off and manage saved places. Forecast checks may send the saved coordinates to a weather provider. Weather may turn on automatically if device location is on and you have not made an explicit choice.", color = TextSecondary)
                 }
             }
         }

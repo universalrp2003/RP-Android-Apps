@@ -31,14 +31,20 @@ class RadioIconStationModeTest(unittest.TestCase):
         self.assertIn('LazyColumn(', station_list)
         self.assertNotIn('TabRow(', station_list)
 
-    def test_weather_monitor_is_not_started_by_radio_app(self):
+    def test_weather_controls_are_reachable_and_can_record_an_explicit_choice(self):
         root = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/AppRoot.kt").read_text()
-        main = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/MainActivity.kt").read_text()
-        service = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/player/PlaybackService.kt").read_text()
         more = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/PlayScreens.kt").read_text()
-        for source in (root, main, service, more, SCREEN):
-            self.assertNotIn("RadioWeatherMonitor.", source)
-        self.assertIn("clearWeatherNotification(this)", main)
+        monitor = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/RadioWeatherMonitor.kt").read_text()
+        vm = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/MainViewModel.kt").read_text()
+        self.assertIn("Weather alert settings", more)
+        self.assertIn("onOpenWeather", more)
+        self.assertIn("RadioWeatherMonitor.openDialog(rootContext)", root)
+        self.assertIn("SharedWeatherControlDialog(", root)
+        self.assertIn("RadioWeatherMonitor.setEnabled(rootContext, on)", root)
+        self.assertIn("userInitiated = true", monitor)
+        self.assertIn("RadioWeatherMonitor.maybeRunScheduledCheck(ctx)", vm)
+        self.assertIn("if (!SharedWeatherRuntime.isEnabled(app)) return", monitor)
+        self.assertIn("clearWeatherNotification(this)", (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/MainActivity.kt").read_text())
 
     def test_light_theme_and_green_header(self):
         theme = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/Theme.kt").read_text()

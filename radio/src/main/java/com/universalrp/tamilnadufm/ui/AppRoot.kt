@@ -87,6 +87,14 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
 
     val state by vm.state.collectAsState()
     val playback by PlayerBus.state.collectAsState()
+    val weather by com.universalrp.tamilnadufm.RadioWeatherMonitor.state.collectAsState()
+    val showWeatherDialog by com.universalrp.tamilnadufm.RadioWeatherMonitor.showDialog.collectAsState()
+    val savedPlaces by com.universalrp.tamilnadufm.RadioWeatherMonitor.savedPlaces.collectAsState()
+    val activePlaceKey = remember(savedPlaces, weather.savedPlaceName, weather.savedPlaceDetails) {
+        savedPlaces.firstOrNull { it.name == weather.savedPlaceName && it.details == weather.savedPlaceDetails }?.key
+    }
+    val rootContext = androidx.compose.ui.platform.LocalContext.current
+    val isTamil = AppLanguageState.current == AppLanguage.TAMIL
 
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -114,7 +122,7 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
                     Tab.NEWS -> NewsScreen(vm, state, vm.newsListState)
                     Tab.LOCAL -> LocalScreen(vm, state)
                     Tab.EQUALIZER -> EqualizerScreen(vm, state)
-                    Tab.MORE -> MoreScreen(vm, state)
+                    Tab.MORE -> MoreScreen(vm, state, onOpenWeather = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(rootContext) })
                 }
             }
             AnimatedVisibility(visible = state.message != null) {
@@ -146,7 +154,91 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
         BackHandler { vm.openNowPlaying(false) }
     }
 
+    if (showWeatherDialog) {
+        com.universalrp.weather.SharedWeatherControlDialog(
+            state = weather,
+            tamil = isTamil,
+            allowGps = false,
+            accentColor = Saffron,
+            ducksMusicNote = true,
+            onDismiss = { com.universalrp.tamilnadufm.RadioWeatherMonitor.closeDialog() },
+            onSetEnabled = { on ->
+                com.universalrp.tamilnadufm.RadioWeatherMonitor.setEnabled(rootContext, on)
+            },
+            onCheckNow = {
+                com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
+            },
+            onTestVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.testVoiceWithDuck(rootContext) },
+            onCyclePreviewAnimation = { com.universalrp.tamilnadufm.RadioWeatherMonitor.cyclePreviewAnimation() },
+            onSearchPlaces = { com.universalrp.tamilnadufm.RadioWeatherMonitor.searchPlaces(rootContext, it) },
+            onSelectPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.selectPlace(rootContext, it) },
+            onClearPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.clearPlace(rootContext) },
+            onSaveTomorrowKey = { com.universalrp.tamilnadufm.RadioWeatherMonitor.saveTomorrowKey(rootContext, it) },
+            onReadGuideAloud = { com.universalrp.tamilnadufm.RadioWeatherMonitor.readGuideAloud(rootContext, it) },
+            onStopVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.stopVoice() },
+            placesContent = {
+        if (savedPlaces.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 2.dp),
+            ) {
+                Text(
+                    text = if (isTamil) "சேமித்த ஊர்கள்" else "Saved places",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+                Spacer(Modifier.height(3.dp))
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    savedPlaces.forEach { place ->
+                        val isActive = place.key == activePlaceKey
+                        Surface(
+                            color = if (isActive) Saffron else SurfaceHigh,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.clickable {
+                                com.universalrp.tamilnadufm.RadioWeatherMonitor.selectSavedPlace(rootContext, place)
+                            },
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = place.name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isActive) Color(0xFF2A1200) else TextSecondary,
+                                )
+                                if (savedPlaces.size > 1) {
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "✕",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isActive) Color(0xFF2A1200) else TextSecondary,
+                                        modifier = Modifier.clickable {
+                                            com.universalrp.tamilnadufm.RadioWeatherMonitor.removeSavedPlace(
+                                                rootContext,
+                                                place,
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
+            },
+        )
+    }
 }
 
 @Composable
