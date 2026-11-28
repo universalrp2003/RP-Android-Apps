@@ -26,3 +26,13 @@ These photos are loaded from Wikimedia Commons; if unavailable the app displays 
 - Suriya — Epsajeevan. [Source](https://commons.wikimedia.org/wiki/File:Soorya_sivakumar.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
 The 21 externally hosted portraits were checked from a CI runner in runs 46086359826 and 46086534038 (second receipt blob `c33f3c25d6d55b9b95e683dcf6d55f092f9f5322`). Seventeen returned JPEG data within the app's size limit in at least one run; P. Susheela, K. J. Yesudas, Harris Jayaraj and Vidyasagar returned HTTP 429 in both checks. A 429 is rate limiting, not proof a file is missing. This does not verify display on a phone or availability in every region; fallback initials remain important.
+
+- Yuvan Shankar Raja: Silverscreen Media Inc.. [Source](https://commons.wikimedia.org/wiki/File:Yuvan_Shankar_Raja_exclusive_HQ_Photos_Silverscreen.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Ajith: Shridhar Devalla. [Source](https://commons.wikimedia.org/wiki/File:Ajith_Kumar_at_Irungattukottai_Race_Track.jpg), [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/).
+- Vijay: Silverscreen Media Inc.; watermark removed by Commons. [Source](https://commons.wikimedia.org/wiki/File:Vijay_at_Puli_Audio_Launch.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Vijayakanth: Silverscreen Media Inc.. [Source](https://commons.wikimedia.org/wiki/File:Vijaykanth_at_the_Sagaptham_Audio_Launch.jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- M. S. Viswanathan: Kannanshanmugam, Shanmugam Studio, Kollam. [Source](https://commons.wikimedia.org/wiki/File:M.s.v.JPG), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Sivaji Ganesan: Mohan V Raman; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Sivaji_Ganesan_1.jpg), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- Vadivelu: Silverscreen Media Inc.; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Vadivelu_1_at_Trailer_%26_HD_Songs_Launch_of_Kaththi_Sandai_(cropped).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Vivek: Dani Charles / Silverscreen; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Vivek_at_the_Ezhumin_Press_Meet_(headshot).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Santhanam: Dani Charles / Silverscreen; cropped by Commons. [Source](https://commons.wikimedia.org/wiki/File:Santhanam_at_the_%E2%80%98A1%E2%80%99_Press_Meet_(cropped).jpg), [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).

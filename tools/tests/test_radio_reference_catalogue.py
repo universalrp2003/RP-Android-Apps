@@ -2,6 +2,7 @@
 import importlib.util
 import json
 import pathlib
+import re
 import unittest
 import urllib.parse
 
@@ -30,7 +31,7 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
         receipts = [json.loads((REFERENCE/name).read_text()) for name in ('first-probe-receipt.json', 'second-probe-receipt.json', 'artist-probe-receipt.json', 'devotional-probe-receipt.json', 'expanded-probe-receipt.json', 'further-probe-receipt.json', 'regional-probe-receipt.json', 'community-artist-probe-receipt.json', 'identity-review-probe-receipt.json', 'official-probe-receipt.json', 'kadal-probe-receipt.json', 'eleventh-probe-receipt.json', 'twelfth-probe-receipt.json')]
         results = {r['url']: r for receipt in receipts for r in receipt['results']}
         added = [s for s in seed['stations'] if s.get('source') in ('reference-directory', 'reference-manual')]
-        self.assertEqual(len(added), 92)
+        self.assertEqual(len(added), 100)
         self.assertEqual(seed['total'], len(seed['stations']))
         self.assertEqual(seed['verifiedCount'], sum(s.get('verified', True) for s in seed['stations']))
         self.assertEqual(seed['counts'], {k: sum(s['category'] == k for s in seed['stations']) for k in seed['counts']})
@@ -41,7 +42,7 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
             if station not in added:
                 continue
             result = results[station['url']]
-            self.assertEqual(result['status'], 'audio_reachable')
+            self.assertIn(result['status'], ('audio_reachable', 'unavailable'))
             self.assertFalse(result['providerReview'])
             self.assertFalse(result['contentReviewed'])
             current = latest_by_index.get(index)
@@ -51,9 +52,27 @@ class RadioReferenceCatalogueTest(unittest.TestCase):
                 self.assertEqual(station['verified'], expected)
                 self.assertEqual(station['auditStatus'], current['status'])
             else:
-                self.assertTrue(station['verified'])
-                self.assertEqual(station['auditStatus'], 'audio_reachable')
+                self.assertEqual(station['verified'], result['status'] == 'audio_reachable')
+                self.assertEqual(station['auditStatus'], result['status'])
             self.assertTrue(1 <= station['referenceScreen'] <= 38)
+
+    def test_every_artist_photo_has_in_app_and_documented_credit(self):
+        base = ROOT/'radio/src/main/java/com/universalrp/tamilnadufm/ui'
+        artist = (base/'ArtistBrowse.kt').read_text()
+        screen = (base/'StationsScreens.kt').read_text()
+        credits = (ROOT/'docs/radio-artist-photo-credits.md').read_text()
+        photos = re.findall(r'ArtistShortcut\("([^"]+)", "[^"]+", "(https://[^"]+)"\)', artist)
+        self.assertGreaterEqual(len(photos), 30)
+        for name, _ in photos:
+            self.assertIn('Triple("' + name + ' — ', screen)
+            self.assertRegex(credits, r'(?m)^- ' + re.escape(name) + r'[: —]')
+
+    def test_existing_stations_are_retained_after_availability_checks(self):
+        seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())['stations']
+        retained = json.loads((REFERENCE/'retained-station-ids.json').read_text())
+        ids = [station['id'] for station in seed]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertFalse(set(retained) - set(ids), "Availability checks must not remove saved stations")
 
     def test_latest_full_audit_matches_shipped_statuses(self):
         seed = json.loads((ROOT/'radio/src/main/assets/stations_seed.json').read_text())['stations']

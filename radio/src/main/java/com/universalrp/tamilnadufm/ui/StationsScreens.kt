@@ -907,6 +907,15 @@ private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit)
             Triple("Rajinikanth — Dani Charles / Silverscreen; watermark removed by Commons", "https://commons.wikimedia.org/wiki/File:Rajinikanth_Felicitates_Writer_Kalaignanam.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
             Triple("Dhanush — Dani Charles / Silverscreen", "https://commons.wikimedia.org/wiki/File:Dhanush_at_the_%E2%80%98Asuran%E2%80%99_Success_Meet.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
             Triple("Suriya — Epsajeevan", "https://commons.wikimedia.org/wiki/File:Soorya_sivakumar.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
+            Triple("Yuvan Shankar Raja — Silverscreen Media Inc.", "https://commons.wikimedia.org/wiki/File:Yuvan_Shankar_Raja_exclusive_HQ_Photos_Silverscreen.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Ajith — Shridhar Devalla", "https://commons.wikimedia.org/wiki/File:Ajith_Kumar_at_Irungattukottai_Race_Track.jpg", "https://creativecommons.org/licenses/by/2.0/"),
+            Triple("Vijay — Silverscreen Media Inc.; watermark removed by Commons", "https://commons.wikimedia.org/wiki/File:Vijay_at_Puli_Audio_Launch.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Vijayakanth — Silverscreen Media Inc.", "https://commons.wikimedia.org/wiki/File:Vijaykanth_at_the_Sagaptham_Audio_Launch.jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("M. S. Viswanathan — Kannanshanmugam, Shanmugam Studio, Kollam", "https://commons.wikimedia.org/wiki/File:M.s.v.JPG", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Sivaji Ganesan — Mohan V Raman; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Sivaji_Ganesan_1.jpg", "https://creativecommons.org/licenses/by-sa/4.0/"),
+            Triple("Vadivelu — Silverscreen Media Inc.; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Vadivelu_1_at_Trailer_%26_HD_Songs_Launch_of_Kaththi_Sandai_(cropped).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Vivek — Dani Charles / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Vivek_at_the_Ezhumin_Press_Meet_(headshot).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
+            Triple("Santhanam — Dani Charles / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Santhanam_at_the_%E2%80%98A1%E2%80%99_Press_Meet_(cropped).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
         )
         AlertDialog(onDismissRequest = { credits = false }, title = { Text("Photo credits") },
             text = {
