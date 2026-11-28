@@ -371,12 +371,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val s = _state.value
         val queries = ArtistSearchAliases.terms(s.query)
         val list = s.stations.filter { station ->
-            val matchesQuery = queries.isEmpty() || queries.any { query ->
-                station.name.lowercase().contains(query) ||
-                    station.tags.lowercase().contains(query) ||
-                    station.country.lowercase().contains(query) ||
-                    station.language.lowercase().contains(query)
-            }
+            val matchesQuery = com.universalrp.tamilnadufm.data.StationSearch.matches(station, queries)
 
             val matchesCategory = when (s.category) {
                 Category.ALL -> true

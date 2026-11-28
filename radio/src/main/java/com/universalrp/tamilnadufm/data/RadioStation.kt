@@ -25,6 +25,8 @@ data class RadioStation(
     val isCustom: Boolean = false,
     /** Directory entries carry a health check; curated ones are probed by CI. */
     val verified: Boolean = true,
+    /** A provisional owner-reference label; not a verified identity or station alias. */
+    val referenceName: String = "",
 ) {
     /** "128 kbps MP3" or "MP3" or "" — shown under the station name. */
     val qualityLabel: String
@@ -72,6 +74,7 @@ data class RadioStation(
         put("category", category)
         put("isCustom", isCustom)
         put("verified", verified)
+        put("referenceName", referenceName)
     }
 
     companion object {
@@ -91,6 +94,7 @@ data class RadioStation(
             votes = json.optInt("votes", 0),
             category = json.optString("category", Category.TAMIL),
             isCustom = custom || json.optBoolean("isCustom", false),
+            referenceName = json.optString("referenceName"),
             verified = json.optBoolean("verified", true) && !RadioStreamPolicy.heldForReview(json.optString("url_resolved").ifBlank { json.optString("url") }),
         )
     }

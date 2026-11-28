@@ -71,5 +71,19 @@ wait_for('Sriram Narasimhan')
 tap(wait_for('OK', 'சரி'))
 tap(wait_for('Ilaiyaraaja'))
 wait_for('ilayaraja')
-print('PASS: launch, artist gallery, photo credits and artist search navigation on emulator.')
+# The screenshot spelling differs from the seed name. It must find the retained
+# unverified record without falsely presenting the reference as a confirmed identity.
+search = next((node for node in tree().iter('node') if node.get('class') == 'android.widget.EditText'), None)
+assert search is not None, 'Station search field not found'
+tap(search)
+adb('shell', 'input', 'keyevent', 'KEYCODE_MOVE_END')
+for _ in range(16):
+    adb('shell', 'input', 'keyevent', 'KEYCODE_DEL')
+adb('shell', 'input', 'text', 'Nattrinai')
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+tap(wait_for('Natrinai FM'))
+wait_for('Nattrinai')
+wait_for('not confirmed', 'உறுதி செய்யப்படவில்லை')
+wait_for('Stream not verified', 'சரிபார்க்கப்படாத ஒலிபரப்பு')
+print('PASS: gallery, credits, artist navigation and unverified screenshot-name lookup on emulator.')
 print('No audible playback, phone, sustained stream, identity or rights test was performed.')

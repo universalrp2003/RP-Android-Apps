@@ -6,6 +6,9 @@ on:
       - "radio/src/main/assets/stations_seed.json"
       - "radio/src/main/java/com/universalrp/tamilnadufm/MainViewModel.kt"
       - "radio/src/main/java/com/universalrp/tamilnadufm/data/ArtistSearchAliases.kt"
+      - "radio/src/main/java/com/universalrp/tamilnadufm/data/StationSearch.kt"
+      - "radio/src/main/java/com/universalrp/tamilnadufm/data/RadioStation.kt"
+      - "radio/src/test/java/com/universalrp/tamilnadufm/data/StationSearchTest.kt"
       - "radio/src/test/java/com/universalrp/tamilnadufm/data/ArtistSearchAliasesTest.kt"
       - "tools/tests/test_radio_reference_catalogue.py"
       - "radio/src/main/java/com/universalrp/tamilnadufm/ui/Components.kt"
@@ -49,6 +52,11 @@ jobs:
           assert len(files) == 1, files
           root = ET.parse(files[0]).getroot()
           assert int(root.get('tests', '0')) == 1
+          assert root.get('failures') == root.get('errors') == root.get('skipped') == '0'
+          files = list(Path('radio/build/test-results/testDebugUnitTest').glob('*StationSearchTest.xml'))
+          assert len(files) == 1, files
+          root = ET.parse(files[0]).getroot()
+          assert int(root.get('tests', '0')) == 3
           assert root.get('failures') == root.get('errors') == root.get('skipped') == '0'
           files = list(Path('radio/build/test-results/testDebugUnitTest').glob('*ArtistSearchAliasesTest.xml'))
           assert len(files) == 1, files

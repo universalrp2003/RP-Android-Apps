@@ -416,6 +416,14 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
             text = {
                 Column {
                     Text(station.subtitle.ifBlank { AppStrings.translate("Live stream") }, color = TextSecondary)
+                    if (station.referenceName.isNotBlank() && !station.referenceName.equals(station.name, ignoreCase = true)) {
+                        Text(
+                            if (AppLanguageState.current == AppLanguage.TAMIL)
+                                "படத்தில் இருக்கக்கூடிய பெயர்: ${station.referenceName} (உறுதி செய்யப்படவில்லை)"
+                            else "Possible reference name: ${station.referenceName} (not confirmed)",
+                            color = TextSecondary, style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                     if (com.universalrp.tamilnadufm.data.RadioStreamPolicy.heldForReview(station.url)) {
                         Text(if (AppLanguageState.current == AppLanguage.TAMIL) "வழங்குநர் ஒலிபரப்பு பரிசீலனையில்" else "Provider stream held for review", color = Warn)
                     } else if (!station.verified) {
@@ -571,6 +579,14 @@ fun StationRow(
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (station.referenceName.isNotBlank() && !station.referenceName.equals(station.name, ignoreCase = true)) {
+                    Text(
+                        if (AppLanguageState.current == AppLanguage.TAMIL)
+                            "படத்தில் இருக்கக்கூடிய பெயர்: ${station.referenceName} (உறுதி செய்யப்படவில்லை)"
+                        else "Possible reference name: ${station.referenceName} (not confirmed)",
+                        color = TextSecondary, style = MaterialTheme.typography.labelSmall,
                     )
                 }
                 if (com.universalrp.tamilnadufm.data.RadioStreamPolicy.heldForReview(station.url)) {
