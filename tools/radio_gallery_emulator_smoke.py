@@ -28,16 +28,17 @@ def tap(node):
     adb('shell', 'input', 'tap', str((bounds[0]+bounds[2])//2), str((bounds[1]+bounds[3])//2))
 
 
-def wait_for(text, seconds=25):
+def wait_for(*texts, seconds=25):
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         root = tree()
-        node = find(root, text)
-        if node is not None:
-            return node
+        for text in texts:
+            node = find(root, text)
+            if node is not None:
+                return node
         time.sleep(1)
     print('Visible UI:', ' | '.join(n.get('text', '') for n in root.iter('node') if n.get('text')))
-    raise AssertionError('Did not find: ' + text)
+    raise AssertionError('Did not find any of: ' + ', '.join(texts))
 
 
 adb('install', '-r', 'radio/build/outputs/apk/debug/radio-debug.apk')
@@ -50,15 +51,15 @@ for prompt in ('Not now', 'பிறகு'):
     if node is not None:
         tap(node)
         break
-wait_for('Ramesh Radio')
-node = wait_for('Artists & popular songs')
+wait_for('Ramesh Radio', 'ரமேஷ் ரேடியோ')
+node = wait_for('Artists & popular songs', 'கலைஞர்கள் & பிரபலமான பாடல்கள்')
 tap(node)
-wait_for('Photo credits')
+wait_for('Photo credits', 'பட உதவி')
 wait_for('Ilaiyaraaja')
-tap(wait_for('Photo credits'))
-wait_for('S. Janaki')
-tap(wait_for('OK'))
-tap(wait_for('Mano'))
-wait_for('mano')
+tap(wait_for('Photo credits', 'பட உதவி'))
+wait_for('Sriram Narasimhan')
+tap(wait_for('OK', 'சரி'))
+tap(wait_for('Ilaiyaraaja'))
+wait_for('ilayaraja')
 print('PASS: launch, artist gallery, photo credits and artist search navigation on emulator.')
 print('No audible playback, phone, sustained stream, identity or rights test was performed.')
