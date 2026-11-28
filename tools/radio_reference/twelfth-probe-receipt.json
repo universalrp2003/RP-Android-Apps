@@ -1,0 +1,100 @@
+{
+  "checkedAtRunnerUtc": "2026-11-28T00:34:41.944973+00:00",
+  "candidates": [
+    {
+      "id": "ref-kavinilavu-fm",
+      "name": "Kavinilavu FM",
+      "url": "https://server1.mahamediacast.com/proxy/kavinilavufm/stream",
+      "favicon": "",
+      "homepage": "https://www.radioindialive.com/tamil-radios/kavinilavu-fm",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 12,
+      "referenceName": "KaviniLavu FM",
+      "referenceEvidence": "https://www.radioindialive.com/tamil-radios/kavinilavu-fm"
+    },
+    {
+      "id": "ref-thoni-fm",
+      "name": "Thoni FM 91.2",
+      "url": "https://stream.zeno.fm/qbzdpeuqz7zuv",
+      "favicon": "",
+      "homepage": "https://tamilmuthu.com/radio/thoni-fm-91-2",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 14,
+      "referenceName": "Thoani FM",
+      "referenceEvidence": "https://tamilmuthu.com/radio/thoni-fm-91-2"
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-kavinilavu-fm",
+      "name": "Kavinilavu FM",
+      "url": "https://server1.mahamediacast.com/proxy/kavinilavufm/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "48000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "128",
+        "icy-description": "Maha Media Networks",
+        "icy-genre": "Default genre",
+        "icy-name": "kavinilavufm",
+        "icy-pub": "0",
+        "icy-url": "https://mahamediacast.com"
+      }
+    },
+    {
+      "id": "ref-thoni-fm",
+      "name": "Thoni FM 91.2",
+      "url": "https://stream.zeno.fm/qbzdpeuqz7zuv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "THONI FM",
+        "icy-br": "128",
+        "StreamTitle": "Shreya Ghoshal, Kamal Haasan - Unnavida Indha Ulagathil-5StarMusiQ.Com",
+        "StreamUrl": "&artist=Shreya Ghoshal%2C Kamal Haasan&album=Virumaandi"
+      }
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}

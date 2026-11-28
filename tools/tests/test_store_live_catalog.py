@@ -114,8 +114,14 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         sounds=next(a for a in current['apps'] if a['id']=='animalvoice')
         self.assertEqual('Animal Sounds',sounds['name'])
         self.assertEqual('com.universalrp.animalvoice.experimental',sounds['packageName'])
-        # The bundled fallback carries the exact public release metadata the website serves.
-        self.assertEqual([a for a in bundled if a['id'] != 'kurippu'],current['apps'])
+        # The Store 0.18 fallback is frozen at Radio 1.31; the live feed may safely advance.
+        self.assertEqual([a for a in bundled if a['id'] not in ('kurippu', 'radio')],
+                         [a for a in current['apps'] if a['id'] != 'radio'])
+        bundled_radio = next(a for a in bundled if a['id'] == 'radio')
+        live_radio = next(a for a in current['apps'] if a['id'] == 'radio')
+        self.assertEqual((bundled_radio['version'], live_radio['version']), ('1.31', '1.33'))
+        for key in ('id', 'name', 'tamilName', 'packageName'):
+            self.assertEqual(bundled_radio[key], live_radio[key])
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
         self.assertIn('const val URL = Catalog.WEBSITE + "catalog-v5.json"',source)
         self.assertIn('"catalog-v4.json", false',source)

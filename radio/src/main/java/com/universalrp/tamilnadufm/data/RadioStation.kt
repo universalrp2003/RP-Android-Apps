@@ -25,6 +25,8 @@ data class RadioStation(
     val isCustom: Boolean = false,
     /** Directory entries carry a health check; curated ones are probed by CI. */
     val verified: Boolean = true,
+    /** A provisional owner-reference label; not a verified identity or station alias. */
+    val referenceName: String = "",
 ) {
     /** "128 kbps MP3" or "MP3" or "" — shown under the station name. */
     val qualityLabel: String
@@ -72,6 +74,7 @@ data class RadioStation(
         put("category", category)
         put("isCustom", isCustom)
         put("verified", verified)
+        put("referenceName", referenceName)
     }
 
     companion object {
@@ -91,6 +94,7 @@ data class RadioStation(
             votes = json.optInt("votes", 0),
             category = json.optString("category", Category.TAMIL),
             isCustom = custom || json.optBoolean("isCustom", false),
+            referenceName = json.optString("referenceName"),
             verified = json.optBoolean("verified", true) && !RadioStreamPolicy.heldForReview(json.optString("url_resolved").ifBlank { json.optString("url") }),
         )
     }
@@ -181,7 +185,26 @@ object Category {
     fun isNews(id: String): Boolean =
         id == TAMIL_NEWS || id == WORLD_NEWS || id == INDIA_NEWS
 
-    fun label(id: String): String = when (id) {
+    fun label(id: String, tamil: Boolean = true): String = if (!tamil) when (id) {
+        ALL -> "All stations"
+        ALL_NEWS -> "All news"
+        FAVOURITES -> "Favourites"
+        CUSTOM -> "My stations"
+        RECENT -> "Recent"
+        TOWNS -> "Towns & FM"
+        TAMIL -> "Tamil FM"
+        TAMIL_ILAYARAJA -> "Ilaiyaraaja"
+        TAMIL_MSV -> "M. S. Viswanathan"
+        TAMIL_AR_RAHMAN -> "A. R. Rahman"
+        TAMIL_80S_90S -> "80s & 90s hits"
+        TAMIL_DEVOTIONAL -> "Devotional"
+        TAMIL_NEWS -> "Tamil news"
+        TAMIL_FM -> "World Tamil"
+        WORLD_NEWS -> "World news"
+        INDIA_NEWS -> "Indian news"
+        ENGLISH -> "English"
+        else -> id.replaceFirstChar { it.uppercase() }
+    } else when (id) {
         ALL -> "அனைத்தும்"
         ALL_NEWS -> "செய்திகள்"
         FAVOURITES -> "விருப்பமானவை"

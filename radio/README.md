@@ -1,13 +1,14 @@
 # Ramesh Radio
 
-> Stable1.31/code31: hold and drag whole category tabs; automatically saved order, accessible arrow controls/reset, reviewed catalogue with28 additional entries. Owner accepted the interface and authorized exact-APK publication; no full-catalogue listening or installed-hash match is claimed.
+> Stable 1.33 / code 33: compact stations and Artists tabs, side navigation and clearer searches. Artist cards search station names; many have no matching in-app audio. External artist collection links have been removed.
 
-Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option. Latest published release: **1.31 / code31**, package `com.universalrp.tamilnadufm`, minimum Android8.0/API26.
+Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option. Latest published release: **1.33 / code 33**, package `com.universalrp.tamilnadufm`, minimum Android 8.0/API 26.
 
-- [Official website](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Ramesh-Radio-v1.31.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk) (15,179,972 bytes; SHA-256 `fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22`) · [release notes](../releases/ramesh-radio-v1.31.md).
-- Exact accepted candidate run41205378161, source691d176cc00adb59702e53bbae3e99bfc2663ec5; promoted without rebuilding in run41207596858. Existing1.29/1.30 installations should update, not uninstall or clear data. Earlier releases remain available.
-- 532 catalogue records;13 shared-provider streams held for content review;42 endpoints unavailable/unresolved. Connection/audio-metadata tests are not station identity, no-promotions or normal-programme guarantees. Tamil80’s normal programme is not restored or bypassed.
-- [Owner acceptance and immutable receipt](../docs/radio-1.31-owner-acceptance.md) · [Privacy policy](../PRIVACY.md)
+- [Download Ramesh-Radio-v1.33.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.33/Ramesh-Radio-v1.33.apk) (15,231,296 bytes; SHA-256 `2be7401b03f054fd985a39d791713c09fa56b207dcbd6747b0a604148c574290`) · [release notes](../releases/ramesh-radio-v1.33.md).
+- Candidate [46139290240](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46139290240), source `ed65d011eeea1ad94433a4fcade519f27847e38c`, published without rebuilding by [46139916692](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46139916692). The exact release was not tested on a physical phone.
+- Weather settings are available in Settings & more. Saved places and existing alert choices are retained; weather can auto-enable when device location is on and no explicit choice was saved. Turning it off records your choice.
+- Of 616 catalogue entries, 67 unheld streams were unavailable in one network probe and 13 remain held for review. Metadata checks do not verify content, identity or rights. No verified continuous Tamil news audio was identified.
+- Update without uninstalling when signatures match. Uninstalling can erase local data, favourites and custom stations. [Privacy policy](../PRIVACY.md)
 
 ## Features
 

@@ -28,18 +28,22 @@ class MainActivity : ComponentActivity() {
     private val controller = mutableStateOf<MediaController?>(null)
 
     private val startupPermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-            RadioWeatherMonitor.refreshState(this)
-            RadioWeatherMonitor.maybeRunScheduledCheck(this)
-        }
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // API 26 uses a dark navigation bar; newer versions can use dark icons on light.
+        if (Build.VERSION.SDK_INT >= 27) {
+            window.navigationBarColor = android.graphics.Color.rgb(244, 246, 241)
+            androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = true
+        }
         AppLanguageState.initialize(this)
+        // Clear an old radio weather notification after upgrading. Saved places remain untouched.
+        com.universalrp.weather.SharedWeatherRuntime.clearWeatherNotification(this)
 
         AudioFx.load(this)
 
-        // Android 13+ notification permission (rain & storm alerts use your saved PIN/town — no location permission).
+        // Android 13+ notification permission for playback controls.
         val wanted = buildList {
             if (Build.VERSION.SDK_INT >= 33 &&
                 ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) !=
@@ -64,7 +68,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        RadioWeatherMonitor.onWindowStart(this)
         if (controllerFuture == null) {
             // Bind to the playback service: this is what keeps the sound going in
             // the background, and what gives us the notification, headset buttons
@@ -82,7 +85,6 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        RadioWeatherMonitor.onWindowStop()
         controller.value = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
         controllerFuture = null

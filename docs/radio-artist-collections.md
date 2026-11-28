@@ -1,0 +1,5 @@
+# Artist collection research (historical)
+
+The owner declined external playback links. The Spotify links tested in an earlier candidate have been removed from the artist interface; they do not provide in-app playback. Artist cards remain name-search shortcuts, and missing artist audio is unresolved. No external media was copied or included. Attribution links remain for credited photographs.
+
+The old `sstamilradio` stream in the screenshot was unavailable in the 616-entry audit. A second existing catalogue entry called `SS Tamil Radio` at `https://cast6.asurahosting.com/proxy/sstamilradio/stream` returned audio metadata in that audit. A similar name and audio metadata do **not** prove identity, rights, or current playback. The UI only offers it as a possible alternative after an error and starts it only if the user explicitly taps it. Both records, their identifiers and existing favourites are retained; no silent fallback or provider hold bypass is used. Other failed stations remain unresolved and available to retry.

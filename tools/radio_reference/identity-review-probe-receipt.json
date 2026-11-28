@@ -1,0 +1,488 @@
+{
+  "checkedAtRunnerUtc": "2026-11-27T23:46:18.169782+00:00",
+  "candidates": [
+    {
+      "id": "ref-vaanpura-fm",
+      "name": "Vaanpura FM",
+      "url": "http://49.12.129.103:7028/stream;",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/3",
+      "tags": "devotional",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 35,
+      "referenceName": "Vaanpura FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/3"
+    },
+    {
+      "id": "ref-wisdom-radio",
+      "name": "Wisdom Radio",
+      "url": "http://165.22.217.209/radio/8000/radio.mp3",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/10",
+      "tags": "devotional",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 35,
+      "referenceName": "Wisdom Radio",
+      "referenceEvidence": "https://www.tamilradios.com/page/10"
+    },
+    {
+      "id": "ref-shaivam-thiruneriya-tamizhosai",
+      "name": "Shaivam Thiruneriya Tamizhosai",
+      "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SP_R2923580_SC",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/8",
+      "tags": "devotional",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 33,
+      "referenceName": "Shaivam Thiruneriya Tamizhosai",
+      "referenceEvidence": "https://www.tamilradios.com/page/8"
+    },
+    {
+      "id": "ref-airtamil-90s",
+      "name": "AirTamil 90s",
+      "url": "https://stream.zeno.fm/06ar0cnafwzuv",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/4",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 6,
+      "referenceName": "AirTamil 90s",
+      "referenceEvidence": "https://www.tamilradios.com/page/4"
+    },
+    {
+      "id": "ref-etr-radio",
+      "name": "ETR Radio",
+      "url": "https://bud.streampanel.net:6257/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/5",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 16,
+      "referenceName": "ETR Radio",
+      "referenceEvidence": "https://www.tamilradios.com/page/5"
+    },
+    {
+      "id": "ref-kumbakonam-city-fm",
+      "name": "Kumbakonam City FM",
+      "url": "https://cast6.asurahosting.com/proxy/kumcityfm/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/2",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 11,
+      "referenceName": "Kumbakonam City FM",
+      "referenceEvidence": "https://www.tamilradios.com/page/2"
+    },
+    {
+      "id": "ref-tuticorin-radio",
+      "name": "Tuticorin Radio",
+      "url": "https://cast6.asurahosting.com/proxy/tuticorinradio/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 12,
+      "referenceName": "Tuticorin Radio",
+      "referenceEvidence": "https://www.tamilradios.com/"
+    },
+    {
+      "id": "ref-dindigul-radio",
+      "name": "Dindigul Radio",
+      "url": "https://cast6.asurahosting.com/proxy/dglradio/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 10,
+      "referenceName": "Dindigul Radio",
+      "referenceEvidence": "https://www.tamilradios.com/"
+    },
+    {
+      "id": "10a6ff92-8c61-4f47-a5c6-327d38127582",
+      "name": "sstamilradio (comparison only)",
+      "url": "https://stream.rcast.net/68750",
+      "favicon": "https://radiosindia.com/images/sstamilradio1.jpg",
+      "homepage": "",
+      "tags": "",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "tamil",
+      "codec": "MP3",
+      "bitrate": 128,
+      "votes": 136,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": true,
+      "source": "directory",
+      "order": 0
+    },
+    {
+      "id": "ref-ss-tamil-radio",
+      "name": "SS Tamil Radio (comparison only)",
+      "url": "https://cast6.asurahosting.com/proxy/sstamilradio/stream",
+      "favicon": "",
+      "homepage": "https://www.tamilradios.com/page/2",
+      "tags": "",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": true,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 11,
+      "referenceEvidence": "https://www.tamilradios.com/page/2",
+      "auditStatus": "audio_reachable"
+    },
+    {
+      "id": "bbe2454e-3776-4e94-b220-b82e4730a837",
+      "name": "90’s Tamil Melodies (comparison only)",
+      "url": "https://stream.zeno.fm/tqnws2eafwzuv.aac",
+      "favicon": "https://onlineradiohub.com/wp-content/uploads/2023/12/90-tamil-melody.jpg",
+      "homepage": "",
+      "tags": "",
+      "country": "India",
+      "countryCode": "IN",
+      "state": "",
+      "language": "tamil",
+      "codec": "MP3",
+      "bitrate": 128,
+      "votes": 3135,
+      "category": "tamil",
+      "isCustom": false,
+      "verified": true,
+      "source": "directory",
+      "order": 0
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-vaanpura-fm",
+      "name": "Vaanpura FM",
+      "url": "http://49.12.129.103:7028/stream;",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "sivagnanam Stream",
+        "icy-genre": "Enable",
+        "icy-br": "128",
+        "icy-sr": "44100",
+        "icy-url": "http://vaanpuratamilchristianradio.com",
+        "icy-pub": "1",
+        "StreamTitle": "ADHU THAN KIRUBAI  ?? ?? ???  CHRISTINAL MANOVA PAS.JOHN JEBARAJ  DAVID SELVAM  PCA MEDIA"
+      }
+    },
+    {
+      "id": "ref-wisdom-radio",
+      "name": "Wisdom Radio",
+      "url": "http://165.22.217.209/radio/8000/radio.mp3",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "audio": [],
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "ref-shaivam-thiruneriya-tamizhosai",
+      "name": "Shaivam Thiruneriya Tamizhosai",
+      "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/SP_R2923580_SC",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "திருநெறிய தமிழோசை",
+        "icy-description": "Tamil Hindu Devotional Radio to Lord Shiva",
+        "icy-url": "http://spacial.com",
+        "icy-genre": "",
+        "icy-br": "128",
+        "StreamTitle": "003 - 003_sk-veda-ghanam-rig-yajur-duet-03"
+      }
+    },
+    {
+      "id": "ref-airtamil-90s",
+      "name": "AirTamil 90s",
+      "url": "https://stream.zeno.fm/06ar0cnafwzuv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "Air Tamil com 90s HD Tamil Songs",
+        "icy-br": "128",
+        "StreamTitle": "AnbeSivam",
+        "StreamUrl": "&artist=&album=Tamil Melody Songs 90s-2000s"
+      }
+    },
+    {
+      "id": "ref-etr-radio",
+      "name": "ETR Radio",
+      "url": "https://bud.streampanel.net:6257/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "audio": [],
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "ref-kumbakonam-city-fm",
+      "name": "Kumbakonam City FM",
+      "url": "https://cast6.asurahosting.com/proxy/kumcityfm/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Kumbakonam City FM",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Ilam Vayasu Ponnu [63Ug]"
+      }
+    },
+    {
+      "id": "ref-tuticorin-radio",
+      "name": "Tuticorin Radio",
+      "url": "https://cast6.asurahosting.com/proxy/tuticorinradio/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "Tuticorin Radio",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Unknown - Manasu mayangum"
+      }
+    },
+    {
+      "id": "ref-dindigul-radio",
+      "name": "Dindigul Radio",
+      "url": "https://cast6.asurahosting.com/proxy/dglradio/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "% Dindigul City FM - Call: 7904929364",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "16000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Unknown - PONNUKU"
+      }
+    },
+    {
+      "id": "10a6ff92-8c61-4f47-a5c6-327d38127582",
+      "name": "sstamilradio (comparison only)",
+      "url": "https://stream.rcast.net/68750",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "unavailable",
+      "audio": [],
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "ref-ss-tamil-radio",
+      "name": "SS Tamil Radio (comparison only)",
+      "url": "https://cast6.asurahosting.com/proxy/sstamilradio/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "aac",
+          "codec_type": "audio",
+          "sample_rate": "32000"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-notice1": "<BR>This stream requires <a href=\"http://www.winamp.com\">Winamp</a><BR>",
+        "icy-notice2": "Shoutcast DNAS/posix(linux x64) v2.6.1.777<BR>",
+        "icy-name": "SS Tamil Radio",
+        "icy-genre": "Unspecified",
+        "icy-br": "64",
+        "icy-sr": "32000",
+        "icy-url": "http://localhost/",
+        "icy-pub": "0",
+        "StreamTitle": "Unknown - Soru Kondu Porapulla"
+      }
+    },
+    {
+      "id": "bbe2454e-3776-4e94-b220-b82e4730a837",
+      "name": "90’s Tamil Melodies (comparison only)",
+      "url": "https://stream.zeno.fm/tqnws2eafwzuv.aac",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "Air Tamil com 90s HD Tamil Songs",
+        "icy-br": "128",
+        "StreamTitle": "AnbeSivam",
+        "StreamUrl": "&artist=&album=Tamil Melody Songs 90s-2000s"
+      }
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}

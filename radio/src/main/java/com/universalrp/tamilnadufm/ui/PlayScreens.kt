@@ -37,7 +37,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Folder
@@ -659,7 +658,7 @@ private fun Fader(
 // ----------------------------------------------------------------------- more
 
 @Composable
-fun MoreScreen(vm: MainViewModel, state: UiState) {
+fun MoreScreen(vm: MainViewModel, state: UiState, onOpenWeather: () -> Unit) {
     val aboutContext = androidx.compose.ui.platform.LocalContext.current
     // Guide: the owner asked for the same compact, expandable Tamil+English guide in every app.
     var showGuide by remember { mutableStateOf(false) }
@@ -708,6 +707,13 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
         }
 
         item {
+            val today = AppStrings.translate("Today")
+            val data = if (state.todayDataUsageMb >= 1024.0) "%.2f GB".format(state.todayDataUsageMb / 1024.0)
+                       else "%.1f MB".format(state.todayDataUsageMb)
+            Text("$data $today", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+        }
+
+        item {
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(horizontal = 14.dp, vertical = 6.dp)) {
                     Text(
@@ -727,9 +733,19 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
         item {
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().clickable { showTabOrder = true }.padding(14.dp)) {
-                    Text(if (tamil) "முழுத் தாவல்களின் வரிசையை மாற்று" else "Arrange whole tabs", color = Saffron, fontWeight = FontWeight.SemiBold)
-                    Text(if (tamil) "கீழ்த் தாவல்கள் மற்றும் வானொலி வகைகள் — உங்கள் விருப்ப வரிசையில்."
-                        else "Put navigation tabs and station categories in your preferred order.", color = TextSecondary)
+                    Text(if (tamil) "பக்கப் பட்டியல் மற்றும் வகைகளை வரிசைப்படுத்து" else "Arrange menu and categories", color = Saffron, fontWeight = FontWeight.SemiBold)
+                    Text(if (tamil) "பக்கப் பட்டியல் மற்றும் வானொலி வகைகள் — உங்கள் விருப்ப வரிசையில்."
+                        else "Put menu items and station categories in your preferred order.", color = TextSecondary)
+                }
+            }
+        }
+
+        item {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().clickable(onClick = onOpenWeather).padding(14.dp)) {
+                    Text(if (tamil) "வானிலை எச்சரிக்கை அமைப்புகள்" else "Weather alert settings", color = Saffron, fontWeight = FontWeight.SemiBold)
+                    Text(if (tamil) "மழை எச்சரிக்கையை இயக்கவும் அல்லது நிறுத்தவும்; சேமித்த ஊரை மாற்றவும். வானிலைச் சோதனை ஊரின் ஆயத்தொலைகளைச் சேவைக்கு அனுப்பலாம். முன்பு தேர்வு செய்யாத நிலையில் கைபேசி இருப்பிடம் இயக்கத்தில் இருந்தால் வானிலை தானாக இயங்கலாம்."
+                        else "Turn alerts on or off and manage saved places. Forecast checks may send the saved coordinates to a weather provider. Weather may turn on automatically if device location is on and you have not made an explicit choice.", color = TextSecondary)
                 }
             }
         }
@@ -910,42 +926,6 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
             }
         }
 
-        // v1.17 — Rain & cyclone voice alert card right above App Updates in More tab
-        item {
-            PanelCard(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(aboutContext) }
-            ) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        Icons.Filled.Cloud,
-                        contentDescription = null,
-                        tint = Saffron,
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "Rain & cyclone voice alert",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            "Speaks ~30 min before rain, ducks radio volume smoothly, 24x7 cyclone priority",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                        )
-                    }
-                }
-            }
-        }
-
         // v1.14 — the update block used to sit bare between two cards, which left a grey,
         // unstyled wall and a visible empty band on the More tab (the owner's screenshot).
         // It is a card now, like every other section, with its explanation folded away.
@@ -1106,7 +1086,7 @@ fun NowPlayingSheet(vm: MainViewModel, state: UiState) {
                     horizontalArrangement = Arrangement.Center,
                 ) {
                     if (station.category.isNotBlank()) {
-                        Pill(com.universalrp.tamilnadufm.data.Category.label(station.category), Saffron)
+                        Pill(com.universalrp.tamilnadufm.data.Category.label(station.category, com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL), Saffron)
                     }
                     if (station.bitrate > 0) {
                         Spacer(Modifier.width(8.dp))
@@ -1171,7 +1151,7 @@ fun NowPlayingSheet(vm: MainViewModel, state: UiState) {
                     Icon(
                         if (playback.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                         contentDescription = null,
-                        tint = Color(0xFF2A1200),
+                        tint = Color.White,
                         modifier = Modifier.size(30.dp),
                     )
                 }

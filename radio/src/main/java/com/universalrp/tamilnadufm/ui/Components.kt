@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -31,10 +32,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.universalrp.tamilnadufm.data.RadioStation
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.coroutines.coroutineContext
 
 @Composable
 fun PanelCard(
@@ -65,18 +72,19 @@ fun Chip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Text(
-        label,
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-        color = if (selected) Color(0xFF2A1200) else TextPrimary,
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(if (selected) Saffron else SurfaceHigh)
-            .border(1.dp, if (selected) Saffron else OutlineC, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    )
+            .border(1.dp, if (selected) Saffron else OutlineC, RoundedCornerShape(10.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) Color.White else TextPrimary,
+            maxLines = 1, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp))
+    }
 }
 
 @Composable
@@ -125,87 +133,85 @@ fun Pill(text: String, color: Color) {
     }
 }
 
-/** Small station artwork: the real logo when we can fetch it, a monogram otherwise. */
+/** Bounded artwork downloads: station-provided logos are optional and can be unavailable. */
 private object LogoCache {
-    private val cache = object : LruCache<String, Bitmap>(120) {
-        override fun sizeOf(key: String, value: Bitmap): Int = 1
+    private const val MAX_IMAGE_BYTES = 2 * 1024 * 1024
+    private const val TARGET_PIXELS = 512
+    private val loads = Semaphore(4)
+    private val cache = object : LruCache<String, Bitmap>(16 * 1024 * 1024) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount
     }
 
-    fun get(url: String): Bitmap? = cache.get(url)
-
-    fun put(url: String, bitmap: Bitmap) {
-        cache.put(url, bitmap)
+    suspend fun load(url: String): Bitmap? {
+        cache.get(url)?.let { return it }
+        if (!url.startsWith("https://", true) && !url.startsWith("http://", true)) return null
+        return withContext(Dispatchers.IO) {
+            loads.withPermit {
+                cache.get(url)?.let { return@withPermit it }
+                try {
+                    val connection = (URL(url).openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 8_000
+                        readTimeout = 8_000
+                        setRequestProperty("User-Agent", "RameshRadio/1.1")
+                    }
+                    try {
+                        if (connection.contentLengthLong > MAX_IMAGE_BYTES) return@withPermit null
+                        val bytes = connection.inputStream.use { stream ->
+                            val output = ByteArrayOutputStream()
+                            val buffer = ByteArray(8192)
+                            while (true) {
+                                coroutineContext.ensureActive()
+                                val count = stream.read(buffer)
+                                if (count < 0) break
+                                if (output.size() + count > MAX_IMAGE_BYTES) return@withPermit null
+                                output.write(buffer, 0, count)
+                            }
+                            output.toByteArray()
+                        }
+                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                        if (bounds.outWidth <= 0 || bounds.outHeight <= 0 ||
+                            bounds.outWidth > 16384 || bounds.outHeight > 16384) return@withPermit null
+                        var sample = 1
+                        while (maxOf(bounds.outWidth / sample, bounds.outHeight / sample) > TARGET_PIXELS) sample *= 2
+                        val options = BitmapFactory.Options().apply { inSampleSize = sample }
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)?.also { cache.put(url, it) }
+                    } finally { connection.disconnect() }
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { null }
+            }
+        }
     }
 }
 
 private val MONOGRAM_COLORS = listOf(
-    Color(0xFFFF8A3D), Color(0xFFFFD166), Color(0xFF2FD8C4),
-    Color(0xFF8B5CF6), Color(0xFFF472B6), Color(0xFF60A5FA),
+    Color(0xFF356B21), Color(0xFF72570B), Color(0xFF006D68),
+    Color(0xFF5B4E88), Color(0xFF9A3F5C), Color(0xFF275F8A),
 )
+
+/** Large, uncropped logos for the station gallery; missing or failed logos get a monogram. */
+@Composable
+fun StationArtwork(station: RadioStation, modifier: Modifier = Modifier, decorative: Boolean = false, crop: Boolean = false) {
+    val bitmap by produceState<Bitmap?>(null, station.favicon) {
+        value = null // Never show the previous station while a new URL is loading.
+        value = LogoCache.load(station.favicon)
+    }
+    val color = MONOGRAM_COLORS[Math.floorMod(station.name.hashCode(), MONOGRAM_COLORS.size)]
+    Box(modifier.background(if (bitmap != null) Color.White else SurfaceHigh),
+        contentAlignment = Alignment.Center) {
+        val picture = bitmap
+        if (picture != null) {
+            Image(bitmap = picture.asImageBitmap(), contentDescription = if (decorative) null else station.name,
+                contentScale = if (crop) ContentScale.Crop else ContentScale.Fit,
+                alignment = if (crop) Alignment.TopCenter else Alignment.Center, modifier = Modifier.fillMaxSize())
+        } else {
+            Text(station.monogram, style = MaterialTheme.typography.headlineSmall,
+                color = color, fontWeight = FontWeight.Bold)
+        }
+    }
+}
 
 @Composable
 fun StationLogo(station: RadioStation, size: Dp = 48.dp, modifier: Modifier = Modifier) {
-    val bitmap by produceState<Bitmap?>(null, station.favicon) {
-        val url = station.favicon
-        if (!url.startsWith("http")) return@produceState
-        val cached = LogoCache.get(url)
-        if (cached != null) {
-            value = cached
-            return@produceState
-        }
-        val downloaded = withContext(Dispatchers.IO) {
-            runCatching {
-                val connection = (URL(url).openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 8_000
-                    readTimeout = 8_000
-                    setRequestProperty("User-Agent", "RameshRadio/1.1")
-                }
-                connection.inputStream.use { stream ->
-                    BitmapFactory.decodeStream(stream)?.also { bitmap ->
-                        LogoCache.put(url, bitmap)
-                    }
-                }
-            }.getOrNull()
-        }
-        value = downloaded
-    }
-
-    val shape = RoundedCornerShape(size / 4)
-    val picture = bitmap
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(shape)
-            .background(SurfaceHigh),
-        contentAlignment = Alignment.Center
-    ) {
-        if (picture != null) {
-            Image(
-                bitmap = picture.asImageBitmap(),
-                contentDescription = station.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(size)
-                    .clip(shape),
-            )
-        } else {
-            val color = MONOGRAM_COLORS[
-                kotlin.math.abs(station.name.hashCode()) % MONOGRAM_COLORS.size
-            ]
-            Box(
-                Modifier
-                    .size(size)
-                    .clip(shape)
-                    .background(color.copy(alpha = 0.22f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    station.monogram,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = color,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-    }
+    StationArtwork(station, modifier.size(size).clip(RoundedCornerShape(size / 4)))
 }

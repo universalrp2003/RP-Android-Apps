@@ -1,4 +1,5 @@
 name: Radio full catalogue audit (no publication)
+# Bounded runner observations only; never automatically import the generated seed.
 on:
   push:
     branches: ["arena/**"]

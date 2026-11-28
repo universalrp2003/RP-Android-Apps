@@ -1,0 +1,118 @@
+name: Radio historical reference research (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: ["tools/radio_reference/fetch_legacy_source.py", "tools/radio_reference/fetch_player_source.py", "tools/radio_reference/inspect_public_players.py", "tools/radio_reference/fetch_tamilradios.py", ".github/workflows/radio-reference-source.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read bounded public historical listing
+        run: python3 tools/radio_reference/fetch_legacy_source.py "$RUNNER_TEMP/legacy-reference"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-historical-reference
+          retention-days: 14
+          path: ${{ runner.temp }}/legacy-reference/historical-source.json
+      - name: Expose receipt blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'legacy-reference'/'historical-source.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Historical source receipt::blob='+json.loads(result.stdout)['sha'])
+
+  player:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve public player metadata without executing it
+        run: python3 tools/radio_reference/fetch_player_source.py "$RUNNER_TEMP/player-reference"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-player-reference
+          retention-days: 14
+          path: ${{ runner.temp }}/player-reference/player-source.json
+      - name: Expose receipt blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'player-reference'/'player-source.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Player reference receipt::blob='+json.loads(result.stdout)['sha'])
+
+  public_players:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Inspect public page links without running scripts
+        run: python3 tools/radio_reference/inspect_public_players.py "$RUNNER_TEMP/public-players"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-public-player-leads
+          retention-days: 14
+          path: ${{ runner.temp }}/public-players/public-player-leads.json
+      - name: Expose leads blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'public-players'/'public-player-leads.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Public player leads::blob='+json.loads(result.stdout)['sha'])
+
+  tamilradios:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve bounded public directory leads
+        run: python3 tools/radio_reference/fetch_tamilradios.py "$RUNNER_TEMP/tamilradios"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tamilradios-name-url-leads
+          retention-days: 14
+          path: ${{ runner.temp }}/tamilradios/tamilradios-leads.json
+      - name: Expose leads blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'tamilradios'/'tamilradios-leads.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Tamilradios name URL leads::blob='+json.loads(result.stdout)['sha'])

@@ -3,32 +3,33 @@ package com.universalrp.tamilnadufm.ui
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// A warm, clean palette: deep plum background, saffron primary, gold accent.
-val Bg = Color(0xFF0B0713)
-val SurfaceC = Color(0xFF171021)
-val SurfaceHigh = Color(0xFF211731)
-val OutlineC = Color(0xFF33254A)
-val Saffron = Color(0xFFFF8A3D)
-val Gold = Color(0xFFFFD166)
-val Teal = Color(0xFF2FD8C4)
-val Good = Color(0xFF4ADE80)
-val Warn = Color(0xFFFBBF24)
-val Danger = Color(0xFFF87171)
-val TextPrimary = Color(0xFFF4EEF9)
-val TextSecondary = Color(0xFFA99CBE)
+// Light, readable radio surfaces with a simple green accent.
+val Bg = Color(0xFFF4F6F1)
+val SurfaceC = Color(0xFFFFFFFF)
+val SurfaceHigh = Color(0xFFEDF3E9)
+val OutlineC = Color(0xFFD0DACE)
+val Saffron = Color(0xFF356B21)
+val HeaderGreen = Color(0xFF447729)
+val Gold = Color(0xFF826000)
+val Teal = Color(0xFF006D68)
+val Good = Color(0xFF316B32)
+val Warn = Color(0xFF805500)
+val Danger = Color(0xFFB3261E)
+val TextPrimary = Color(0xFF1B211A)
+val TextSecondary = Color(0xFF515E50)
 
-private val DarkScheme = darkColorScheme(
+private val LightScheme = lightColorScheme(
     primary = Saffron,
-    onPrimary = Color(0xFF2A1200),
+    onPrimary = Color.White,
     secondary = Gold,
-    onSecondary = Color(0xFF2A1D00),
+    onSecondary = Color.White,
     tertiary = Teal,
-    onTertiary = Color(0xFF00312B),
+    onTertiary = Color.White,
     background = Bg,
     onBackground = TextPrimary,
     surface = SurfaceC,
@@ -48,7 +49,7 @@ private val AppShapes = Shapes(
 @Composable
 fun TamilFmTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = DarkScheme,
+        colorScheme = LightScheme,
         shapes = AppShapes,
         content = content,
     )

@@ -18,6 +18,7 @@ import com.universalrp.tamilnadufm.audio.Bands
 import com.universalrp.tamilnadufm.audio.EqPreset
 import com.universalrp.tamilnadufm.audio.EqPresets
 import com.universalrp.tamilnadufm.data.Category
+import com.universalrp.tamilnadufm.data.ArtistSearchAliases
 import com.universalrp.tamilnadufm.data.DirectoryClient
 import com.universalrp.tamilnadufm.data.LocalTrack
 import com.universalrp.tamilnadufm.data.RadioStation
@@ -25,7 +26,11 @@ import com.universalrp.tamilnadufm.data.StationOrdering
 import com.universalrp.tamilnadufm.data.StationRepository
 import com.universalrp.tamilnadufm.player.PlayerBus
 import com.universalrp.tamilnadufm.player.PlaybackService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -95,10 +100,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState(navigationOrder = repo.tabOrder(true), categoryOrder = repo.tabOrder(false)))
     val state: StateFlow<UiState> = _state
 
+    private val browseNavigation = BrowseNavigation()
     private var controller: MediaController? = null
     private var pendingLocalTrack: LocalTrack? = null
     private var sleepJob: Job? = null
     private var folderJob: Job? = null
+    private var directoryJob: Job? = null
 
     /** v1.13: the last-station start happens once per app process, never on every resume. */
     private var autoResumeTried = false
@@ -320,7 +327,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setCategory(category: String) {
-        mutate { it.copy(category = category) }
+        mutate { it.copy(category = category, query = "") }
         applyFilter()
     }
 
@@ -363,13 +370,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun applyFilter() {
         val s = _state.value
-        val query = s.query.trim().lowercase()
+        val queries = ArtistSearchAliases.terms(s.query)
         val list = s.stations.filter { station ->
-            val matchesQuery = query.isEmpty() ||
-                station.name.lowercase().contains(query) ||
-                station.tags.lowercase().contains(query) ||
-                station.country.lowercase().contains(query) ||
-                station.language.lowercase().contains(query)
+            val matchesQuery = com.universalrp.tamilnadufm.data.StationSearch.matches(station, queries)
 
             val matchesCategory = when (s.category) {
                 Category.ALL -> true
@@ -395,7 +398,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     station.language.lowercase().contains("english")
                 else -> station.category == s.category
             }
-            matchesQuery && matchesCategory
+            matchesQuery && matchesCategory && (s.tab != Tab.NEWS || Category.isNews(station.category))
         }
         val ordered = when {
             s.category == Category.ALL || s.category == Category.ALL_NEWS ->
@@ -410,15 +413,32 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // -------------------------------------------------------------- directory
 
+    private suspend fun directoryOrEmpty(fetch: suspend () -> List<RadioStation>): List<RadioStation> =
+        try {
+            fetch()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            emptyList()
+        }
+
     /** Live search against the open directory — thousands of stations. */
     fun searchDirectory() {
         val query = _state.value.query.trim()
-        mutate { it.copy(directoryBusy = true, showDirectory = true) }
-        viewModelScope.launch {
-            val results = runCatching {
-                if (query.isBlank()) DirectoryClient.popularTamil()
-                else DirectoryClient.search(query)
-            }.getOrDefault(emptyList())
+        directoryJob?.cancel()
+        mutate { it.copy(directoryBusy = true, showDirectory = true, directoryResults = emptyList(), message = null) }
+        directoryJob = viewModelScope.launch {
+            val results = if (query.isBlank()) {
+                directoryOrEmpty { DirectoryClient.popularTamil() }
+            } else {
+                // Search known spelling variants independently; one mirror failure must not
+                // discard results already found for another spelling.
+                coroutineScope {
+                    ArtistSearchAliases.terms(query).map { term ->
+                        async { directoryOrEmpty { DirectoryClient.search(term) } }
+                    }.awaitAll().flatten().distinctBy { it.url.lowercase() }
+                }
+            }
             mutate {
                 it.copy(
                     directoryBusy = false,
@@ -433,9 +453,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun discoverNews(language: String) {
-        mutate { it.copy(directoryBusy = true, showDirectory = true) }
-        viewModelScope.launch {
-            val results = runCatching { DirectoryClient.news(language) }.getOrDefault(emptyList())
+        directoryJob?.cancel()
+        mutate { it.copy(directoryBusy = true, showDirectory = true, directoryResults = emptyList(), message = null) }
+        directoryJob = viewModelScope.launch {
+            val results = directoryOrEmpty { DirectoryClient.news(language) }
             mutate {
                 it.copy(
                     directoryBusy = false,
@@ -446,7 +467,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun closeDirectory() = mutate { it.copy(showDirectory = false) }
+    fun closeDirectory() {
+        directoryJob?.cancel()
+        mutate { it.copy(showDirectory = false, directoryBusy = false) }
+    }
 
     /** Adds a directory hit to "My stations" so it survives between sessions. */
     fun saveDirectoryStation(station: RadioStation) {
@@ -825,7 +849,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // ------------------------------------------------------------------- misc
 
-    fun selectTab(tab: Tab) = mutate { it.copy(tab = tab) }
+    fun selectTab(tab: Tab) {
+        val current = _state.value
+        val browse = browseNavigation.switch(current.tab, tab, BrowseSelection(current.category, current.query))
+        mutate { it.copy(tab = tab, category = browse?.category ?: it.category, query = browse?.query ?: it.query) }
+        if (browse != null) applyFilter()
+    }
 
     fun dismissMessage() = mutate { it.copy(message = null) }
 

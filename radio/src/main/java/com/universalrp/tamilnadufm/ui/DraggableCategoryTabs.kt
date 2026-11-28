@@ -48,6 +48,11 @@ fun DraggableCategoryTabs(
     val list = rememberLazyListState()
     val latestDrop by rememberUpdatedState(onDrop)
     val latestIds by rememberUpdatedState(ids)
+    // Reveal the selected chip after artist searches or category changes.
+    LaunchedEffect(selected) {
+        val index = ids.indexOf(selected)
+        if (index >= 0) list.animateScrollToItem(index)
+    }
     val haptic = LocalHapticFeedback.current
     val density = LocalDensity.current
     val edge = with(density) { 48.dp.toPx() }
@@ -85,13 +90,6 @@ fun DraggableCategoryTabs(
 
     val target = if (dragged != null) dropTarget() else null
     Column {
-        Text(
-            if (tamil) "தாவலை அழுத்திப் பிடித்து இழுக்கவும் • வரிசை தானாகச் சேமிக்கப்படும்"
-            else "Hold a tab and drag to reorder • saved automatically",
-            color = TextSecondary,
-            style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(bottom = 4.dp),
-        )
         Box(Modifier.fillMaxWidth().clipToBounds().onSizeChanged {
             viewportWidth = it.width
             viewportHeight = it.height
@@ -134,7 +132,7 @@ fun DraggableCategoryTabs(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 items(ids, key = { it }) { id ->
-                    val label = AppStrings.translate(Category.label(id))
+                    val label = Category.label(id, tamil)
                     Chip(
                         label = label,
                         selected = selected == id,
@@ -157,7 +155,7 @@ fun DraggableCategoryTabs(
             }
             dragged?.let { id ->
                 Chip(
-                    label = Category.label(id), selected = true, onClick = {},
+                    label = Category.label(id, tamil), selected = true, onClick = {},
                     modifier = Modifier.offset {
                         IntOffset((finger.x - grabOffset).coerceIn(0f, (viewportWidth - chipWidth).coerceAtLeast(0).toFloat()).roundToInt(), 0)
                     }.width(with(density) { chipWidth.toDp() }).heightIn(min = 48.dp)
@@ -166,7 +164,7 @@ fun DraggableCategoryTabs(
             }
         }
         if (target != null) {
-            val label = AppStrings.translate(Category.label(target.id))
+            val label = Category.label(target.id, tamil)
             Text(
                 if (tamil) "$label ${if (target.after) "பின்னால்" else "முன்னால்"} வைக்க விடுங்கள்"
                 else "Release to place ${if (target.after) "after" else "before"} $label",

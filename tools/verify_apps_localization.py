@@ -201,7 +201,7 @@ def verify_app_guides() -> None:
         ),
         "Ramesh Radio": (
             "radio/src/main/java/com/universalrp/tamilnadufm/ui/StationsScreens.kt",
-            ("AppGuides.rameshRadio", "showGuide", "Icons.Filled.HelpOutline"),
+            ("AppGuides.rameshRadio", "showGuide", "RadioTopBar(onOpenMenu = onOpenMenu, onHelp = { showGuide = true })"),
         ),
         "PulseEQ": (
             "equalizer/src/main/java/com/universalrp/pulseeq/ui/EqualizerScreen.kt",
@@ -228,6 +228,10 @@ def verify_app_guides() -> None:
             ("AppGuides.animalSounds", 'overlay = "guide"', "GuideEntryRow"),
         ),
     }
+    radio_topbar = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/AppRoot.kt").read_text(encoding="utf-8")
+    if "Icons.Filled.HelpOutline" not in radio_topbar or 'AppStrings.translate("Guide")' not in radio_topbar:
+        raise ValueError("Ramesh Radio shared top bar must expose the guide button.")
+
     for app, (relative_path, required_tokens) in direct_entry_points.items():
         source = (ROOT / relative_path).read_text(encoding="utf-8")
         missing = [token for token in required_tokens if token not in source]
@@ -721,7 +725,7 @@ def verify_about_links() -> None:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.18"',
             'tagPrefix = "live-guard"', 'publishedVersion = "3.05"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.31"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.33"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.26"',

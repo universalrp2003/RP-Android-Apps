@@ -1,0 +1,49 @@
+name: Radio artist portrait reachability (no publication)
+on:
+  push:
+    branches: ["arena/30198928-rp-android-apps"]
+    paths: [".github/workflows/radio-portrait-check.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check bounded photo responses
+        run: |
+          python3 - <<'PY'
+          import concurrent.futures, json, os, re, urllib.error, urllib.request
+          from pathlib import Path
+          source = Path('radio/src/main/java/com/universalrp/tamilnadufm/ui/ArtistBrowse.kt').read_text()
+          photos = re.findall(r'ArtistShortcut\("([^"]+)", "[^"]+", "(https://[^"]+)"\)', source)
+          def check(entry):
+              name, url = entry
+              try:
+                  req = urllib.request.Request(url, headers={'User-Agent': 'RameshRadio/1.1'})
+                  with urllib.request.urlopen(req, timeout=20) as response:
+                      data = response.read(2 * 1024 * 1024 + 1)
+                      valid = len(data) <= 2 * 1024 * 1024 and data.startswith(b'\xff\xd8\xff')
+                      return name, response.status, len(data), 'jpeg' if valid else 'invalid or over limit'
+              except urllib.error.HTTPError as e:
+                  return name, "HTTPError", e.code
+              except Exception as e:
+                  return name, type(e).__name__
+          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+              results = list(pool.map(check, photos))
+          for result in results: print(*result, flush=True)
+          Path(os.environ["RUNNER_TEMP"], "portraits.json").write_text(json.dumps(results))
+          print('Reachability is one observation, not proof of mobile availability or identity.')
+          PY
+      - name: Expose receipt as a blob (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64, json, os, pathlib, subprocess
+          data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'portraits.json').read_bytes()
+          payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
+          result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
+          print('::notice title=Portrait diagnostic receipt::blob='+json.loads(result.stdout)['sha'])

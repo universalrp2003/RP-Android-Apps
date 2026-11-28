@@ -266,13 +266,13 @@ object AppGuides {
             topic(
                 "Playing a file from your phone",
                 "உங்கள் போனிலிருந்து கோப்பு இயக்குதல்",
-                "Open Local at the bottom. Choose a folder once to list only audio in that folder and its " +
+                "Open the side menu and select Local music. Choose a folder once to list only audio in that folder and its " +
                     "subfolders, or choose Open a file for one item. Tap a song to play it. While a local file is " +
                     "playing, the Local screen and Now Playing sheet show elapsed time, total length and a seek bar; " +
                     "drag it to any point in the recording. Live stations have no total duration and can seek only " +
                     "inside the short buffered window. Folder access is granted by Android's picker; the app does " +
                     "not scan the whole phone.",
-                "கீழே உள்ள பாடல்கள் (Local) தாவலைத் திறக்கவும். ஒரு கோப்புறையைத் தேர்ந்தெடுத்தால் அதிலும் அதன் துணைக் " +
+                "பக்கப் பட்டியலில் உள்ளூர் பாடல்களைத் தேர்ந்தெடுக்கவும். ஒரு கோப்புறையைத் தேர்ந்தெடுத்தால் அதிலும் அதன் துணைக் " +
                     "கோப்புறைகளிலும் உள்ள ஒலி மட்டும் பட்டியலாகும்; அல்லது ஒரு கோப்பிற்கு கோப்பைத் திற (Open a file)-ஐத் " +
                     "தேர்ந்தெடுக்கவும். பாடலைத் தொட்டு இயக்குங்கள். உள்ளூர் கோப்பு இயங்கும்போது பாடல்கள் (Local) திரையிலும் " +
                     "Now Playing திரையிலும் கடந்த நேரம், மொத்த நீளம், சீக் பட்டை தெரியும்; பதிவின் எந்த இடத்திற்கும் " +
@@ -316,21 +316,10 @@ object AppGuides {
                     "அமைப்புகளும் இந்தப் போனிலேயே இருக்கும்.",
             ),
             topic(
-                "Rain & cyclone voice alerts while listening (PIN or Optional Mobile Tower)",
-                "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு (PIN அல்லது விருப்ப மொபைல் டவர்)",
-                "Tap the cloud icon at the top of Radio (or open More). Ramesh Radio NEVER asks for Location " +
-                    "permission automatically — enter your 6-digit PIN code or village/town once (e.g. 622301) " +
-                    "for 100% accurate rain alerts with zero Location permission! Because Android places Mobile " +
-                    "Signal Tower lookup inside the 'Location' permission group, an optional 'Enable Mobile Tower' " +
-                    "button is available inside Rain Settings only if you explicitly want automatic mobile-tower " +
-                    "town detection (0% GPS drain, never tracks or stores movements). Every alert shows and speaks " +
-                    "your exact village/town and district, only while Ramesh Radio is open or playing.",
-                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறக்கவும். ரமேஷ் ரேடியோ ஒருபோதும் தானாக Location " +
-                    "அனுமதி கேட்காது — எந்த அனுமதியும் இன்றி உங்கள் 6-இலக்க PIN எண் அல்லது ஊர்ப் பெயரை (உதா: 622301) " +
-                    "ஒருமுறை சேமித்தாலே 100% துல்லிய மழை எச்சரிக்கை கிடைக்கும்! மொபைல் சிக்னல் டவர் ஊர் அறிதலை " +
-                    "Android 'Location' அனுமதிக்குள் வைத்திருப்பதால், தானியங்கி டவர் கண்டறிதல் தேவைப்பட்டால் மட்டும் " +
-                    "உள்ளே உள்ள 'மொபைல் டவர் இயக்கு (விருப்பம்)' பொத்தானை நீங்களாக அழுத்தலாம் (0% GPS செலவு; " +
-                    "பயணத்தைக் கண்காணிக்காது). ரேடியோ இயங்கும்போது மட்டும் உங்கள் ஊர் மற்றும் மாவட்டப் பெயருடன் அறிவிக்கும்.",
+                "Weather alert settings",
+                "வானிலை எச்சரிக்கை அமைப்புகள்",
+                "Open the side menu, choose Settings & more, then Weather alert settings. Turn alerts on or off and manage your saved places. When enabled, forecast checks can send saved coordinates to a weather provider. If device location is on and you have not made an explicit choice, weather may be enabled automatically; switching it off saves your choice.",
+                "பக்கப் பட்டியலில் அமைப்புகள் மற்றும் மேலும், பிறகு வானிலை எச்சரிக்கை அமைப்புகளைத் திறக்கவும். எச்சரிக்கைகளை இயக்கலாம் அல்லது நிறுத்தலாம்; சேமித்த ஊர்களை நிர்வகிக்கலாம். இயக்கத்தில் இருந்தால் ஊரின் ஆயத்தொலைகள் வானிலைச் சேவைக்கு அனுப்பப்படலாம். முன்பு தேர்வு செய்யாத நிலையில் கைபேசியின் இருப்பிடம் இயக்கத்தில் இருந்தால் வானிலை தானாக இயங்கலாம்; அதை நிறுத்தினால் உங்கள் தேர்வு சேமிக்கப்படும்.",
             ),
             topic(
                 "Updating Ramesh Radio",
