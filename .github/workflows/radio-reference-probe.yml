@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: ["arena/30198928-rp-android-apps"]
-    paths: ["tools/radio_reference/candidates-twelfth.json", "tools/radio_reference/probe_candidates.py", ".github/workflows/radio-reference-probe.yml"]
+    paths: ["tools/radio_reference/candidates-thirteenth.json", "tools/radio_reference/probe_candidates.py", ".github/workflows/radio-reference-probe.yml"]
 permissions:
   contents: read
 jobs:
@@ -24,10 +24,10 @@ jobs:
           fi
           command -v ffprobe
       - name: Probe selected reference candidates
-        run: python3 tools/radio_reference/probe_candidates.py tools/radio_reference/candidates-twelfth.json "$RUNNER_TEMP/reference-probe"
+        run: python3 tools/radio_reference/probe_candidates.py tools/radio_reference/candidates-thirteenth.json "$RUNNER_TEMP/reference-probe"
       - uses: actions/upload-artifact@v4
         with:
-          name: radio-reference-probe-twelfth
+          name: radio-reference-probe-thirteenth
           retention-days: 14
           path: ${{ runner.temp }}/reference-probe/reference-probe.json
       - name: Expose probe receipt as a blob (no branch or release write)
@@ -39,4 +39,4 @@ jobs:
           data = (pathlib.Path(os.environ['RUNNER_TEMP'])/'reference-probe'/'reference-probe.json').read_bytes()
           payload = json.dumps({'content':base64.b64encode(data).decode(), 'encoding':'base64'})
           result = subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'], input=payload, text=True, capture_output=True, check=True)
-          print('::notice title=Reference twelfth probe receipt::blob='+json.loads(result.stdout)['sha'])
+          print('::notice title=Reference thirteenth probe receipt::blob='+json.loads(result.stdout)['sha'])
