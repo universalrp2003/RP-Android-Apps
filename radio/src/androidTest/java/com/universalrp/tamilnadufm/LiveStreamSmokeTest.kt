@@ -24,6 +24,11 @@ class LiveStreamSmokeTest {
     private fun checkStream(url: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        instrumentation.uiAutomation.executeShellCommand("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS").close()
+        // Android 15 requires the app to be foreground to request audio focus.
+        val activity = instrumentation.startActivitySync(
+            android.content.Intent(context, MainActivity::class.java).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
         lateinit var future: ListenableFuture<MediaController>
         instrumentation.runOnMainSync {
             future = MediaController.Builder(context, SessionToken(context, ComponentName(context, PlaybackService::class.java))).buildAsync()
@@ -41,7 +46,7 @@ class LiveStreamSmokeTest {
             while (System.nanoTime() < deadline && !playing) {
                 instrumentation.runOnMainSync {
                     playing = controller.playbackState == Player.STATE_READY && controller.isPlaying
-                    diagnostic = "state=${controller.playbackState}, error=${controller.playerError}"
+                    diagnostic = "state=${controller.playbackState}, playWhenReady=${controller.playWhenReady}, suppression=${controller.playbackSuppressionReason}, error=${controller.playerError}"
                 }
                 if (!playing) Thread.sleep(500)
             }
@@ -51,6 +56,7 @@ class LiveStreamSmokeTest {
                 controller.pause()
                 controller.clearMediaItems()
                 MediaController.releaseFuture(future)
+                activity.finish()
             }
         }
     }
