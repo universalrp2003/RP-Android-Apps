@@ -57,14 +57,14 @@ class RetainedTransferTest {
 
     @Test fun aDownloadKeptFromAShorterLiveFeedIsRestoredAfterRelaunch() {
         // 0.16 saved whatever catalog the download began from, then read it back with the strict
-        // 17-entry parse. A live feed may legitimately be shorter for a while after an app is
+        // bundled-entry parse. A live feed may legitimately be shorter for a while after an app is
         // added, so that download was dropped on relaunch as if it had never existed.
         val i = InstrumentationRegistry.getInstrumentation()
         val context = i.targetContext.applicationContext as Application
         val managed = ManagedApkDownload(context)
         managed.cancel()
         val bundled = Catalog.parse(context.assets.open("catalog.json").bufferedReader().use { it.readText() })
-        assertEquals(17, bundled.size)
+        assertEquals(18, bundled.size)
         val kept = bundled.take(15) // a live feed that has not yet caught up with the bundled contract
         val targetId = kept.last().id
         assertEquals("a shorter feed, not the full contract", 15, kept.size)
