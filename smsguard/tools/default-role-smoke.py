@@ -37,7 +37,7 @@ def nodes():
     ns = raw_nodes()
     later = known_update_later(ns)
     if later is not None:
-        # The old public baseline may asynchronously advertise current 1.1.17.
+        # The old public baseline may asynchronously advertise public 1.1.17 or 1.1.18.
         # Defer only that exact app-owned notice, never security/role dialogs.
         update_notices_deferred += 1
         (OUT / f'update-notice-{update_notices_deferred}.xml').write_text((OUT/'last-ui.xml').read_text())

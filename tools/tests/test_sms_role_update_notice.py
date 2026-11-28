@@ -26,6 +26,8 @@ class SmsRoleUpdateNoticeTest(unittest.TestCase):
                 self.assertIsNone(ui.known_update_later(ns))
         for labels in (set(), {'Later'}, {'Update available', 'Later'}, {'Harmful app blocked', 'Later'}, {'SMS Guard', 'Set as default'}):
             self.assertIsNone(ui.known_update_later(nodes(labels)))
+        unknown_version = {text.replace('1.1.18', '1.1.99') for text in ui.NOTICES[-1]}
+        self.assertIsNone(ui.known_update_later(nodes(unknown_version)))
         source = (ROOT/'smsguard/tools/default-role-smoke.py').read_text()
         for assertion in ("assert installed_hash() == expected_hash", "assert uid() == old_uid", "assert holder()==PKG", "'incoming SMS persisted and visible'", "'SMS survives normal update'", "'Declining changed default app'", "'Cancelling Android chooser changed role'"):
             self.assertIn(assertion, source)

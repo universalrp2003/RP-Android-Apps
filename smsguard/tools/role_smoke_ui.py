@@ -1,13 +1,17 @@
 """Fail-closed recognition of the ordinary website-update notice in role smoke tests.
 
 Never dismiss Android permissions, role choosers, Play Protect or unknown dialogs.
-The immutable 1.1.16 baseline can legitimately advertise public 1.1.17.
+The immutable 1.1.16 baseline can legitimately advertise public 1.1.17 or 1.1.18.
 """
 PACKAGE = 'com.universalrp.smsguard'
 NOTICES = (
     {'புதுப்பிப்பு உள்ளது', 'புதிய பதிப்பு 1.1.17 அதிகாரப்பூர்வ இணையதளத்தில் உள்ளது. உலாவியில் பதிவிறக்குங்கள்; இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது.',
      'அதிகாரப்பூர்வ இணையதளத்தைத் திற', 'பிறகு'},
     {'Update available', 'Version 1.1.17 is available on the official website. Download it in your browser; this app does not download or install APKs.',
+     'Open official website', 'Later'},
+    {'புதுப்பிப்பு உள்ளது', 'புதிய பதிப்பு 1.1.18 அதிகாரப்பூர்வ இணையதளத்தில் உள்ளது. உலாவியில் பதிவிறக்குங்கள்; இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது.',
+     'அதிகாரப்பூர்வ இணையதளத்தைத் திற', 'பிறகு'},
+    {'Update available', 'Version 1.1.18 is available on the official website. Download it in your browser; this app does not download or install APKs.',
      'Open official website', 'Later'},
 )
 
