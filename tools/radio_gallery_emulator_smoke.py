@@ -167,10 +167,16 @@ def open_weather():
 
 
 def weather_switch():
-    root = tree()
-    switches = [n for n in root.iter('node') if n.get('class') == 'android.widget.Switch']
-    assert len(switches) == 1, 'Expected one weather switch in the dialog'
-    return switches[0]
+    for _ in range(6):
+        root = tree()
+        switches = [n for n in root.iter('node') if n.get('class') == 'android.widget.Switch']
+        if len(switches) == 1:
+            return switches[0]
+        # The weather sheet's long description can put the switch below the fold.
+        adb('shell', 'input', 'swipe', '500', '1000', '500', '550', '400')
+        time.sleep(0.5)
+    print('Weather UI:', ' | '.join(str(n.attrib) for n in root.iter('node') if n.get('text') or n.get('checkable') == 'true'))
+    raise AssertionError('Expected one visible weather switch in the dialog')
 
 
 def wait_switch(value):
