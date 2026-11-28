@@ -29,7 +29,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: bash -o pipefail -c 'gradle :radio:connectedDebugAndroidTest --no-daemon --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.tamilnadufm.LiveStreamSmokeTest 2>&1 | tee "$RUNNER_TEMP/radio-playback-smoke.log"'
+          script: bash -o pipefail -c 'gradle :radio:connectedDebugAndroidTest --no-daemon -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.tamilnadufm.LiveStreamSmokeTest 2>&1 | tee "$RUNNER_TEMP/radio-playback-smoke.log"'
       - name: Surface failure diagnostics
         if: failure()
         shell: python
@@ -37,5 +37,7 @@ jobs:
           import os
           from pathlib import Path
           p = Path(os.environ['RUNNER_TEMP']) / 'radio-playback-smoke.log'
-          text = p.read_text(errors='replace')[-6000:] if p.exists() else 'Playback test did not start.'
+          text = p.read_text(errors='replace')[-4000:] if p.exists() else 'Playback test did not start.'
+          for result in Path('radio/build/outputs/androidTest-results').rglob('*.xml'):
+              text += '\n' + result.read_text(errors='replace')[:10000]
           print('::error title=Radio playback emulator smoke::' + text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
