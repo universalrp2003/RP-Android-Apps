@@ -130,7 +130,7 @@ search = next((n for n in tree().iter('node') if n.get('class') == 'android.widg
 assert search is not None and search.get('text', '') != 'Nattrinai', 'Category kept the old search'
 # Back from the directory returns to the app, even while a request is running.
 tap(wait_for('Directory', 'பட்டியல்'))
-wait_for('Live directory', 'நேரடிப் பட்டியல்')
+wait_for('Live directory', 'நேரடி நிலையப் பட்டியல்')
 adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
 wait_for('Stations', 'நிலையங்கள்')
 def open_menu():
