@@ -122,7 +122,12 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onO
         RadioTopBar(onOpenMenu = onOpenMenu, onHelp = { showGuide = true })
         TabRow(selectedTabIndex = if (showArtists) 1 else 0, containerColor = HeaderGreen, contentColor = Color.White,
             indicator = { positions -> TabRowDefaults.Indicator(Modifier.tabIndicatorOffset(positions[if (showArtists) 1 else 0]), color = Color.White) }) {
-            Tab(selected = !showArtists, onClick = { showArtists = false; artistSearch = false; vm.setQuery(""); screenScope.launch { listState.scrollToItem(0) } }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
+            Tab(selected = !showArtists, onClick = {
+                showArtists = false
+                artistSearch = false
+                if (state.query.isNotBlank()) screenScope.launch { listState.scrollToItem(0) }
+                vm.setQuery("")
+            }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
                 text = { androidx.compose.material3.Text(if (tamil) "நிலையங்கள்" else "Stations", maxLines = 1) })
             Tab(selected = showArtists, onClick = { showArtists = true }, selectedContentColor = Color.White, unselectedContentColor = Color.White.copy(alpha = 0.8f),
                 text = { androidx.compose.material3.Text(if (tamil) "கலைஞர்கள் (${ArtistBrowse.artists.size})" else "Artists (${ArtistBrowse.artists.size})", maxLines = 1) })
