@@ -32,6 +32,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // API 26 uses a dark navigation bar; newer versions can use dark icons on light.
+        if (Build.VERSION.SDK_INT >= 27) {
+            window.navigationBarColor = android.graphics.Color.rgb(244, 246, 241)
+            androidx.core.view.WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = true
+        }
         AppLanguageState.initialize(this)
         // Clear an old radio weather notification after upgrading. Saved places remain untouched.
         com.universalrp.weather.SharedWeatherRuntime.clearWeatherNotification(this)
