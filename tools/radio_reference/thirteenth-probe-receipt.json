@@ -1,0 +1,98 @@
+{
+  "checkedAtRunnerUtc": "2026-11-28T02:01:53.820234+00:00",
+  "candidates": [
+    {
+      "id": "ref-thadam-fm",
+      "name": "Thadam FM",
+      "url": "https://ec7.yesstreaming.net:1865/stream",
+      "favicon": "",
+      "homepage": "https://thadamfm.live/",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_fm",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 17,
+      "referenceName": "Thadam FM",
+      "referenceEvidence": "https://thadamfm.live/"
+    },
+    {
+      "id": "ref-sivan-isai",
+      "name": "Sivan Isai",
+      "url": "https://stream.zeno.fm/hqdpcakmw4suv",
+      "favicon": "",
+      "homepage": "https://www.radioindialive.com/sivan-isai",
+      "tags": "tamil",
+      "country": "",
+      "countryCode": "",
+      "state": "",
+      "language": "tamil",
+      "codec": "",
+      "bitrate": 0,
+      "votes": 0,
+      "category": "tamil_devotional",
+      "isCustom": false,
+      "verified": false,
+      "source": "reference-manual",
+      "order": 0,
+      "referenceScreen": 34,
+      "referenceName": "Sivan Isai",
+      "referenceEvidence": "https://www.radioindialive.com/sivan-isai"
+    }
+  ],
+  "results": [
+    {
+      "id": "ref-thadam-fm",
+      "name": "Thadam FM",
+      "url": "https://ec7.yesstreaming.net:1865/stream",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-br": "320",
+        "icy-name": "THADAM FM",
+        "icy-pub": "1",
+        "StreamTitle": "Dj Online"
+      }
+    },
+    {
+      "id": "ref-sivan-isai",
+      "name": "Sivan Isai",
+      "url": "https://stream.zeno.fm/hqdpcakmw4suv",
+      "providerReview": false,
+      "contentReviewed": false,
+      "status": "audio_reachable",
+      "audio": [
+        {
+          "codec_name": "mp3",
+          "codec_type": "audio",
+          "sample_rate": "44100"
+        }
+      ],
+      "detail": "audio metadata parsed",
+      "reportedTags": {
+        "icy-name": "Sivan isai",
+        "icy-br": "128",
+        "StreamTitle": "M.S.Subbulakshmi - Bruhi Mukundhethey",
+        "StreamUrl": "&artist=M.S.Subbulakshmi&album=MSS Classic Devotional Album"
+      }
+    }
+  ],
+  "limits": "Single CI-location audio metadata probe; no content, identity, phone, region or licence guarantee. Reported-provider streams remain held for review."
+}
