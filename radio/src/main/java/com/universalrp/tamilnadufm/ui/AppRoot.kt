@@ -46,6 +46,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.session.MediaController
 import com.universalrp.tamilnadufm.MainViewModel
 import com.universalrp.tamilnadufm.Tab
+import com.universalrp.tamilnadufm.data.StationAlternatives
 import com.universalrp.tamilnadufm.player.PlayerBus
 import com.universalrp.updates.AppStrings
 import com.universalrp.updates.AppLanguage
@@ -116,7 +118,13 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
                 }
             }
             AnimatedVisibility(visible = state.message != null) {
-                state.message?.let { text -> MessageBar(text) { vm.dismissMessage() } }
+                state.message?.let { text ->
+                    val alternative = if (text == "That station did not respond. It may be offline right now — try another, or check your connection.")
+                        StationAlternatives.possibleFor(state.nowPlaying, state.stations) else null
+                    MessageBar(text, onClose = { vm.dismissMessage() }, onAlternative = alternative?.let { station ->
+                        { vm.dismissMessage(); vm.play(station) }
+                    })
+                }
             }
             if (state.tab != Tab.MORE || state.nowPlaying != null || state.playingLocalTitle != null) {
                 TransportBar(vm, state, playback.isPlaying, playback.isBuffering)
@@ -142,8 +150,9 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
 }
 
 @Composable
-private fun MessageBar(text: String, onClose: () -> Unit) {
+private fun MessageBar(text: String, onClose: () -> Unit, onAlternative: (() -> Unit)? = null) {
     Surface(color = SurfaceHigh, modifier = Modifier.fillMaxWidth()) {
+        Column {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -164,6 +173,14 @@ private fun MessageBar(text: String, onClose: () -> Unit) {
                     .size(18.dp)
                     .clickable(onClick = onClose),
             )
+        }
+        if (onAlternative != null) {
+            val tamil = AppLanguageState.current == AppLanguage.TAMIL
+            TextButton(onClick = onAlternative, modifier = Modifier.padding(start = 8.dp)) {
+                Text(if (tamil) "சாத்தியமான மாற்று: SS Tamil Radio (உறுதியல்ல)"
+                    else "Try possible alternative: SS Tamil Radio (not confirmed)", color = Saffron)
+            }
+        }
         }
     }
 }

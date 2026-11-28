@@ -87,7 +87,10 @@ for _ in range(12):
         break
     adb('shell', 'input', 'swipe', '350', '1100', '350', '400', '400')
     time.sleep(0.4)
-wait_for('Santhanam')
+tap(wait_for('Santhanam'))
+wait_for('Open collection in Spotify', 'Spotify-இல் தொகுப்பைத் திற')
+adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')
+wait_for('Photo credits', 'பட உதவி')
 for _ in range(12):
     root = tree()
     if find(root, 'Photo credits') is not None or find(root, 'பட உதவி') is not None:

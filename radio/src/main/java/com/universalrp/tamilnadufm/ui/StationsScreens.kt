@@ -276,6 +276,31 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState, onO
                         }
                     }
 
+                    if (artistSearch) {
+                        val collectionUrl = ArtistBrowse.externalCollections[state.query.trim().lowercase()]
+                        item {
+                            val uri = LocalUriHandler.current
+                            PanelCard(Modifier.fillMaxWidth()) {
+                                Column(Modifier.padding(12.dp)) {
+                                    Text(if (tamil) "கலைஞர் தொகுப்பு" else "Artist collection",
+                                        style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                                    if (collectionUrl != null) {
+                                        Text(if (tamil) "இது Spotify செயலி அல்லது உலாவியில் திறக்கும்; கணக்கு அல்லது சந்தா தேவைப்படலாம். இது ரேடியோ ஒலிபரப்பு அல்ல."
+                                            else "Opens in Spotify or your browser; an account or subscription may be needed. This is not a radio stream.",
+                                            style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                        TextButton(onClick = { uri.openUri(collectionUrl) }) {
+                                            Text(if (tamil) "Spotify-இல் தொகுப்பைத் திற" else "Open collection in Spotify")
+                                        }
+                                    } else {
+                                        Text(if (tamil) "இந்தக் கலைஞருக்கான தொகுப்பு இணைப்பு இன்னும் சேர்க்கப்படவில்லை. கீழே பெயர் பொருந்தும் வானொலி நிலையங்கள் மட்டும் காட்டப்படும்."
+                                            else "No collection link added for this artist yet. Below are station-name matches only.",
+                                            style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (state.visible.isEmpty()) {
                         item {
                             PanelCard(Modifier.fillMaxWidth()) {
