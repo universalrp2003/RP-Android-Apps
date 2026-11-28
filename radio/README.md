@@ -1,11 +1,12 @@
 # Ramesh Radio
 
-> Stable 1.32 / code 32: compact stations and Artists tabs, side navigation and clearer searches. Artist cards search station names; many have no matching in-app audio. External artist collection links have been removed.
+> Stable 1.33 / code 33: compact stations and Artists tabs, side navigation and clearer searches. Artist cards search station names; many have no matching in-app audio. External artist collection links have been removed.
 
-Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option. Latest published release: **1.32 / code 32**, package `com.universalrp.tamilnadufm`, minimum Android 8.0/API 26.
+Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option. Latest published release: **1.33 / code 33**, package `com.universalrp.tamilnadufm`, minimum Android 8.0/API 26.
 
-- [Download Ramesh-Radio-v1.32.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.32/Ramesh-Radio-v1.32.apk) (15,231,296 bytes; SHA-256 `3f0973d1fa56c322171d4e34908624f41e68688d1f81cc1dde972faf23c70033`) · [release notes](../releases/ramesh-radio-v1.32.md).
-- Candidate [46135353151](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46135353151), source `17dae9d7d54841bef01634cb68c87c175d7aacc3`, published without rebuilding by [46136124785](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46136124785). The exact release was not tested on a physical phone.
+- [Download Ramesh-Radio-v1.33.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.33/Ramesh-Radio-v1.33.apk) (15,231,296 bytes; SHA-256 `2be7401b03f054fd985a39d791713c09fa56b207dcbd6747b0a604148c574290`) · [release notes](../releases/ramesh-radio-v1.33.md).
+- Candidate [46139290240](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46139290240), source `ed65d011eeea1ad94433a4fcade519f27847e38c`, published without rebuilding by [46139916692](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46139916692). The exact release was not tested on a physical phone.
+- Weather settings are available in Settings & more. Saved places and existing alert choices are retained; weather can auto-enable when device location is on and no explicit choice was saved. Turning it off records your choice.
 - Of 616 catalogue entries, 67 unheld streams were unavailable in one network probe and 13 remain held for review. Metadata checks do not verify content, identity or rights. No verified continuous Tamil news audio was identified.
 - Update without uninstalling when signatures match. Uninstalling can erase local data, favourites and custom stations. [Privacy policy](../PRIVACY.md)
 

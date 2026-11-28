@@ -1,5 +1,7 @@
 ## Live Guard 3.05 — owner-authorized signed release
 
+Ramesh Radio 1.33 / code 33: [public release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.33), asset `Ramesh-Radio-v1.33.apk`, 15,231,296 bytes, SHA-256 `2be7401b03f054fd985a39d791713c09fa56b207dcbd6747b0a604148c574290`; release 461507946, asset 804315871. [Promotion run 46139916692](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46139916692) published the exact signed candidate from source `ed65d011eeea1ad94433a4fcade519f27847e38c`. The weather-off setting persisted across emulator restart; these release bytes were not tested on a physical phone.
+
 Ramesh Radio 1.32 / code 32: [public release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.32), asset `Ramesh-Radio-v1.32.apk`, 15,231,296 bytes, SHA-256 `3f0973d1fa56c322171d4e34908624f41e68688d1f81cc1dde972faf23c70033`; release 461480563, asset 804186766. [Promotion run 46136124785](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/46136124785) verified and published the exact signed candidate from source `17dae9d7d54841bef01634cb68c87c175d7aacc3`. No physical-phone test of these bytes.
 
 - [CleanSweep-v3.05.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.05/CleanSweep-v3.05.apk): 14,813,623 bytes; SHA-256 `304c31b778b4020b136dbb24ba2c96fb6f6172c921ba0da268a69585e4e2c42b`.

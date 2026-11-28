@@ -11,6 +11,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
+    # Historical promotion: 1.33 is public; never create it again.
+    if: ${{ false }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
