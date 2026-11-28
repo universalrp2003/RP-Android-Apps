@@ -29,4 +29,13 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: python3 tools/radio_gallery_emulator_smoke.py
+          script: bash -o pipefail -c 'python3 tools/radio_gallery_emulator_smoke.py 2>&1 | tee "$RUNNER_TEMP/radio-emulator-smoke.log"'
+      - name: Surface failure diagnostics
+        if: failure()
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP']) / 'radio-emulator-smoke.log'
+          text = p.read_text(errors='replace')[-6000:] if p.exists() else 'Emulator script did not start.'
+          print('::error title=Radio emulator smoke::' + text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
