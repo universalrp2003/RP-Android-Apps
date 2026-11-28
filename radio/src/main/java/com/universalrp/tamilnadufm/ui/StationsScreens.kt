@@ -917,15 +917,15 @@ private fun ArtistScreen(onBack: () -> Unit, onSelect: (ArtistShortcut) -> Unit)
             Triple("Vivek — Dani Charles / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Vivek_at_the_Ezhumin_Press_Meet_(headshot).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
             Triple("Santhanam — Dani Charles / Silverscreen; cropped by Commons", "https://commons.wikimedia.org/wiki/File:Santhanam_at_the_%E2%80%98A1%E2%80%99_Press_Meet_(cropped).jpg", "https://creativecommons.org/licenses/by-sa/3.0/"),
         )
-        AlertDialog(onDismissRequest = { credits = false }, title = { Text("Photo credits") },
+        AlertDialog(onDismissRequest = { credits = false }, title = { Text(if (tamil) "பட உதவி" else "Photo credits") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text("Photos from Wikimedia Commons; display is resized, files are not modified by the app.")
+                    Text(if (tamil) "படங்கள் விக்கிமீடியா காமன்ஸிலிருந்து பெறப்படுகின்றன; காட்டுவதற்காக அளவு மாற்றப்படுகிறது, செயலி கோப்புகளை மாற்றாது." else "Photos from Wikimedia Commons; display is resized, files are not modified by the app.")
                     creditRows.forEach { (label, source, licence) ->
                         Text(label, style = MaterialTheme.typography.bodySmall)
                         Row {
-                            TextButton(onClick = { uri.openUri(source) }) { Text("Source") }
-                            TextButton(onClick = { uri.openUri(licence) }) { Text("Licence") }
+                            TextButton(onClick = { uri.openUri(source) }) { Text(if (tamil) "மூலம்" else "Source") }
+                            TextButton(onClick = { uri.openUri(licence) }) { Text(if (tamil) "உரிமம்" else "Licence") }
                         }
                     }
                 }
